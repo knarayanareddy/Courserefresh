@@ -10,18 +10,20 @@ up next — no prior context assumed.
 
 ## 0. Where the last session stopped (read this before §1)
 
-Two commits on this branch, green, pushed:
+Five commits on this branch, green, pushed (open as **PR #2**, `mergeable`):
 
 | Commit | What it contains |
 |---|---|
 | `85e3ce6` | `REVIEW.md` F1–F13 resolved on the no-key path; the author's round (D-32) built end to end; Tavily and JEV integrated; two evidence bundles shipped under `specs/evidence/`; registers re-derived |
 | `e2bfbc5` | the canvas queue ordered by learner consequence (C-05), row anchors, and JV-04's JEV fixture replay |
+| `327c93b` | this handoff: the complete leftover list (§5), the author's-round runbook (Step 4b), the session-boundary and register traps |
+| `e2b6c36`, `450a31c` | two corrections to this file, found by reading the code it describes (which command writes the canvas; the restore ritual needs `git clean` too) |
 
 **Verified at this tip:** `sh app/check.sh` → **295 PASS (263 PASS lines in 13 measured stages + the
 32-check claims audit) · `ALL GREEN` · exit 0**, with no credentials and no sockets. A live form ruling
 was exercised against the served console end to end: `GET /canvas` → form POST → `303` → the next cycle
-published at `authority: PA3 · decided_by: human:author · reason human_signoff`) — the digest line reads
-`- author ruling rcpt-… (approve, human_signoff): applied`).
+published at `authority: PA3 · decided_by: human:author · reason human_signoff`, and the digest line
+reads `- author ruling rcpt-… (approve, human_signoff): applied`.
 
 **`app/out/` does not survive a session boundary.** It is gitignored *and* it is runtime state (runs,
 receipts, digest, `state/`, `evidence/`, `eval/`); on a fresh clone, or after this sandbox is reset, it
