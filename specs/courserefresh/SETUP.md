@@ -13,7 +13,7 @@ the repository (`test_hygiene.py` would fail the build if one did).
 
 ```bash
 cd <checkout>
-sh app/check.sh            # 12 stages · expect "ALL GREEN" with zero credentials
+sh app/check.sh            # 13 stages · expect "ALL GREEN" with zero credentials
 python3 app/run_live.py --preflight
 ```
 
@@ -115,7 +115,30 @@ The console (read-only, one page, no scripts) and the telemetry intake:
 python3 app/serve.py                   # console 0.0.0.0:8080, telemetry 0.0.0.0:8787
 ```
 
-## 5. Troubleshooting (symptom → cause → fix)
+## 5. Hand the run back (one command, no key leaves the machine)
+
+After the first live cycle:
+
+```bash
+python3 app/tools/collect_live.py            # --no-probe to skip the three validation calls
+```
+
+It writes `handoff/<run_id>/` (and `handoff-<run_id>.tar.gz`) containing: a fresh preflight with
+presence + fingerprints only, `receipts.jsonl`, `run_log.jsonl`, the digest, the cohort gates, the
+delivery records, the n8n workflow ids, the Apify unit ledger (with run ids), a canvas summary with the
+execution ids, a **counts-only** telemetry summary, `HANDOFF.md` (what the run proves and what is
+still missing) and `MANIFEST.sha256`.
+
+Two properties make it safe to push or paste:
+
+- it redacts every value of every secret-looking environment variable it can see, and refuses to
+  finish (**exit 3**) if any value, or any key-shaped string, survives — `SECRET-SCAN.txt` is the
+  receipt for that claim;
+- it never copies learner telemetry: handles are counted (`distinct_handles`), never written.
+
+`python3 app/tests/test_handoff.py` proves both, including a planted token that must be caught.
+
+## 6. Troubleshooting (symptom → cause → fix)
 
 | Symptom | Cause | Fix |
 |---|---|---|
@@ -129,7 +152,7 @@ python3 app/serve.py                   # console 0.0.0.0:8080, telemetry 0.0.0.0
 | `actor_failed` from Apify | actor id/build changed, or token scoped to another account | re-run `python3 app/tools/make_apify_fixtures.py` is *not* the fix — check the actor in the Apify console and update `sources.json` + its sha |
 | port already in use | a rehearsal still running | `CR_CONSOLE_PORT=8081 python3 app/serve.py` |
 
-## 6. What must never happen (and cannot, silently)
+## 7. What must never happen (and cannot, silently)
 
 - A key in the repository: `test_hygiene.py` scans `app/**` and `specs/**` for key-shaped strings and
   addresses; `.env` is gitignored and `.env.example` carries only names.
@@ -139,5 +162,5 @@ python3 app/serve.py                   # console 0.0.0.0:8080, telemetry 0.0.0.0
   only when their platform is wired. The video may not say "Apify powers the system" while `APIFY_TOKEN`
   is missing — the preflight output is the release note.
 
-*Evidence for every statement above: `EVIDENCE.md` E3 (battery, 12 stages), E8 (dry cycle through the
+*Evidence for every statement above: `EVIDENCE.md` E3 (battery, 13 stages), E8 (dry cycle through the
 live engine), E9 (preflight, no keys) — commands and hashes on record.*

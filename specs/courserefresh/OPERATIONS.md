@@ -136,11 +136,15 @@ can never rewrite `main`.
 
 ```bash
 python3 app/tools/reset_course.py                       # restore the frozen baseline (course + quizzes)
-sh app/check.sh                                         # 12 stages, must be ALL GREEN
+sh app/check.sh                                         # 13 stages, must be ALL GREEN
 python3 app/run_live.py --root app/out/e8 --seed-baseline
 python3 app/run_live.py --root app/out/e8 --dry-run --once
 python3 app/tools/freeze_evidence.py --out app/out/evidence/<run_id>
+python3 app/tools/collect_live.py            # the shareable bundle: redacted, counts-only telemetry
 ```
+
+`collect_live.py` exits `3` if a secret-shaped string survived its redaction; nothing leaves the
+machine on that exit code. Treat a `3` as Sev-2 (§6).
 
 Rules learned the hard way: any edit to a lesson invalidates the frozen hero (hash mismatch), any edit
 to `app/n8n/policy_node.js` invalidates the exports (`make_n8n_exports.py`), and any edit to the

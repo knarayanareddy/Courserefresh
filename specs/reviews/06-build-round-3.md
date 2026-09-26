@@ -24,6 +24,7 @@ an assertion with no artifact is a claim, and claims are the thing this project 
 | `app/lib/console.py` (read-only page, pause switch) | UX | T | T: "if I have to open a terminal to see why lesson 3 changed, I will not" → `/lesson/{id}` returns versions, gates and the receipt that caused each one |
 | `app/run_live.py` (the loop) | SRE | JEV | JEV: "the loop is one more place a model can quietly decide" → the judge answers closed questions; the code decides; `--via-n8n` is parity-policed |
 | `app/tests/test_live_modules.py` (the proof, no keys) | SRE | all seven | every seat named the check that would have caught its own component's worst day; those checks are in this file |
+| `app/tools/collect_live.py` (handoff collector) | SRE | UX | UX: "a folder a human will paste into a chat must be safe to paste" → telemetry becomes counts, secrets are redacted, and exit 3 blocks the handoff |
 | `SETUP.md` / `.env.example` / `OPERATIONS.md` §9–12 | UX | SRE | SRE: "a runbook that assumes the reader knows the exit codes is not a runbook" |
 
 The pairing rule was the point: the seats that built the risky parts (a model call, a learner-facing
@@ -99,6 +100,6 @@ number that does not exist. **T** signed this one too; it is the seat's own roun
 | SRE | **sign** | conditions 3 and 4 |
 
 The seven seats agree on the built system the way they agreed on the spec: *the parts that can be
-proven without credentials are proven by the battery (12 stages, 164 checks), and the parts that need
+proven without credentials are proven by the battery (13 stages, 178 checks), and the parts that need
 the real world are named, gated and listed above rather than asserted.* What remains is pasting keys —
 and the preflight that will tell you, in one screen, exactly what that unlocks.

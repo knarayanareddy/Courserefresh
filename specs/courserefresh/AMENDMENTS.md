@@ -133,6 +133,7 @@ green, `reviews/04` pastes it; F-01–F-17 verified; new D-09–D-14 from the bu
 | D-27 | Six exports, not five: `wf-cr-9-errors` is attached to every workflow at import time so an unhandled throw lands as a receipt instead of silence | review 05 N8N-03, now enforced by `test_contracts.py` |
 | D-28 | `units_per_run: 1` with the phrase "declared 1 run = 1 unit" written into the ledger row | `WIRING.md` §5 has no price; an approximation that names itself is honest, a number that looks measured is not (Art. VI) |
 | D-30 | The learn phase measures the gate window from receipts, not a configured number: if nothing published the lesson, the gate reads `measurement_incomplete` and nothing reverts | a window that cannot be dated is not a window (Art. VI) |
+| D-31 | A run is handed back through `collect_live.py`, which redacts every secret value it can see, **refuses to finish (exit 3)** if one survives, and summarises learner telemetry as counts instead of copying it | a handoff that might carry a key is not a handoff, it is a leak with a README |
 | D-29 | The build is recorded as **peer-supervised**: each component has a builder seat and a supervisor seat, and the 16 findings in `reviews/06` carry the seat that found them | the user asked for the personas to build while supervising each other; the record is what makes that checkable |
 
 ## 8. The one row that will matter most
@@ -141,4 +142,4 @@ green, `reviews/04` pastes it; F-01–F-17 verified; new D-09–D-14 from the bu
 |---|---|---|
 | X-01 | Every claim in this package is either measured with an artifact, configured, or written `unmeasured`. | **verified** — `reviews/04` §3 pastes `test_claims.py` (3/3) and the register's measured rows; every other value is `<placeholder>`-tagged |
 | X-02 | The live wiring (Apify actors, model calls, console, cohort) is the remaining gap; the package says so wherever it matters (`reviews/04` §4, tasks `[ ]`/`[~]`, `EVIDENCE.md` E7, `RECEIPTS.md` N13/N14/N20–N22). | open by design — closes only with real run ids |
-| X-03 | Round 3 closed the *build* gap: every component runs and is tested with zero credentials (`SETUP.md` §1, E8, E9), and the only input left is the keys. | **verified** — `sh app/check.sh` 164 PASS / 12 stages; `reviews/06` §5 sign-off with four named conditions |
+| X-03 | Round 3 closed the *build* gap: every component runs and is tested with zero credentials (`SETUP.md` §1, E8, E9), and the only input left is the keys. | **verified** — `sh app/check.sh` 178 PASS / 13 stages; `reviews/06` §5 sign-off with four named conditions |

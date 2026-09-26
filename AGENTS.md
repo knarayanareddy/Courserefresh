@@ -36,6 +36,10 @@ source of truth; if code disagrees with the spec, the spec wins until the spec i
   `python3 app/tools/make_n8n_exports.py` (the exports embed it byte-for-byte) and
   `node app/tests/test_gate_parity.py`. If you touch either rulebook, the other must change in the
   same commit or the battery fails.
+- **Nothing leaves the machine with a key in it.** Before you share a run, use
+  `python3 app/tools/collect_live.py`: it redacts every secret value it can see, summarises learner
+  telemetry as counts, and exits 3 (refusing the handoff) if a secret-shaped string survived.
+  `app/tests/test_handoff.py` proves it, including a planted token.
 - **A receipt must still describe the file.** If you change anything that writes artifacts, run `python3 app/tests/test_artifacts.py` — hashes are re-computed from disk, and a revert must keep the text it claims to restore (Art. IX.3).
 - **Hostile input is in scope** (Art. X): `cr-inject-01` must always escalate, with the hostile
   string visible on the receipt.

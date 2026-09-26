@@ -60,7 +60,7 @@ direction (an AC with no row, a row with no AC). **Nothing is "verified" until t
 | AC-18.1 | `test_live_modules.py` (channels) | `app/out/live/delivery.jsonl` | 1:05 |
 | AC-18.2 | `test_live_modules.py` (staged ≠ delivered) | delivery records; `notify.py` | 1:05 |
 | AC-18.3 | `test_artifacts.py` (caps) | skipped rows with `rate_limited` | — |
-| AC-19.1 | `test_live_modules.py` in `check.sh` | battery.txt (12 stages) | 0:00 proof |
+| AC-19.1 | `test_live_modules.py` in `check.sh` | battery.txt (13 stages) | 0:00 proof |
 | AC-19.2 | `test_live_modules.py` (sim labels) | receipts `mode=sim`; digest header | 0:12 |
 | AC-19.3 | `test_live_modules.py` (end-to-end) | `app/out/live-e2e/` (run + artefacts) | 0:45 |
 | AC-3.1 | `node app/tests/test_gate_parity.py` | parity output (59 rows + 2 probes) | 1:40 canvas |
