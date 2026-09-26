@@ -66,7 +66,16 @@ run_id = "cr-20990101-0000-777"
                                                            "same_as_oracle": True,
                                                            "execution_id": "exec-4711"}],
                                                "sources_scanned": 6}) + "\n")
-(out / "receipts.jsonl").write_text("\n".join(json.dumps(r) for r in [
+def _seal(rows):
+    prev = "genesis"
+    for row in rows:
+        row["prev"] = prev
+        row["row_hash"] = "sha256:" + hashlib.sha256(json.dumps(row, sort_keys=True).encode()).hexdigest()
+        prev = row["row_hash"]
+    return rows
+
+
+(out / "receipts.jsonl").write_text("\n".join(json.dumps(r) for r in _seal([
     {"receipt_id": "rcpt-777-000", "event_id": "cr-1", "ts": "2026.09.26T00:00:00Z", "stream": "change",
      "decision": {"action": "PUBLISH", "reason_codes": ["material_breaking"], "authority": "PA2"},
      # a deliberately sloppy receipt: this is the leak the collector must scrub
@@ -74,7 +83,7 @@ run_id = "cr-20990101-0000-777"
     {"receipt_id": "rcpt-777-001", "event_id": "cr-2", "ts": "2026.09.26T00:00:01Z", "stream": "change",
      "decision": {"action": "ESCALATE", "reason_codes": ["insufficient_corroboration"], "authority": "PA2"},
      "label": "one voice only"},
-]) + "\n")
+])) + "\n")
 (out / "digest.md").write_text(f"# digest\n\nmode: **live**\n\nrefusal: one voice only\n")
 (out / "digest.html").write_text("<!doctype html><title>digest</title><p>mode: live</p>")
 (out / "live" / "preflight.json").write_text(json.dumps({"mode": "live", "blocking_for_live": []}))
@@ -139,6 +148,10 @@ check("environment.json lists names and fingerprints, never values",
       "APIFY_TOKEN" in env_doc["keys_present"] and env_doc["secrets"]["APIFY_TOKEN"].startswith("set(")
       and SECRET not in (folder / "environment.json").read_text(),
       env_doc["secrets"].get("APIFY_TOKEN", "missing"))
+session_doc = json.loads((folder / "session.json").read_text())
+check("the collector re-verifies the chain itself and totals the whole session",
+      session_doc["chain_ok"] is True and session_doc["chain_rows"] == 2
+      and session_doc["decisions_total"] == {"PUBLISH": 1, "ESCALATE": 1}, json.dumps(session_doc))
 check("HANDOFF.md says what the run proves and what is still missing",
       "still missing" in (folder / "HANDOFF.md").read_text()
       and "live` run" in (folder / "HANDOFF.md").read_text())

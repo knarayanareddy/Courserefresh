@@ -66,7 +66,7 @@ from memory.
 | N32 | battery, after the round-3 build | `155` checks pass across `12` stages, exit 0 | **measured** | `app/out/evidence/battery.txt` | `sh app/check.sh` |
 | N33 | live-path checks that run with no credentials | `39` (config 9 · apify 5 · judge 6 · n8n 7 · telemetry 4 · notify 2 · console 5 · e2e 7) | **measured** | `app/tests/test_live_modules.py` | E11 command |
 
-| N34 | handoff collector checks | `14` (redaction, secret scan, manifest re-hash, canvas/Apify ids, telemetry counts-only, archive, empty-tree refusal) | **measured** | `app/tests/test_handoff.py` | stage 13/13 |
+| N34 | handoff collector checks | `15` (redaction, secret scan, self-verified chain + session totals, manifest re-hash, canvas/Apify ids, telemetry counts-only, archive, empty-tree refusal) | **measured** | `app/tests/test_handoff.py` | stage 13/13 |
 
 ## 4. Configuration (chosen, not measured — the word "measured" is banned here)
 

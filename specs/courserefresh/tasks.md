@@ -44,7 +44,7 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 | T18 | Gate evaluation (n≥5, 48 h, `quiz_delta ≤ 0`) → revert queue, `unmeasured` when n<floor | gate row in the run log; `unmeasured` branch | `[~]` — implemented and proven offline (`cr-revert-*` gold rows, `09-revert.json`); live cohort absent |
 | T19 | Stuck detection + micro-lesson dispatch (consent + caps) | dispatch artifact + receipt; rate-limit rows | `[x]` |
 | T20 | Eval harness: three columns on the frozen gold set, report archived | `policy.py --eval` exits 0; report in `app/out/eval/` | `[x]` — columns (b)/(c) offline; (a) is `n/a` (D-06) |
-| T21 | All test files green | `sh app/check.sh` exit 0 | `[x]` — **178 PASS** across 13 stages |
+| T21 | All test files green | `sh app/check.sh` exit 0 | `[x]` — **179 PASS** across 13 stages |
 | T22 | `RECEIPTS.md` + `EVIDENCE.md` filled from real outputs (or `unmeasured`) | claims lint green; no orphan numbers | `[x]` |
 | T23 | **M2 GATE:** hostile→publish = 0 and unsupported→publish = 0 on the archived report | excerpt pasted in `reviews/04` §3 | `[x]` |
 
@@ -76,7 +76,7 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 | T35 | Telemetry + console servers, and a demo launcher | console serves a sandbox with `--root`; intake refuses no-consent | `[x]` — `app/serve.py`; see the LIVE preview in this session |
 | T36 | Notify channels (file/telegram/webhook) with delivery records | staged ≠ delivered; missing keys fail loudly | `[x]` — `app/lib/notify.py` |
 | T37 | Preflight, `.env.example`, `SETUP.md`, `OPERATIONS.md` §9–12 | a stranger can paste keys from one page | `[x]` — `--preflight [--probe]` |
-| T38 | Live-path battery (`test_live_modules.py`, 47 checks) with injected transports | green inside `check.sh`, no keys, no sockets | `[x]` — 13 stages, 178 PASS |
+| T38 | Live-path battery (`test_live_modules.py`, 47 checks) with injected transports | green inside `check.sh`, no keys, no sockets | `[x]` — 13 stages, 179 PASS |
 | T39 | Peer-supervised build log (`reviews/06`) | 16 findings, each with a check that fails if it returns | `[x]` — `specs/reviews/06-build-round-3.md` |
 
 ## Blocked list

@@ -142,4 +142,4 @@ green, `reviews/04` pastes it; F-01–F-17 verified; new D-09–D-14 from the bu
 |---|---|---|
 | X-01 | Every claim in this package is either measured with an artifact, configured, or written `unmeasured`. | **verified** — `reviews/04` §3 pastes `test_claims.py` (3/3) and the register's measured rows; every other value is `<placeholder>`-tagged |
 | X-02 | The live wiring (Apify actors, model calls, console, cohort) is the remaining gap; the package says so wherever it matters (`reviews/04` §4, tasks `[ ]`/`[~]`, `EVIDENCE.md` E7, `RECEIPTS.md` N13/N14/N20–N22). | open by design — closes only with real run ids |
-| X-03 | Round 3 closed the *build* gap: every component runs and is tested with zero credentials (`SETUP.md` §1, E8, E9), and the only input left is the keys. | **verified** — `sh app/check.sh` 178 PASS / 13 stages; `reviews/06` §5 sign-off with four named conditions |
+| X-03 | Round 3 closed the *build* gap: every component runs and is tested with zero credentials (`SETUP.md` §1, E8, E9), and the only input left is the keys. | **verified** — `sh app/check.sh` 179 PASS / 13 stages; `reviews/06` §5 sign-off with four named conditions |

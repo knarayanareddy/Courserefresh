@@ -100,6 +100,6 @@ number that does not exist. **T** signed this one too; it is the seat's own roun
 | SRE | **sign** | conditions 3 and 4 |
 
 The seven seats agree on the built system the way they agreed on the spec: *the parts that can be
-proven without credentials are proven by the battery (13 stages, 178 checks), and the parts that need
+proven without credentials are proven by the battery (13 stages, 179 checks), and the parts that need
 the real world are named, gated and listed above rather than asserted.* What remains is pasting keys —
 and the preflight that will tell you, in one screen, exactly what that unlocks.

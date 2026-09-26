@@ -126,8 +126,9 @@ python3 app/tools/collect_live.py            # --no-probe to skip the three vali
 It writes `handoff/<run_id>/` (and `handoff-<run_id>.tar.gz`) containing: a fresh preflight with
 presence + fingerprints only, `receipts.jsonl`, `run_log.jsonl`, the digest, the cohort gates, the
 delivery records, the n8n workflow ids, the Apify unit ledger (with run ids), a canvas summary with the
-execution ids, a **counts-only** telemetry summary, `HANDOFF.md` (what the run proves and what is
-still missing) and `MANIFEST.sha256`.
+execution ids, a **counts-only** telemetry summary, `session.json` (every cycle in the tree, decision
+totals, and a chain the collector re-hashes itself rather than trusting a run-log flag), `HANDOFF.md`
+(what the run proves and what is still missing) and `MANIFEST.sha256`.
 
 Two properties make it safe to push or paste:
 

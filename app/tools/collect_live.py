@@ -110,6 +110,38 @@ def telemetry_summary(path: Path) -> dict:
             "lessons": lessons, "note": "handles are counted, never copied"}
 
 
+def verify_chain(rows: list[dict]) -> tuple[bool, int]:
+    """Recompute the receipt chain's verdict here rather than trusting a run-log flag.
+
+    A handoff that says "chain verified" because the process said so is exactly the kind of claim
+    this package refuses; the collector re-hashes the rows it is about to hand over.
+    """
+    prev, count = "genesis", 0
+    for row in rows:
+        body = {k: v for k, v in row.items() if k != "row_hash"}
+        if body.get("prev") != prev or "sha256:" + hashlib.sha256(
+                json.dumps(body, sort_keys=True).encode()).hexdigest() != row.get("row_hash"):
+            return False, count
+        prev, count = row["row_hash"], count + 1
+    return True, count
+
+
+def session(runs: list[dict], receipts: list[dict]) -> dict:
+    """What the whole collected session did, not just what its last cycle did."""
+    totals: dict[str, int] = {}
+    per_run = []
+    for row in runs:
+        for action, n in (row.get("decisions") or {}).items():
+            totals[action] = totals.get(action, 0) + n
+        per_run.append({"run_id": row.get("run_id"), "mode": row.get("mode"),
+                        "label": row.get("label"), "decisions": row.get("decisions"),
+                        "started_at": row.get("started_at"), "ended_at": row.get("ended_at")})
+    ok, rows = verify_chain(receipts)
+    return {"runs": len(runs), "per_run": per_run, "decisions_total": totals,
+            "chain_ok": ok, "chain_rows": rows,
+            "modes": sorted({str(r.get("mode")) for r in runs if r.get("mode")})}
+
+
 def canvas_and_apify(out: Path) -> tuple[dict, dict]:
     runs = [json.loads(l) for l in (out / "run_log.jsonl").read_text().splitlines() if l.strip()] \
         if (out / "run_log.jsonl").exists() else []
@@ -150,6 +182,10 @@ def environment(cfg, root: Path) -> dict:
 
 def handoff_markdown(run_id: str, meta: dict, canvas: dict, apify: dict, telemetry: dict) -> str:
     mode = meta.get("mode", "unknown")
+    session_info = meta.get("session", {})
+    per_run = "\n".join(
+        f"| `{r['run_id']}` | {r['mode']} | {r.get('label') or '—'} | {json.dumps(r['decisions'] or {}, sort_keys=True)} |"
+        for r in session_info.get("per_run", [])) or "| — | — | — | — |"
     warn = ("**This is a `sim` run** — the datasets came from `app/fixtures/apify/`, or `--dry-run` was "
             "set. No Apify actor ran and no workflow executed. The labels in the artifacts say so."
             if mode != "live" else
@@ -164,11 +200,19 @@ Collected {meta.get("collected_at")} by `app/tools/collect_live.py` from `{meta.
 
 | Thing | Value |
 |---|---|
-| decisions | {json.dumps(meta.get("decisions", {}), sort_keys=True)} |
-| receipt chain verified at end | {meta.get("chain_verified")} |
+| cycles collected | {session_info.get("runs", 0)} |
+| decisions (whole session) | {json.dumps(session_info.get("decisions_total", {}), sort_keys=True)} |
+| receipt chain re-verified by the collector | {session_info.get("chain_ok")} ({session_info.get("chain_rows", 0)} rows) |
+| modes present | {", ".join(session_info.get("modes") or [mode])} |
 | canvas executions used for a decision | {canvas["executions"]} (degraded: {canvas["degraded"]}, mismatches: {canvas["mismatches"]}) |
 | Apify units recorded | {apify["units_recorded"]} across {len(apify["runs"])} run id(s) |
 | telemetry | {telemetry["rows"]} event(s) from {telemetry.get("distinct_handles", 0)} hashed handle(s) |
+
+### Cycles in this handoff
+
+| run | mode | label | decisions |
+|---|---|---|---|
+{per_run}
 
 ## What is still missing (the honest list)
 
@@ -217,16 +261,19 @@ def main(argv: list[str] | None = None) -> int:
     cfg = Config()
     values = secret_values(cfg)
     runs = [json.loads(l) for l in (run_out / "run_log.jsonl").read_text().splitlines() if l.strip()]
+    receipts = [json.loads(l) for l in (run_out / "receipts.jsonl").read_text().splitlines() if l.strip()] \
+        if (run_out / "receipts.jsonl").exists() else []
     run_id = args.run_id or (runs[-1].get("run_id") if runs else None) or datetime.now(timezone.utc).strftime("cr-manual")
     last = runs[-1] if runs else {}
+    session_info = session(runs, receipts)
     dest = out_dir / run_id
     if dest.exists():
         shutil.rmtree(dest)
     dest.mkdir(parents=True, exist_ok=True)
 
     report: dict = {"run_id": run_id, "root": str(root), "mode": last.get("mode", cfg.mode()),
-                    "decisions": last.get("decisions", {}), "chain_verified": last.get("chain_verified_at_end"),
-                    "collected_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+                    "session": session_info, "collected_at":
+                        datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
     if not args.no_probe:
         try:
             import importlib.util
@@ -270,6 +317,7 @@ def main(argv: list[str] | None = None) -> int:
     write("preflight.json", report["probe"])
     write("HANDOFF.md", handoff_markdown(run_id, report, canvas, apify,
                                          telemetry_summary(run_out / "state" / "telemetry.jsonl")))
+    write("session.json", session_info)
 
     # the guard: nothing leaves this machine with a value we can still recognise
     offenders = []
@@ -302,9 +350,10 @@ def main(argv: list[str] | None = None) -> int:
                       "archive": str(archive) if archive else None, "files": len(manifest),
                       "redactions": {"exact": exact_total, "shape": shaped_total},
                       "scan": "pass" if ok else "fail",
-                      "missing": [n for n in ("receipts.jsonl", "run_log.jsonl", "digest.md",
-                                              "delivery.jsonl", "n8n_ids.json", "apify_units.jsonl")
-                                  if not (dest / n).exists()]}, indent=1, sort_keys=True))
+                      "chain_ok": report["session"]["chain_ok"],
+                      "absent": [n for n in ("receipts.jsonl", "run_log.jsonl", "digest.md",
+                                             "delivery.jsonl", "n8n_ids.json", "apify_units.jsonl")
+                                 if not (dest / n).exists()]}, indent=1, sort_keys=True))
     return 0 if ok else 3
 
 

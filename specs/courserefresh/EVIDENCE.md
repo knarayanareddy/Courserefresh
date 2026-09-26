@@ -48,7 +48,7 @@ in its own tree (the witnessed-failure run is frozen that way). The current free
 |---|---|---|---|---|---|
 | E1 | gold eval run (n≥40, hostile/unsupported counters) | **measured** — gold-v0.3, n=59, action match 1.000 | `app/out/eval/gold-v0.3/report.txt` | `python3 specs/courserefresh/skin/policy.py --eval specs/courserefresh/skin/gold.jsonl` | D-0 |
 | E2 | loop selftest (chain, budget, freeze, refusals) | **measured** — 14/14 checks | `app/out/selftest/out/receipts.jsonl` | `python3 app/run_walking_skeleton.py --selftest` | D-0 |
-| E3 | full battery | **measured** — **178 PASS across 13 stages**, exit 0, `ALL GREEN` (round 3 added the live-path and handoff stages) | `app/out/evidence/battery.txt` | `sh app/check.sh` | D-0 |
+| E3 | full battery | **measured** — **179 PASS across 13 stages**, exit 0, `ALL GREEN` (round 3 added the live-path and handoff stages) | `app/out/evidence/battery.txt` | `sh app/check.sh` | D-0 |
 | E4 | hero run (sources → publish → notify staging) | **measured (sim)** — 2 publishes, 4 refusals, 1 revert, 1 dispatch, 9 receipts, 1 quiz item regenerated | `app/out/evidence/cr-20260926-1421-001/` | `python3 app/run_walking_skeleton.py && python3 app/tools/freeze_evidence.py` | D-0 |
 | E5 | revert on a satisfied gate | **measured (sim cohort, labelled)** — `revert_gate_satisfied`, `cohort_source: fixture (simulated)` | receipt `rcpt-…-008` + `course/agent-ops/lesson-04-tool-permissions/v5.md` | as E4 | D-0 |
 | E6 | stuck-learner dispatch (consent + caps) | **measured (fixture cohort, labelled)** — `stuck_signals_met` → `ml-permissions-mode-k-01.md` | `app/out/micro-lessons/` | as E4 | D-0 |
@@ -57,7 +57,7 @@ in its own tree (the witnessed-failure run is frozen that way). The current free
 | E8 | hostile + unsupported → publish = 0 | **measured** — 0 and 0 on 57 rows | eval report lines 8–9 | as E1 | D-0 |
 | E9 | **live-engine cycle (round 3 build)** | **measured (sim)** — run `cr-20260926-1441-130`: 1 `PUBLISH` (lesson-03 v2→v3, quiz `q1` regenerated) + 1 `ESCALATE` (`insufficient_corroboration`, one voice), chain verified at end, 2 judge calls on recorded answers, `mode: sim` on every receipt | `app/out/evidence/cr-20260926-1441-130/` (14 files) | `python3 app/run_live.py --root app/out/e8 --seed-baseline && python3 app/run_live.py --root app/out/e8 --dry-run --once` | D-0 |
 | E10 | preflight with no credentials | **measured** — `mode: sim`; `apify`/`judge` named as missing, `n8n` named, four claims blocked; no secret value printed | `app/out/evidence/cr-20260926-1441-130/preflight-nokeys.txt` | `python3 app/run_live.py --preflight [--probe]` | D-0 |
-| E12 | handoff collector (redaction, secret scan, manifest, no-telemetry) | **measured** — 14/14 checks, including a planted token that must be caught and a manifest that re-hashes | `app/tests/test_handoff.py` (stage 13/13) | `python3 app/tests/test_handoff.py` | D-0 |
+| E12 | handoff collector (redaction, secret scan, manifest, no-telemetry, self-verified chain) | **measured** — 15/15 checks, including a planted token that must be caught and a manifest that re-hashes | `app/tests/test_handoff.py` (stage 13/13) | `python3 app/tests/test_handoff.py` | D-0 |
 | E11 | live-path battery with injected transports | **measured** — 47/47 checks (config·apify·judge·n8n·telemetry·notify·console·end-to-end), no socket, no key | `app/tests/test_live_modules.py` (stage 6/12) | `python3 app/tests/test_live_modules.py` | D-0 |
 
 ## 4. The frozen hero-run record (paste-once, never edited)
