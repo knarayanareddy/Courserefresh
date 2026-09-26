@@ -29,7 +29,8 @@ is simply not there. Nothing is lost — it is derived. The first three commands
 
 ```bash
 sh app/check.sh                       # regenerates app/out/{evidence,selftest,eval,…}; expect ALL GREEN
-python3 app/run_walking_skeleton.py   # the hero run + the canvas.json/html the console serves
+python3 app/run_walking_skeleton.py   # the hero run: receipts, run_log, digest, notifications, canvas rows
+python3 app/lib/canvas.py             # writes app/out/canvas.{json,html} (the console also renders on demand)
 python3 app/serve.py                  # console 0.0.0.0:8080 · telemetry 0.0.0.0:8787 (LIVE preview)
 ```
 
@@ -145,7 +146,8 @@ The loop keeps the refusals a person may lift as *withheld deltas*, and the canv
 happens. It is worth 60 seconds on camera because it is the difference between a report and a control:
 
 ```bash
-python3 app/run_walking_skeleton.py     # hero run → app/out/canvas.{json,html}, state/pending.jsonl
+python3 app/run_walking_skeleton.py     # hero run → receipts, digest, state/pending.jsonl (the queue)
+python3 app/lib/canvas.py               # writes app/out/canvas.{json,html} (read-only copy of the page)
 python3 app/serve.py                    # then open /canvas (append ?token=… if CR_CONSOLE_TOKEN is set)
 ```
 
@@ -361,8 +363,8 @@ Status of every panel condition is in `specs/reviews/07` — the rows below are 
 
 **First, with no keys** (all of it verifiable in this repo):
 
-0. `sh app/check.sh` → `ALL GREEN`; `python3 app/run_walking_skeleton.py`; `/canvas` serves the queue with
-   the ruling form. Then close what §5a names: **C-08 + complement 4** (revert from the canvas, two-key
+0. `sh app/check.sh` → `ALL GREEN`; `python3 app/run_walking_skeleton.py`; `python3 app/serve.py` and
+   `/canvas` serves the queue with the ruling form (the console builds the document on demand). Then close what §5a names: **C-08 + complement 4** (revert from the canvas, two-key
    for assessment rows — do the `restore_version` hardening in the same change), **TV-02's action half**
    (leads → `source_proposals.jsonl` → a PA3 add), and whichever of complements 7/8 you can measure
    honestly. Each one ships with its check, and the register block is re-derived in the same commit.
