@@ -337,17 +337,12 @@ def verify_import(client) -> dict:
         name = export.get("name")
         match = next((w for w in listing.get("workflows", []) if w.get("name") == name
                       and w.get("id") is not None), None)
-        # fall back to the ids the importer recorded, so the gate also works later, offline of a
-        # fresh import (the ids file is the deployment's memory of what it pushed)
-        if match is None:
-            ids_path = ROOT / "app" / "out" / "live" / "n8n-ids.json"
-            if ids_path.exists():
-                recorded = json.loads(ids_path.read_text()).get("ids", {})
-                wid = recorded.get(name)
-            else:
-                wid = None
-        else:
-            wid = match["id"]
+        # The instance's own listing is the source of presence. The importer's ids file is only a
+        # hint for reading back a copy the listing already vouches for — trusting it for presence
+        # would let a stale ids file (from another deployment, another checkout) tell the gate a
+        # workflow exists when the instance never heard of it. If the name is not in the listing,
+        # the workflow is not deployed, and the gate says so.
+        wid = match["id"] if match else None
         if not wid:
             problems.append({"workflow": name, "node": "-", "parameter": "-",
                              "problem": "not found on the instance (run --import first)"})

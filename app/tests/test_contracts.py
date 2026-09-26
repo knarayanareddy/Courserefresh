@@ -200,6 +200,10 @@ class _FakeN8n:
         return {"ok": True, "workflows": [{"id": wid, "name": w["name"]} for wid, w in self.stored.items()]}
 
     def get_workflow(self, wid):
+        if wid not in self.stored:
+            # a real instance 404s an id it does not hold; the gate must report that, not crash
+            return {"ok": False, "error": "n8n_error", "code": "payload_invalid",
+                    "message": f"no stored copy for {wid}"}
         return {"ok": True, "workflow": self.stored[wid]}
 
 

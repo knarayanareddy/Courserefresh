@@ -175,7 +175,7 @@ check("an existing workflow is updated in place, not duplicated",
       updated["ok"] and updated["created"] is False and updated["id"] == "wf-1", str(updated))
 
 # import: idempotent, and the error workflow is attached to the other five
-import_state = {"created": [], "patched": []}
+import_state = {"created": [], "patched": [], "updated": []}
 
 
 def import_listing(body):
@@ -190,6 +190,7 @@ def import_create(body):
 
 
 def import_update(body):
+    import_state["updated"].append(body)
     return 200, {"data": {"id": "wf-0"}}
 
 
@@ -213,7 +214,9 @@ check("importing the exports updates in place instead of duplicating, and record
       first["ok"] and len(first["ids"]) == 6 and not import_state["created"]
       and json.loads(ids_path.read_text())["instance_version"] == "1.64.0",
       f"created={import_state['created']} ids={len(first['ids'])}")
-attached = [p for p in import_state["patched"] if p.get("settings", {}).get("errorWorkflow") ==
+# n8n Cloud accepts settings only via PUT (PATCH is 405), so the attach is a full-body PUT whose
+# settings carry the error workflow id — assert on what would actually be sent to the instance
+attached = [p for p in import_state["updated"] if (p.get("settings") or {}).get("errorWorkflow") ==
             first["ids"].get("CR-9 · errors → receipt")]
 check("the error workflow is attached to the other five at import time",
       len(attached) == 5, f"attached={len(attached)}")
@@ -1222,10 +1225,12 @@ check("the learn cadence is a declared knob matching the n8n wf-cr-3 schedule",
       and live.learn_due({"learn_epoch": 990.0}, 15, 1000.0) is False,
       "15-min default, epoch-based, first run learns immediately")
 fresh_state = {}
+probe_epoch = 1_700_000_000.0          # 2023-11-14: a fixed day, so the test can't depend on now
+probe_day = time.strftime("%Y-%m-%d", time.localtime(probe_epoch))
 check("the digest fires when the clock passes CR_DIGEST_AT and only once per local day",
-      live.digest_due(fresh_state, 1_700_000_000.0, "00:00") is True          # any time past 00:00
-      and live.digest_due({"digest_date": time.strftime("%Y-%m-%d")}, 1_700_000_000.0, "00:00") is False,
-      "due once per day, keyed on the local date")
+      live.digest_due(fresh_state, probe_epoch, "00:00") is True          # any time past 00:00
+      and live.digest_due({"digest_date": probe_day}, probe_epoch, "00:00") is False,
+      "due once per day, keyed on the local date the clock actually reads")
 live.rebase(SANDBOX)
 
 passed = sum(1 for _, ok, _ in CHECKS if ok)

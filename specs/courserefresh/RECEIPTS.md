@@ -66,6 +66,7 @@ from memory.
 | N31 | Apify units accounted in a live cycle | `6` units, ledger row carries the declared approximation `1 run = 1 unit` | **measured** (sim) | `app/out/e8/app/out/state/apify_units.jsonl` | E9 command |
 | N32 | battery, after the review fixes | `263` PASS lines across the `13` measured stages, plus stage 14 (the claims audit: see the block in §6), exit 0 | **measured** | `app/out/evidence/battery.log` + `battery-summary.json` | `sh app/check.sh` |
 | N33 | live-path checks that run with no credentials | `127` (47 at round 3 + 80 review-fix checks: canvas path, canvas-decides, crash-retry, consent, probe, dwell, bootstrap, JEV including the fixture replay, Tavily, canvas, author rulings, queue order) | **measured** | `app/tests/test_live_modules.py` | E11 command |
+| N35 | battery, after the C1–C5 deployment fixes | `274` PASS lines across the `13` measured stages (135 live-path incl. the watch/learn/digest engine and the notice reorder regression; 19 contracts incl. the verify-import gate), stage 14 audit exit 0 | **measured** | `app/out/evidence/battery.log` + `battery-summary.json` | `sh app/check.sh` (env-clean, no credentials) |
 
 | N34 | handoff collector checks | `15` (redaction, secret scan, self-verified chain + session totals, manifest re-hash, canvas/Apify ids, telemetry counts-only, archive, empty-tree refusal) | **measured** | `app/tests/test_handoff.py` | stage 13/13 |
 
@@ -131,7 +132,7 @@ battery stayed green (review F5 — a wrong sha256 for the frozen gold set sat h
   },
   "battery": {
     "stages_before_audit": 13,
-    "pass_lines_before_audit": 263,
+    "pass_lines_before_audit": 274,
     "parity": [
       59,
       2
@@ -156,8 +157,8 @@ battery stayed green (review F5 — a wrong sha256 for the frozen gold set sat h
       5
     ],
     "test_contracts": [
-      16,
-      16
+      19,
+      19
     ],
     "test_curriculum": [
       8,
@@ -180,8 +181,8 @@ battery stayed green (review F5 — a wrong sha256 for the frozen gold set sat h
       7
     ],
     "test_live_modules": [
-      127,
-      127
+      135,
+      135
     ],
     "test_policy": [
       18,

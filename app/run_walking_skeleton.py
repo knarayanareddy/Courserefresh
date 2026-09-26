@@ -595,11 +595,14 @@ def render_html(tree: Tree, log: dict) -> str:
     """The console page. Same content as the digest, same lockfile colours, no scripts."""
     t = design_tokens()
     rows = tree.rows()
+    # DRAFT is in the closed action set (change_taxonomy.json) — policy emits it for freeze_active,
+    # low_learner_impact and authority_insufficient — so the console must have a colour and a word
+    # for it or the page render crashes on the first PA0/frozen cycle it ever shows
     colour = {"PUBLISH": t["--status-publish"], "REVERT": t["--status-revert"],
               "ESCALATE": t["--status-revert"], "NO_CHANGE": t["--status-nochange"],
-              "DISPATCH": t["--status-queue"]}
+              "DRAFT": t["--status-queue"], "DISPATCH": t["--status-queue"]}
     word = {"PUBLISH": "PUBLISHED", "REVERT": "REVERTED", "ESCALATE": "REFUSED",
-            "NO_CHANGE": "NO CHANGE", "DISPATCH": "SENT"}
+            "NO_CHANGE": "NO CHANGE", "DRAFT": "DRAFTED", "DISPATCH": "SENT"}
     e = html.escape
     body = []
     for r in rows:
