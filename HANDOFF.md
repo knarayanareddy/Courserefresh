@@ -1,10 +1,49 @@
 # HANDOFF — continuing the Courserefresh session
 
-`Branch: arena/01a0ddea-courserefresh · Written D1 (Sat 2026-09-26) · Deadline: video 15:00, live final 16:15, Sun 2026-09-27`
+`Branch: arena/01a0de69-courserefresh · Written at the end of the review-fix session, D1 (Sat 2026-09-26) · Deadline: video 15:00, live final 16:15, Sun 2026-09-27`
 
 **Read this file first, then `AGENTS.md`.** This is the operating handoff: where the project stands,
 what is genuinely left, and the exact commands. It is written for the agent (or human) who picks this
 up next — no prior context assumed.
+
+---
+
+## 0. Where the last session stopped (read this before §1)
+
+Two commits on this branch, green, pushed:
+
+| Commit | What it contains |
+|---|---|
+| `85e3ce6` | `REVIEW.md` F1–F13 resolved on the no-key path; the author's round (D-32) built end to end; Tavily and JEV integrated; two evidence bundles shipped under `specs/evidence/`; registers re-derived |
+| `e2bfbc5` | the canvas queue ordered by learner consequence (C-05), row anchors, and JV-04's JEV fixture replay |
+
+**Verified at this tip:** `sh app/check.sh` → **295 PASS (263 PASS lines in 13 measured stages + the
+32-check claims audit) · `ALL GREEN` · exit 0**, with no credentials and no sockets. A live form ruling
+was exercised against the served console end to end: `GET /canvas` → form POST → `303` → the next cycle
+published at `authority: PA3 · decided_by: human:author · reason human_signoff`) — the digest line reads
+`- author ruling rcpt-… (approve, human_signoff): applied`).
+
+**`app/out/` does not survive a session boundary.** It is gitignored *and* it is runtime state (runs,
+receipts, digest, `state/`, `evidence/`, `eval/`); on a fresh clone, or after this sandbox is reset, it
+is simply not there. Nothing is lost — it is derived. The first three commands of any session:
+
+```bash
+sh app/check.sh                       # regenerates app/out/{evidence,selftest,eval,…}; expect ALL GREEN
+python3 app/run_walking_skeleton.py   # the hero run + the canvas.json/html the console serves
+python3 app/serve.py                  # console 0.0.0.0:8080 · telemetry 0.0.0.0:8787 (LIVE preview)
+```
+
+The *durable* evidence is what is shipped: `specs/evidence/cr-20260926-1726-793/` (offline twin, 19
+files) and `specs/evidence/cr-20260926-1726-054/` (live engine dry cycle, 20 files incl.
+`live/preflight.txt`) — every hash re-derived by the audit stage on each battery run.
+
+Git: the branch is `arena/01a0de69-courserefresh`; if the local branch pointer ever looks older than the
+work, the pushed tip is the truth:
+
+```bash
+git fetch origin "refs/heads/arena/01a0de69-courserefresh:refs/remotes/origin/arena/01a0de69-courserefresh"
+git reset --mixed origin/arena/01a0de69-courserefresh      # worktree-keeping; then git status
+```
 
 ---
 
@@ -31,7 +70,8 @@ criterion → evidence → sentence mapping).
 | Battery | `sh app/check.sh` → **295 PASS (13 measured stages + the 32-check claims audit) · `ALL GREEN` · exit 0**, **with zero credentials** |
 | Live path | Built and exercised end-to-end through injected transports (127/127, `test_live_modules.py`, including the Tavily, JEV-fixture, canvas and author-ruling paths); **never called a real API** — that is deliberate |
 | Blocking input | **keys only.** `python3 app/run_live.py --preflight` prints exactly what is missing, by name |
-| Round status | Rounds 1–3 (package → panel → specialist debate → peer-supervised build) are complete and recorded in `specs/reviews/01…06` |
+| Author rulings | built and exercised (D-32): a ruling binds the next cycle at `authority: PA3` / `decided_by: human:author` / `reason human_signoff`, and expires the moment the evidence it was made about changes |
+| Round status | Rounds 1–3 (package → panel → specialist debate → peer-supervised build) are complete and recorded in `specs/reviews/01…06`; the seat panel on the canvas / Tavily / JEV is `specs/reviews/07` (C-01…C-08, TV-01…TV-04, JV-01…JV-05, 8 ranked complements, each with its status) |
 | Today | **D1.** Keys → first live cycle → `--watch` overnight → harvest in the morning → film → submit 15:00 |
 
 The single sentence that describes this repo's design: *every claim is either measured and receipted,
@@ -99,6 +139,22 @@ Success = a run id, labelled decisions, `canvas.execution_id` on the decision, d
 `0` fine · `1` cycle failed · `2` preflight blocked · `3` refused (authority/consent/freeze) ·
 `4` human override refused. **Exit 3 is the system working**, not a crash.
 
+### Step 4b — the author's round (no keys needed; do this before filming)
+
+The loop keeps the refusals a person may lift as *withheld deltas*, and the canvas is where the ruling
+happens. It is worth 60 seconds on camera because it is the difference between a report and a control:
+
+```bash
+python3 app/run_walking_skeleton.py     # hero run → app/out/canvas.{json,html}, state/pending.jsonl
+python3 app/serve.py                    # then open /canvas (append ?token=… if CR_CONSOLE_TOKEN is set)
+```
+
+Read a queued row (diff, sources with the "is this a voice?" column, the plain-language reason, how close
+the call was), submit Approve or Reject **without JavaScript**, then re-run the loop: the receipt shows
+`decided_by: human:author`, `authority: PA3`, reason `human_signoff`, and the digest lists the ruling.
+Run it again with the evidence changed and the same ruling is reported `stale` — the machine decides and
+the row comes back. Runbook: `OPERATIONS.md` §9b. Law: `AMENDMENTS.md` D-32.
+
 ### Step 5 — let it run while nobody watches (the 25% criterion)
 
 ```bash
@@ -146,8 +202,9 @@ received a card) and **`sim`** (no live Apify/n8n execution). The console header
   n=59, frozen (`app/out/eval/gold-v0.3/report.txt`: action/reason 1.000, hostile→publish 0,
   unsupported→publish 0).
 - **Offline twin**: `app/run_walking_skeleton.py` (writes real artifacts into `course/**`), frozen hero
-  run shipped in `specs/evidence/` (19 files, hashed); witnessed-failure run `cr-20260926-1420-924`
-  regenerates locally.
+  run shipped in `specs/evidence/cr-20260926-1726-793/` (19 files, hashed); the live engine's dry cycle
+  is `specs/evidence/cr-20260926-1726-054/` (20 files, incl. `live/preflight.txt`). The witnessed-failure
+  rehearsal `cr-20260926-1420-924` regenerates locally.
 - **The author's round (D-32)**: refusals a person could lift are kept as *withheld deltas*
   (`app/out/state/pending.jsonl`) and the canvas at `GET /canvas` is where a teacher approves or
   rejects them. A ruling binds the next cycle (`authority: PA3`, `decided_by: human:author`,
@@ -163,21 +220,65 @@ received a card) and **`sim`** (no live Apify/n8n execution). The console header
 - **Handoff safety**: `app/tools/collect_live.py` — one command packs a run, redacts every secret value
   it can see, summarises telemetry as counts, re-verifies the receipt chain itself, and **exits 3**
   rather than hand over anything containing a key-shaped string.
+- **The registers are machine-checked**: `app/tools/audit_claims.py` (stage 14) re-derives every number
+  in `RECEIPTS.md` §6 from the files it names — battery totals, per-suite counts, per-bundle digest sizes,
+  shipped-bundle completeness — and `test_contracts.py` fails if a spec still points at a frozen run under
+  `app/out/`. If you change a suite, the register must change in the same commit.
 
-## 5. What is genuinely open (named, not rounded up)
+## 5. The complete leftover list (what to do next, with the check that closes each)
 
-| Item | Closes when | Owner |
+Status of every REVIEW.md finding is in `REVIEW.md` §7 (all F1–F13 closed, each held by a check).
+Status of every panel condition is in `specs/reviews/07` — the rows below are what is *left*.
+
+### 5a. No credentials needed — start here
+
+| ID | What is left | Closes with (exact check) |
 |---|---|---|
-| T10 / K-07 | a real Apify actor run id lands in `WIRING.md` §6 | keys |
-| T12 / K-05 | a real n8n execution of `wf-cr-1-triage` decides a cycle (`--via-n8n`) | keys + activated canvas |
-| T13 / K-06 | one delivered learner card (or the word `staged` on screen) | keys + channel |
-| T15 | the digest is delivered by `--watch` at 07:30 | a running loop |
-| T16 / E7b | one live failure handled: degraded receipt + digest line, no crash | an unattended window |
-| T17 | `--preflight --probe` green with `mode: live` | keys |
-| T18 | a live cohort gate fires (n≥5, 48 h) | a live cohort — may not fit the window; then `unmeasured` |
-| T09 | a stranger watching says *"it changed the lesson by itself, and it refused this one"* | a human |
-| T25 / T26 | the video and the live final rehearsal | human time |
-| T28–T31 | stretch (Notion mirror, email digest, eval column (a), cadence experiment) | optional |
+| **C-08 / complement 6** | **Revert from the canvas.** The teacher's most common intervention has no verb: `approve` and `reject` exist, `revert` does not. Add it to the closed ruling set (`app/lib/rulings.py`), render a third button on the canvas row, and have the engine act on it as a human REVERT (`authority: PA3`, `decided_by: human:author`, cohort gate bypassed because a person decided) | §13 of `test_live_modules.py`: a `revert` ruling on a published row produces a REVERT receipt at PA3 naming `restore_version`, and a *single* ruling on a quiz-touching row stays queued (see complement 4) |
+| **complement 4** | **Two-key for assessment changes** (Art. IV): a quiz rewrite that one author approved is the highest-consequence row in the product; it should need a second ruling (or a second author) before it publishes | same §13: assessment diff + single `approve` → the row stays queued with `needs_second_key` |
+| **TV-02 (action half)** | A discovery lead that is allowlisted but untracked is surfaced in the digest and dies there. Write it to `app/out/state/source_proposals.jsonl` and render it as a canvas queue row ("proposed source — add to the watchlist?"). The **add itself stays a PA3 human edit** of `skin/sources.json` (Art. XIV.1 — a model never edits the allowlist) | §11 check: a fixture lead → a proposal row → a PA3 add; `state/source_proposals.jsonl` has one row per lead |
+| **JV-03 (record half)** | The page says `Judge confidence (predicted) · calibration: unmeasured`. That stays until a calibration record exists: **n ≥ 20 published decisions with an observed outcome**, written by a tool (extend `app/tools/metrics.py`), with a register row | the canvas prints a measured rate instead of `unmeasured`, and `RECEIPTS.md` has the row with artifact + command |
+| **complement 7** | **Queue-only / run-scoped view + the boundary measured** (SRE): 9 rows render in well under a second; nobody has measured 100 or 1000 | a timing check at n = 100/1000 receipts, reported as a number (or `unmeasured`) |
+| **complement 8** | **Time-to-decision receipt**: "the queue is short" is a claim. `median time from queue to ruling`, derived from ruling timestamps; `unmeasured` until n ≥ 20 rulings | a register row; the number comes from the timestamps, never a guess |
+| **hardening (small, do it with C-08)** | `run_walking_skeleton.revert_version()` reads `target["restore_version"]` with `[]`. A hand-made or canvas-made revert event without that key raises `KeyError` instead of escalating `previous_version_missing`, which is how every other missing precondition behaves | a test that feeds a revert event with no `restore_version` and asserts an ESCALATE, not a traceback |
+| **housekeeping** | `test_live_modules.py` is 127 checks; if you add checks, re-derive the register block (§6 of `RECEIPTS.md`) — the audit fails **both** ways (stale register, undocumented check) | `sh app/check.sh` → `ALL GREEN` with the new counts |
+
+### 5b. Blocked on the user's keys (the only input left)
+
+| ID | What is left | Closes when |
+|---|---|---|
+| T17 / M1 gate | `--preflight --probe` green with `mode: live` and zero `claim blocked` lines | keys |
+| T10 / K-07 | a **real** Apify actor run id in `WIRING.md` §1/§6, snapshots hashed | `APIFY_TOKEN` |
+| T12 / K-05 | a real n8n execution of `wf-cr-1-triage` deciding a cycle (`--via-n8n`), execution id on the receipt | `N8N_BASE_URL` + `N8N_API_KEY` + activated canvas |
+| T13 / K-06 | one delivered learner card — or the word `staged` said out loud | a channel token |
+| T15 | the digest delivered by `--watch` at 07:30 | a running loop |
+| T16 / E7b | one **live** failure handled: degraded receipt + digest line, no crash | an unattended window |
+| T18 | a live cohort gate fires (n ≥ 5 for ≥ 48 h). If the window is shorter this stays `unmeasured` — legal, and it must be said out loud | a live cohort |
+| X-02 | the "live wiring is the remaining gap" row closes only with real run ids | the above |
+
+### 5c. Human-only (no agent can close these)
+
+| ID | What |
+|---|---|
+| T09 / M0 gate | a stranger watching the run says *"it changed the lesson by itself, and it refused this one"* |
+| T25 | the video, per `VIDEO-SHOTLIST.md` (two words out loud if true: `staged`, `sim`) |
+| T26 | the live-final rehearsal, per `checklists.md` §5 |
+
+### 5d. Stretch (explicitly optional)
+
+| ID | What |
+|---|---|
+| T28 | Notion mirror of the changed lesson (token + API patience) |
+| T29 | digest by email as a second channel (small win) |
+| T30 | eval column (a) with a proprietary comparator (needs a key + a spend decision) |
+| T31 | cadence experiment 60 → 30 min, measured |
+
+### 5e. Refused on purpose — do not "fix" these
+
+* **JV-05**: a JEV `score` question for materiality. The seven questions are closed on purpose; the
+  materiality decision belongs to the rulebook, not to a probability-weighted average (Art. III).
+* **Auto-approval after a timeout** — a silence is not a decision.
+* **Learner-level detail on the canvas** — aggregate counts only (C-07).
 
 ## 6. The laws that will bite (each has a test that enforces it)
 
@@ -217,6 +318,29 @@ received a card) and **`sim`** (no live Apify/n8n execution). The console header
   `cr/triage`.
 - **Collector exit 3** → a secret survived its redaction; nothing leaves the machine. Fix and rerun.
 - **Never run two servers on the same ports** — `CR_CONSOLE_PORT=8081 python3 app/serve.py` to move one.
+- **A session boundary deletes `app/out/`.** It is gitignored runtime state and the sandbox prunes
+  output directories, so a handoff can arrive with no `app/out/` at all. Run `sh app/check.sh` first;
+  everything in it is regenerable. The shipped bundles in `specs/evidence/` are the durable copies.
+- **Count-sweep ritual.** After any change to a suite, re-derive `RECEIPTS.md` §6 — the register block's
+  keys are `stages_before_audit`, `pass_lines_before_audit`, `parity`, `audit_checks`, `suites`,
+  `evidence{run_id,bundles,digests}` and the audit fails *both* ways (stale register, undocumented
+  check). Then grep **every** prose count (`295 PASS`, per-suite numbers, `13 stages`) — backticks get
+  missed. Historical docs (`reviews/01…06`, `REVIEW.md` §6) keep their own numbers on purpose.
+- **Do not name a runnable file under `app/out/evidence/` in a spec** (F13c lint: frozen evidence
+  belongs in `specs/evidence/`). Prose mentions of the directory, or `app/out/evidence/<run_id>/`
+  placeholders, are fine; N28's rehearsal path survives because it does not end in a file extension.
+- **The canvas queue order is `canvas.review_key` → `verdict.queue`**, and the page renders that list.
+  A queued row's proposed file lives on the withheld delta (`review.proposed_path`), not on the receipt —
+  that is what the consequence ordering reads.
+- **The canvas interval sentence only renders for a row with no `flip_drivers`** (and no provider
+  confidences). A test that wants the ±interval case must clear both, or the drivers sentence prints.
+- **JEV fixture drift guard**: `app/fixtures/jev/systemone-response.json` must keep its option keys equal
+  to the closed sets in `specs/courserefresh/skin/questions.json`; §10 of the live tests fails otherwise.
+- **Replay merge replaces a fixture event with the same `event_id`** (an append-only guard silently
+  drops replays), and `apply_patch` requires `event["parent"]`.
+- **Course tree**: HEAD carries the hero run's written versions (`lesson-03/v2`, `lesson-04/v4,v5`); that
+  is the delivered state. `reset_course.py` deliberately diffs against it — so the restore after any
+  local loop run is `python3 app/tools/reset_course.py >/dev/null; git checkout -- course/`.
 
 ## 8. Where everything lives
 
@@ -234,6 +358,16 @@ received a card) and **`sim`** (no live Apify/n8n execution). The console header
 | `app/out/` | gitignored state: runs, receipts, digest, live/, state/, evidence/, eval/ |
 
 ## 9. Definition of done for the next session
+
+**First, with no keys** (all of it verifiable in this repo):
+
+0. `sh app/check.sh` → `ALL GREEN`; `python3 app/run_walking_skeleton.py`; `/canvas` serves the queue with
+   the ruling form. Then close what §5a names: **C-08 + complement 4** (revert from the canvas, two-key
+   for assessment rows — do the `restore_version` hardening in the same change), **TV-02's action half**
+   (leads → `source_proposals.jsonl` → a PA3 add), and whichever of complements 7/8 you can measure
+   honestly. Each one ships with its check, and the register block is re-derived in the same commit.
+
+**Then, when the keys arrive:**
 
 1. `--preflight --probe` green, `mode: live`, zero `claim blocked` lines.
 2. Canvas imported and activated; a real execution id in `WIRING.md` §6.

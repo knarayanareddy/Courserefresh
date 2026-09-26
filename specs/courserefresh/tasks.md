@@ -5,7 +5,7 @@
 run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. State vocabulary:
 `[ ]` todo · `[x]` done-done · `[~]` cut/degraded (say what, in the task) · `[!]` blocked (say who).
 
-**TIME-NOW block.** `D-label: D-0 · mode: sim green · hero run: cr-20260926-1726-793 (offline twin, shipped in specs/evidence/) · live engine: built, dry-run green (cr-20260926-1436-436; E8) · credentials: the only input left`
+**TIME-NOW block.** `D-label: D-0 · mode: sim green · hero run: cr-20260926-1726-793 (offline twin, shipped in specs/evidence/) · live engine: built, dry-run green (cr-20260926-1726-054, shipped in specs/evidence/) · credentials: the only input left`
 
 ---
 
@@ -20,7 +20,7 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 | T05 | Refusal path: hostile event escalates, quote preserved, publish = 0 | receipt `injection_or_jailbreak`; TM01 | `[x]` |
 | T06 | Revert path: gate recorded at publish; satisfied gate restores as a new version | `lesson-04` v4→v5 (v5 = v3 body + revert note); receipt `revert_gate_satisfied` | `[~]` — proven on the fixture cohort (labelled `fixture (simulated)`); a *live* gate needs the live cohort |
 | T07 | Kill switch: `--pause`/`--resume`, freeze visible on receipts, token gate | selftest "no writes while frozen"; TM14 (exit 3) | `[x]` |
-| T08 | Digest v0 from receipts, refusals first, ≤4 KB, mode header | digest check; 1323 bytes; 4 KB contract test | `[x]` |
+| T08 | Digest v0 from receipts, refusals first, ≤4 KB, mode header | digest check; 1705 bytes (hero) / 1411 (live engine); 4 KB contract test | `[x]` |
 | T09 | **M0 GATE:** a stranger watching the run says *"it changed the lesson by itself, and it refused this one"* | sign-off in `reviews/04` §0 | `[!]` — six of seven ticks have artifacts; the *stranger* tick needs a human (booked for the live rehearsal) |
 
 ## M1 — Live engine (Apify + n8n really move the course)
@@ -52,7 +52,7 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 
 | ID | Task | Done when | Status |
 |---|---|---|---|
-| T24 | Evidence freeze: run log, receipts, diffs, notifications, digest, eval report | `MANIFEST.sha256` in `EVIDENCE.md` §4 | `[x]` — 19 files frozen |
+| T24 | Evidence freeze: run log, receipts, diffs, notifications, digest, eval report | `MANIFEST.sha256` in `EVIDENCE.md` §2/§4 | `[x]` — two shipped bundles: 19 files (offline twin) + 20 (live engine, incl. `live/`) |
 | T25 | Video shot per the shot list; refusals and labels on screen | checklist §4 signed | `[!]` — human time |
 | T26 | Live final dry run (3 min + Q&A) | checklist §5 signed | `[!]` — human time |
 | T27 | `AMENDMENTS.md` current; `reviews/04` with pasted outputs; findings closed or open | closure rule satisfied | `[~]` — closed except the live rows named in `reviews/04` §4 |
@@ -70,13 +70,13 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 
 | ID | Task | Done when | Status |
 |---|---|---|---|
-| T32 | Live engine `app/run_live.py` over the twin's writers (notice→verify→decide→act→learn→report) | `--selftest` 12/12; one dry cycle publishes, refuses and digests | `[x]` — `cr-20260926-1436-436` (sim) and E8; `--watch`, `--learn`, `--digest-only`, `--inject-failure`, `--via-n8n` all exist |
+| T32 | Live engine `app/run_live.py` over the twin's writers (notice→verify→decide→act→learn→report) | `--selftest` 14/14; one dry cycle publishes, refuses and digests | `[x]` — `cr-20260926-1726-054` (sim, shipped) and E8; `--watch`, `--learn`, `--digest-only`, `--inject-failure`, `--via-n8n` all exist |
 | T33 | n8n build requirements: execute-once guard, error workflow `wf-cr-9-errors`, contract notes, `--import` | `test_contracts.py` green on 6 exports; import prints ids | `[x]` — import is credential-gated (`N8N_BASE_URL`+`N8N_API_KEY`), proven through an injected transport |
 | T34 | Judge with four providers + key probe | probe prints status, never the key; `unknown_state` fails closed | `[x]` — `probe_provider()`; `--preflight --probe` |
 | T35 | Telemetry + console servers, and a demo launcher | console serves a sandbox with `--root`; intake refuses no-consent | `[x]` — `app/serve.py`; see the LIVE preview in this session |
 | T36 | Notify channels (file/telegram/webhook) with delivery records | staged ≠ delivered; missing keys fail loudly | `[x]` — `app/lib/notify.py` |
 | T37 | Preflight, `.env.example`, `SETUP.md`, `OPERATIONS.md` §9–12 | a stranger can paste keys from one page | `[x]` — `--preflight [--probe]` |
-| T38 | Live-path battery (`test_live_modules.py`, 47 checks) with injected transports | green inside `check.sh`, no keys, no sockets | `[x]` — 13 stages, 295 PASS + audit |
+| T38 | Live-path battery (`test_live_modules.py`, 127 checks) with injected transports | green inside `check.sh`, no keys, no sockets | `[x]` — 13 stages, 295 PASS + audit |
 | T39 | Peer-supervised build log (`reviews/06`) | 16 findings, each with a check that fails if it returns | `[x]` — `specs/reviews/06-build-round-3.md` |
 
 ## Blocked list

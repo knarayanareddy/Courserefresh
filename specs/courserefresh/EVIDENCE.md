@@ -27,7 +27,7 @@ decisions — coverage is asserted by `--selftest`.
 |---|---|---|
 | Run log | `app/out/run_log.jsonl` | `sha256` (`85e5428d…`) |
 | Receipts (chained) | `app/out/receipts.jsonl` | `sha256` (`69606627…`) + `verify_chain()` output |
-| Digest | `app/out/digest.md` | `sha256` (`10976626…`), 1323 bytes |
+| Digest | `app/out/digest.md` | `sha256` (`ae1a08d6…`), 1705 bytes |
 | Changed lesson + diff | `course/**/v<n>.md`, `diffs/v<n>.diff` | copied into the freeze; `git hash-object` once committed |
 | Learner notifications (staged or sent) | `app/out/notifications.jsonl` | `sha256` (`685a88bd…`) |
 | Micro-lesson | `app/out/micro-lessons/<id>.md` | `sha256` (`f2de7227…`) |
