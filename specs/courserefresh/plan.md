@@ -67,7 +67,7 @@ in the digest when used); any write outside `course/**`.
 
 ## 4. Determinism, parity, and the offline twin
 
-- The two policy runtimes are compared row-by-row on the gold set (42 rows → 0 disagreements).
+- The two policy runtimes are compared row-by-row on the gold set (59 rows + 2 named probes → 0 disagreements).
 - The offline twin (`app/run_walking_skeleton.py`) executes the *same* rules for the demo and the
   tests; its receipts carry `mode: sim` or `offline-twin`.
 - Deterministic replay: given the same snapshots and telemetry, the digest and the decisions must be

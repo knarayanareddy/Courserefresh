@@ -20,6 +20,8 @@ def main() -> int:
     import argparse
     ap = argparse.ArgumentParser(description="freeze one run's evidence")
     ap.add_argument("--out", default=str(OUT), help="the run's output directory (default app/out)")
+    ap.add_argument("--course", default=str(ROOT / "course"),
+                    help="the course tree this run wrote to (a sandbox has its own)")
     args = ap.parse_args()
     out = Path(args.out).resolve()
     runs = [json.loads(l) for l in (out / "run_log.jsonl").read_text().splitlines()] if (out / "run_log.jsonl").exists() else []
@@ -35,7 +37,7 @@ def main() -> int:
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(path, target)
                 copied.append(target)
-    course = ROOT / "course"
+    course = Path(args.course).resolve()
     for path in course.rglob("*.md"):
         target = dest / "course" / path.relative_to(course)
         target.parent.mkdir(parents=True, exist_ok=True)

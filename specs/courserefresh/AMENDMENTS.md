@@ -1,5 +1,5 @@
 # Courserefresh — amendments (the package's own change log)
-`v1.4 · Last amended D-0 · Rule (Art. XVI.4): every finding and every change to this package is a row here, and a row is `open` until its verification output is pasted into reviews/04`
+`v1.5 · Last amended D-0 · Rule (Art. XVI.4): every finding and every change to this package is a row here, and a row is `open` until its verification output is pasted into reviews/04`
 
 Vocabulary: **open** = decided, not yet proven · **verified** = command run, output pasted in
 `reviews/04` · **cut** = deliberately not done, with cause · **superseded** = replaced by a later row.
@@ -109,9 +109,34 @@ green, `reviews/04` pastes it; F-01–F-17 verified; new D-09–D-14 from the bu
 | D-20 | `unmeasured` beats a plausible figure, even when a judge is watching — and the video says the word out loud | Art. VI survives contact with the demo |
 | D-21 | A rehearsal may never borrow the credibility of the live path: seeded events carry `seeded_rehearsal` as a reason code, reverted cohorts carry `cohort_source`, and the console shows the mode in its header | the difference between a demo and a deception is one label |
 
+## 7b. Findings and decisions from round 3 (the build, `reviews/06`)
+
+| ID | Finding (seat that found it) | Change made | Status | Verified by |
+|---|---|---|---|---|
+| F-37 / B-01 | Credentials in the process environment were never read: keys pasted as `APIFY_TOKEN=… python3 app/run_live.py` were silently inert (SRE) | three-source resolution (explicit > environment > `.env` > defaults), filtered to project prefixes; `sources` map tells you where every value came from | **verified** | `test_live_modules.py` (env precedence) |
+| F-38 / B-03 | Guard helpers return `(ok, reason)` tuples; two call sites treated them as booleans, so a rejected host read as allowed (JEV) | unpack at every call site and record the reason on the refusal | **verified** | `test_live_modules.py` (`host_not_allowlisted`) |
+| F-39 / B-05 | Dedupe by content hash alone collapsed two publishers' copies of one page into a single voice — corroboration would have been wrong in both directions (Apify) | dedupe per `source_id:hash`; baselines seeded with the same shape | **verified** | E8 cycle: one voice → refusal, two voices → publish |
+| F-40 / B-08 | Claim clustering produced one cluster per snapshot, so the same fact published twice per cycle (JEV) | Jaccard ≥ 0.25 claim overlap, authoritative+earliest representative, one publish per cycle, extras deferred with a reason | **verified** | E8 cycle (1 publish, 1 escalate) |
+| F-41 / B-11 | The judge key was never validated: a wrong key surfaced as `unknown_state` refusals on stage (JEV) | `probe_provider()` validates with one `GET {base}/models` and says whether the configured model is listed — never the key | **verified** | `--preflight --probe` |
+| F-42 / B-15 | `--via-n8n` compared only the action; two different refusals looked like agreement (SRE) | `canvas_agrees()` compares action **and** sorted reason codes; a mismatch writes nothing, marks materiality `ambiguous`, and records both decisions | **verified** | `test_live_modules.py` (parity + mismatch) |
+| F-43 / B-09 | The export contract test asserted a fixed count and derived workflow names from file names — it would have passed while the error workflow was missing (n8n) | per-file name↔number check, execute-once guard required, sticky-note required, count read from the export set | **verified** | `test_contracts.py` 13/13 |
+| F-44 / B-14 | Nothing stopped a number reaching a learner-facing rewrite that no quote supported (teacher) | `validate_render` refuses numerals absent from the quote spans and replacements over 400 chars | **verified** | `test_live_modules.py` (anchored render) |
+
+| ID | Decision (round 3) | Why |
+|---|---|---|
+| D-22 | The canvas decides whenever it is reachable; the Python oracle polices it; agreement is on action **and** reason codes; disagreement stops the cycle | criterion 3 wants n8n to power the system, Art. XIV wants the loop to survive its platforms, and a decision two runtimes disagree about is not a decision |
+| D-23 | The `file` notify channel is the default and may never claim `delivered`; a channel without credentials fails loudly | "staged" and "sent" are different words, and the difference is the whole consent story |
+| D-24 | Telemetry refusal happens **before** storage, with generic error text; handles are hashed by the client, and the server refuses anything else | the smallest possible surface for learner data is none |
+| D-25 | A cohort below the floor prints `unmeasured` with its reason; no revert is ever triggered by a number that does not exist | Art. VI applied to the learning loop, not just to the report |
+| D-26 | `--preflight` is the release note: the four claims (`apify powers the system`, `n8n runs the decisions`, `live model calls`, `learner cards delivered`) are allowed only when their platform is wired | the video may not say a thing the preflight would contradict |
+| D-27 | Six exports, not five: `wf-cr-9-errors` is attached to every workflow at import time so an unhandled throw lands as a receipt instead of silence | review 05 N8N-03, now enforced by `test_contracts.py` |
+| D-28 | `units_per_run: 1` with the phrase "declared 1 run = 1 unit" written into the ledger row | `WIRING.md` §5 has no price; an approximation that names itself is honest, a number that looks measured is not (Art. VI) |
+| D-29 | The build is recorded as **peer-supervised**: each component has a builder seat and a supervisor seat, and the 16 findings in `reviews/06` carry the seat that found them | the user asked for the personas to build while supervising each other; the record is what makes that checkable |
+
 ## 8. The one row that will matter most
 
 | ID | Statement | Status |
 |---|---|---|
 | X-01 | Every claim in this package is either measured with an artifact, configured, or written `unmeasured`. | **verified** — `reviews/04` §3 pastes `test_claims.py` (3/3) and the register's measured rows; every other value is `<placeholder>`-tagged |
 | X-02 | The live wiring (Apify actors, model calls, console, cohort) is the remaining gap; the package says so wherever it matters (`reviews/04` §4, tasks `[ ]`/`[~]`, `EVIDENCE.md` E7, `RECEIPTS.md` N13/N14/N20–N22). | open by design — closes only with real run ids |
+| X-03 | Round 3 closed the *build* gap: every component runs and is tested with zero credentials (`SETUP.md` §1, E8, E9), and the only input left is the keys. | **verified** — `sh app/check.sh` 158 PASS / 12 stages; `reviews/06` §5 sign-off with four named conditions |

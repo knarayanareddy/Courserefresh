@@ -1,0 +1,19 @@
+{
+  "source_id": "n8n-docs",
+  "run_id": "rec-n8n-docs-01",
+  "usd": 0.058,
+  "recorded_note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch",
+  "items": [
+    {
+      "fixture_key": "n8n-docs-rename",
+      "url": "https://docs.n8n.io/",
+      "title": "Workflow settings",
+      "published_at": "2026-09-25T10:02:00Z",
+      "markdown": "n8n 1.85 renamed `tool_permissions` to `permissions.mode`; the old key is removed in 1.86. Update any settings block you copied from the earlier lessons.",
+      "content_hash": "sha256:f26f61569e5d40164937ef706f43cbeebd3fb31099849a9411ab76cb10c46597",
+      "actor_run_id": "rec-n8n-docs-01",
+      "http_status": 200,
+      "note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch"
+    }
+  ]
+}

@@ -39,7 +39,8 @@ decisions — coverage is asserted by `--selftest`.
 `app/tools/freeze_evidence.py` copies the set to `app/out/evidence/<run_id>/`, writes
 `MANIFEST.sha256`, and prints the manifest for pasting into §4. `--out DIR` freezes a rehearsal run
 in its own tree (the witnessed-failure run is frozen that way). The current freeze is
-`app/out/evidence/cr-20260926-1421-001/` (19 files).
+`app/out/evidence/cr-20260926-1421-001/` (19 files, the hero) and
+`app/out/evidence/cr-20260926-1441-130/` (14 files, the round-3 live-engine rehearsal, E9).
 
 ## 3. Register rows (filled as they are measured)
 
@@ -47,13 +48,16 @@ in its own tree (the witnessed-failure run is frozen that way). The current free
 |---|---|---|---|---|---|
 | E1 | gold eval run (n≥40, hostile/unsupported counters) | **measured** — gold-v0.3, n=59, action match 1.000 | `app/out/eval/gold-v0.3/report.txt` | `python3 specs/courserefresh/skin/policy.py --eval specs/courserefresh/skin/gold.jsonl` | D-0 |
 | E2 | loop selftest (chain, budget, freeze, refusals) | **measured** — 13/13 checks | `app/out/selftest/out/receipts.jsonl` | `python3 app/run_walking_skeleton.py --selftest` | D-0 |
-| E3 | full battery | **measured** — 103 PASS, exit 0, `ALL GREEN` | `app/out/evidence/battery.txt` | `sh app/check.sh` | D-0 |
+| E3 | full battery | **measured** — **158 PASS across 12 stages**, exit 0, `ALL GREEN` (round 3 added the live-path stage) | `app/out/evidence/battery.txt` | `sh app/check.sh` | D-0 |
 | E4 | hero run (sources → publish → notify staging) | **measured (sim)** — 2 publishes, 4 refusals, 1 revert, 1 dispatch, 9 receipts, 1 quiz item regenerated | `app/out/evidence/cr-20260926-1421-001/` | `python3 app/run_walking_skeleton.py && python3 app/tools/freeze_evidence.py` | D-0 |
 | E5 | revert on a satisfied gate | **measured (sim cohort, labelled)** — `revert_gate_satisfied`, `cohort_source: fixture (simulated)` | receipt `rcpt-…-008` + `course/agent-ops/lesson-04-tool-permissions/v5.md` | as E4 | D-0 |
 | E6 | stuck-learner dispatch (consent + caps) | **measured (fixture cohort, labelled)** — `stuck_signals_met` → `ml-permissions-mode-k-01.md` | `app/out/micro-lessons/` | as E4 | D-0 |
 | E7 | one witnessed failure handled | **measured (rehearsal)** — `--chaos write-fail` → exactly one `write_failed` refusal, chain intact, digest + console both say it (N28) | `app/out/e7/app/out/evidence/cr-20260926-1420-924/` | `python3 app/run_walking_skeleton.py --root app/out/e7 --chaos write-fail` | D-0 |
 | E7b | the same failure, unwitnessed and live | `unmeasured` — the live half is unwired (K-05, K-07) | — | live run | — |
 | E8 | hostile + unsupported → publish = 0 | **measured** — 0 and 0 on 57 rows | eval report lines 8–9 | as E1 | D-0 |
+| E9 | **live-engine cycle (round 3 build)** | **measured (sim)** — run `cr-20260926-1441-130`: 1 `PUBLISH` (lesson-03 v2→v3, quiz `q1` regenerated) + 1 `ESCALATE` (`insufficient_corroboration`, one voice), chain verified at end, 2 judge calls on recorded answers, `mode: sim` on every receipt | `app/out/evidence/cr-20260926-1441-130/` (14 files) | `python3 app/run_live.py --root app/out/e8 --seed-baseline && python3 app/run_live.py --root app/out/e8 --dry-run --once` | D-0 |
+| E10 | preflight with no credentials | **measured** — `mode: sim`; `apify`/`judge` named as missing, `n8n` named, four claims blocked; no secret value printed | `app/out/evidence/cr-20260926-1441-130/preflight-nokeys.txt` | `python3 app/run_live.py --preflight [--probe]` | D-0 |
+| E11 | live-path battery with injected transports | **measured** — 42/42 checks (config·apify·judge·n8n·telemetry·notify·console·end-to-end), no socket, no key | `app/tests/test_live_modules.py` (stage 6/12) | `python3 app/tests/test_live_modules.py` | D-0 |
 
 ## 4. The frozen hero-run record (paste-once, never edited)
 
@@ -73,6 +77,21 @@ PROOF    app/out/evidence/cr-20260926-1421-001/MANIFEST.sha256
 LABELS   mode: sim on every receipt and on the digest header
          revert receipt: cohort_source "fixture (simulated)"
          no seeded artifact in this run (the rehearsal needs --seed-demo and says SEEDED when used)
+```
+
+## 4b. The round-3 rehearsal record (the live engine, no credentials)
+
+```
+RUN      cr-20260926-1441-130      MODE sim (recorded datasets + recorded judge answers; dry-run)
+WHAT     one cycle of app/run_live.py: snapshots from the Apify fixtures → 2 claims clustered
+         → 1 PUBLISH (lesson-03-apify-inputs v2 → v3, quiz q1 regenerated, diff written)
+         → 1 ESCALATE (insufficient_corroboration: two publishers, one voice)
+         → digest + console page + 2 judge calls (recorded) + 6 Apify units accounted
+HASHES   receipts 0bd5f131…  run_log ad215f20…  digest 92aab48e…  html f52fbc78…
+PROOF    app/out/evidence/cr-20260926-1441-130/MANIFEST.sha256
+LABELS   mode: sim on every receipt, on the digest header, on the console header
+         the judge provider is `mock` and the fixture is recorded — the digest says so
+         preflight-nokeys.txt next to the run: what is wired, what is not, by key name only
 ```
 
 ## 5. Replay ladder (what to show when something is down)

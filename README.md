@@ -26,11 +26,26 @@ bad edits without being asked**. It refuses to act on one source, and it says so
 | 6 | [`specs/courserefresh/plan.md`](specs/courserefresh/plan.md) | How it is built and run (Apify → n8n → repo → learners → digest) |
 | 7 | [`specs/reviews/04-post-build-panel-and-audit.md`](specs/reviews/04-post-build-panel-and-audit.md) | The post-build panel (product · engineer · founder · curriculum lead · learner · judge) and the closing audit with pasted output |
 | 8 | [`specs/reviews/05-specialist-debate.md`](specs/reviews/05-specialist-debate.md) | The specialists' debate (n8n · Apify · judge rubric · UX · teacher · learner · security) — the argument, the fixes, and the four disagreements left on the record |
+| 9 | [`specs/reviews/06-build-round-3.md`](specs/reviews/06-build-round-3.md) | **The build, peer-supervised**: who built what, who watched, the 16 defects found in each other's work, and the check that fails if one returns |
+| 10 | [`specs/courserefresh/SETUP.md`](specs/courserefresh/SETUP.md) | **The only page you need to go live**: paste the keys, `--preflight --probe`, import the canvas, run the first cycle |
 
-**Verify it yourself:** `sh app/check.sh` → `ALL GREEN` (103 checks, 11 stages) on a clean checkout;
-the frozen hero run `cr-20260926-1421-001` and its `MANIFEST.sha256` (19 files) are described in
-`specs/courserefresh/EVIDENCE.md` §4, and opening `app/out/digest.html` shows the console the run
-produces — built from the design lockfile, refusals first, no scripts.
+**Verify it yourself:** `sh app/check.sh` → `ALL GREEN` (**158 checks, 12 stages**) on a clean checkout
+with **no credentials** — the live path (Apify client, judge, n8n client, telemetry intake, console,
+notify channels, one end-to-end dry cycle) is exercised through injected transports. The frozen hero run
+`cr-20260926-1421-001` (19 files) and the round-3 engine rehearsal `cr-20260926-1441-130` (14 files) are
+recorded in `specs/courserefresh/EVIDENCE.md` §4/§4b.
+
+**Run it now, with no keys at all:**
+
+```bash
+python3 app/run_live.py --preflight               # what is wired, what is not, by key name only
+python3 app/run_live.py --root app/out/e8 --seed-baseline
+python3 app/run_live.py --root app/out/e8 --dry-run --once
+python3 app/serve.py --root app/out/e8            # console 0.0.0.0:8080 · telemetry 0.0.0.0:8787
+```
+
+Then paste keys into `.env` (`.env.example` is the checklist) and re-run
+`python3 app/run_live.py --preflight --probe`.
 
 ## The whole package, in one table
 

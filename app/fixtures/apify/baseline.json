@@ -1,0 +1,46 @@
+{
+  "recorded_note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch",
+  "entries": [
+    {
+      "source_id": "n8n-releases",
+      "fixture_key": "n8n-rename",
+      "hash": "sha256:19d3422a19b37e4cd654c3856f673dbcd0065cbdda930c5002d76003270d5546"
+    },
+    {
+      "source_id": "n8n-releases",
+      "fixture_key": "n8n-apify-node",
+      "hash": "sha256:2383e3ebabee311728cd1d0cc6df0a801d8f9fb5c63e4d0b0580ecc1aaf2379f"
+    },
+    {
+      "source_id": "n8n-docs",
+      "fixture_key": "n8n-docs-rename",
+      "hash": "sha256:19d3422a19b37e4cd654c3856f673dbcd0065cbdda930c5002d76003270d5546"
+    },
+    {
+      "source_id": "apify-changelog",
+      "fixture_key": "apify-schema",
+      "hash": "sha256:bf6523a978f2640e779de8bf25f1681aa20a1c6e0037c7e148bb5e01a7d25176"
+    },
+    {
+      "source_id": "apify-docs",
+      "fixture_key": "apify-docs-schema",
+      "hash": "sha256:5c9a4b7e495f3f28f8c5a8680ead5e4be8d5c7e104218dbbeb2c1af26e5ec5cf"
+    },
+    {
+      "source_id": "mcp-spec",
+      "fixture_key": "mcp-spec-schema",
+      "hash": "sha256:dc7850a145115436b3a4ce403bbeb1582450ddc7c3fabbcc5403f8fdffb2dcde"
+    },
+    {
+      "source_id": "mcp-blog",
+      "fixture_key": "mcp-blog-schema",
+      "hash": "sha256:705fdaaab4828cc8549e61ef8d2e39ada534446d26a1e6459d219ac6f14d8351"
+    }
+  ],
+  "previous_text": {
+    "n8n-rename": "n8n 1.84 documents the setting that limits an agent's tools as `tool_permissions.tools` in the workflow settings.",
+    "n8n-apify-node": "The Apify node passes actor inputs to the actor without further checks.",
+    "n8n-docs-rename": "n8n 1.84 documents the setting that limits an agent's tools as `tool_permissions.tools` in the workflow settings.",
+    "apify-schema": "Actor runs accept any input object; the actor itself decides what to do with it."
+  }
+}

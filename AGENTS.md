@@ -11,6 +11,8 @@ source of truth; if code disagrees with the spec, the spec wins until the spec i
 3. `specs/courserefresh/BUILD.md` §0 — the build order and the Core-First Warden's veto.
 4. `specs/courserefresh/tasks.md` — what is done (`[x]`), degraded (`[~]`), blocked (`[!]`), todo (`[ ]`).
 5. `specs/courserefresh/TRACEABILITY.md` — every AC with the command that proves it.
+6. `specs/courserefresh/SETUP.md` — the credential checklist (names only; `.env` is gitignored) and the
+   exact commands that prove the wiring before any key exists.
 
 ## The laws that bite
 
@@ -27,6 +29,13 @@ source of truth; if code disagrees with the spec, the spec wins until the spec i
   and prerequisites in `course/agent-ops/curriculum.json`; a change regenerates the quiz item it
   affects and *names* the downstream lessons to revisit — it never rewrites them unattended.
   `python3 app/tests/test_curriculum.py` decides.
+- **Never read `os.environ` by hand.** Use `app/lib/config.py` (`Config`), so precedence stays
+  explicit > environment > `.env` > defaults, secrets are never printed, and the preflight can name
+  what is missing. Round 3 shipped with this bug; `test_live_modules.py` now fails if it returns.
+- **The canvas decides, the oracle polices.** If you touch `app/n8n/policy_node.js`, re-run
+  `python3 app/tools/make_n8n_exports.py` (the exports embed it byte-for-byte) and
+  `node app/tests/test_gate_parity.py`. If you touch either rulebook, the other must change in the
+  same commit or the battery fails.
 - **A receipt must still describe the file.** If you change anything that writes artifacts, run `python3 app/tests/test_artifacts.py` — hashes are re-computed from disk, and a revert must keep the text it claims to restore (Art. IX.3).
 - **Hostile input is in scope** (Art. X): `cr-inject-01` must always escalate, with the hostile
   string visible on the receipt.

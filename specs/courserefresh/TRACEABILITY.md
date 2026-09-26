@@ -13,7 +13,6 @@ direction (an AC with no row, a row with no AC). **Nothing is "verified" until t
 | AC-2.1 | `TM03` + `cr-ambiguous-01` | eval report row; receipt quote | 0:30 refusal |
 | AC-2.2 | `cr-single-01`, `cr-conflict-01` gold rows | eval report; receipts | 0:30 |
 | AC-2.3 | `test_policy.py::test_independence_groups` | test output | — |
-| AC-3.1 | `node app/tests/test_gate_parity.py` | parity output (42 rows) | 1:40 canvas |
 | AC-3.2 | `test_contracts.py` taxonomy parse + receipt validation | test output | 1:40 |
 | AC-3.3 | `test_policy.py::test_coercion_*` | test output | — |
 | AC-4.1 | `--selftest` publish check | `course/**/v4.md`, `diffs/v4.diff`, `git log` | 0:45 action |
@@ -49,6 +48,22 @@ direction (an AC with no row, a row with no AC). **Nothing is "verified" until t
 | AC-14.2 | `test_design.py` contrast audit | `specs/design/MASTER.md` §1 | 1:10 |
 | AC-14.3 | `TM11` escape probe | `app/out/digest.html` (escaped hostile label) | 1:10 |
 | AC-12.3 | checklist §5 | live-final rehearsal notes | 16:15 |
+| AC-15.1 | `run_live.py --preflight --probe` | `app/out/live/preflight.json` (no secret values) | 1:55 wiring |
+| AC-15.2 | `test_live_modules.py` (mode + claims) | preflight output; `release` claim matrix | 1:55 |
+| AC-15.3 | `test_live_modules.py` (env precedence) | `.env.example`; `test_hygiene.py` | — |
+| AC-16.1 | `test_live_modules.py` (webhook decision) | `canvas` block in `run_log.jsonl`; `wf-cr-1-triage.json` | 1:40 canvas |
+| AC-16.2 | `test_live_modules.py::canvas_agrees` | mismatch row in run log (fails closed) | 1:40 |
+| AC-16.3 | `test_contracts.py` export checks | `app/n8n/wf-cr-*.json` (6 exports) | 1:40 |
+| AC-17.1 | `test_live_modules.py` (consent) | `app/lib/telemetry.py` refusal (403) | 1:05 learner |
+| AC-17.2 | `test_live_modules.py` (handle) | `telemetry.jsonl` rows (hashed handles only) | 1:05 |
+| AC-17.3 | `test_live_modules.py` (cohort) | `app/out/live/cohort_gates.json` | 1:20 revert |
+| AC-18.1 | `test_live_modules.py` (channels) | `app/out/live/delivery.jsonl` | 1:05 |
+| AC-18.2 | `test_live_modules.py` (staged ≠ delivered) | delivery records; `notify.py` | 1:05 |
+| AC-18.3 | `test_artifacts.py` (caps) | skipped rows with `rate_limited` | — |
+| AC-19.1 | `test_live_modules.py` in `check.sh` | battery.txt (12 stages) | 0:00 proof |
+| AC-19.2 | `test_live_modules.py` (sim labels) | receipts `mode=sim`; digest header | 0:12 |
+| AC-19.3 | `test_live_modules.py` (end-to-end) | `app/out/live-e2e/` (run + artefacts) | 0:45 |
+| AC-3.1 | `node app/tests/test_gate_parity.py` | parity output (59 rows + 2 probes) | 1:40 canvas |
 
 **Closing rule.** Before the video is submitted, every row above must be either `verified`
 (artifact path recorded in `EVIDENCE.md` §3) or explicitly `[~] cut` with its cause. There is no

@@ -1,0 +1,19 @@
+{
+  "source_id": "mcp-blog",
+  "run_id": "rec-mcp-blog-01",
+  "usd": 0.041,
+  "recorded_note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch",
+  "items": [
+    {
+      "fixture_key": "mcp-blog-schema",
+      "url": "https://blog.modelcontextprotocol.io/",
+      "title": "On schema-validated calls",
+      "published_at": "2026-08-29T07:30:00Z",
+      "markdown": "A short note on schema-validated tool calls and why a mismatch is refused rather than coerced.",
+      "content_hash": "sha256:705fdaaab4828cc8549e61ef8d2e39ada534446d26a1e6459d219ac6f14d8351",
+      "actor_run_id": "rec-mcp-blog-01",
+      "http_status": 200,
+      "note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "recorded_note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch",
+  "renders": {
+    "apify-schema": {
+      "find": "Fetch first, hash immediately, cache the bytes.",
+      "replace": "Fetch first, validate the actor input against the actor schema, hash immediately, cache the bytes.",
+      "learner_facing": "Actor inputs are now checked against the actor schema before a run starts. Your practice task gets one extra field; the rest of the lesson is unchanged.",
+      "quiz": {
+        "item_id": "q1",
+        "prompt": "An actor input object is missing a field the actor's schema requires. What happens:",
+        "options": [
+          "the actor runs and fails inside",
+          "the run is refused before compute is spent",
+          "the field is guessed"
+        ],
+        "answer": 1
+      }
+    },
+    "n8n-apify-node": {
+      "find": "Fetch first, hash immediately, cache the bytes.",
+      "replace": "Fetch first, let the node validate the actor input against the schema, hash immediately, cache the bytes.",
+      "learner_facing": "The n8n Apify node now checks an actor input against the actor schema before the run starts, so a malformed input fails early."
+    }
+  }
+}

@@ -60,6 +60,12 @@ from memory.
 | N23 | micro-lessons dispatched | `1` (`ml-permissions-mode-k-01.md`) | **measured** (sim) | `app/out/micro-lessons/` | `ls app/out/micro-lessons/` |
 | N24 | consented learners / total in fixtures | `7 / 8` (one declined-by-design fixture) | **measured** (fixtures) | `kickoff/LEARNER-PLAN.md` §1 | `python3 app/tools/metrics.py` |
 
+| N29 | live-engine dry cycle: decisions | `PUBLISH 1` · `ESCALATE 1` · `NO_CHANGE 0` (run `cr-20260926-1441-130`) | **measured** (sim) | `app/out/evidence/cr-20260926-1441-130/receipts.jsonl` | E9 command |
+| N30 | judge calls on the live path | `2` (recorded answers, provider `mock`, fixture printed on the digest) | **measured** (sim) | E9 receipts (`judge.provider`) | E9 command |
+| N31 | Apify units accounted in a live cycle | `6` units, ledger row carries the declared approximation `1 run = 1 unit` | **measured** (sim) | `app/out/e8/app/out/state/apify_units.jsonl` | E9 command |
+| N32 | battery, after the round-3 build | `155` checks pass across `12` stages, exit 0 | **measured** | `app/out/evidence/battery.txt` | `sh app/check.sh` |
+| N33 | live-path checks that run with no credentials | `39` (config 9 · apify 5 · judge 6 · n8n 7 · telemetry 4 · notify 2 · console 5 · e2e 7) | **measured** | `app/tests/test_live_modules.py` | E11 command |
+
 ## 4. Configuration (chosen, not measured — the word "measured" is banned here)
 
 | Item | Value | File |
@@ -84,6 +90,9 @@ from memory.
    row that says so." (N07, N09, N10, N13, N14, N20–N22)
 6. "Every colour on screen is a locked token with a measured contrast — the worst is 4.61:1." (N27)
 7. "A failed write is refused once, with its reason, in the digest and on the console." (N28)
+8. "It runs a full cycle with no credentials at all: one change published, one refused, both
+   labelled `sim` — and the preflight names the four claims the missing keys still block." (N29, N32,
+   E9/E10)
 
 Any other number — including in the pitch, the video, or a judge's question — is answered by the
 matching register row or by the words `unmeasured` (Art. VI, TM18).

@@ -28,7 +28,7 @@ each other. The course lives at `course/agent-ops/`; learners read it there and 
 | **Learn** | A cohort window is evaluated against the publish's revert gate; stuck signals dispatch micro-lessons; a satisfied gate reverts | every 15 min, gates at 48 h |
 | **Report** | The digest (refusals first) at 07:30 and on demand; the console shows the same receipts | daily |
 
-## 2. User stories & acceptance criteria (42 ACs)
+## 2. User stories & acceptance criteria (57 ACs)
 
 Priority: **P0** = the demo dies without it · **P1** = proves the "learns" clause · **P2** = stretch.
 
@@ -52,7 +52,7 @@ Priority: **P0** = the demo dies without it · **P1** = proves the "learns" clau
 
 ### US-3 (P0) — As the judge, I want to see where the rules live.
 - **AC-3.1** One executable rulebook exists in two parity-tested runtimes.
-  *Proof:* `node app/tests/test_gate_parity.py` — 42/42 rows agree; `POLICY` node visible on canvas.
+  *Proof:* `node app/tests/test_gate_parity.py` — 59 rows + 2 probes agree; `POLICY` node visible on canvas.
 - **AC-3.2** Every decision carries ≥1 reason code from the closed taxonomy, or `unknown_state`.
   *Proof:* `test_contracts.py` (taxonomy parse), `--selftest` receipt validation.
 - **AC-3.3** Malformed/out-of-range input escalates; the node never throws.
@@ -152,6 +152,60 @@ Priority: **P0** = the demo dies without it · **P1** = proves the "learns" clau
   pass the 3:1 non-text floor. *Proof:* `python3 app/tests/test_design.py`.
 - **AC-14.3** Hostile text that reaches a receipt is escaped in the console, never rendered.
   *Proof:* `TM11` (escapes a `<script>` probe).
+
+### US-15 (P0) — As the operator, I want to paste keys once and be told exactly what is wired.
+- **AC-15.1** One command reports each platform as wired or missing by *key name*, and probing is
+  opt-in (`--probe`), which validates the pasted key with one cheap call and prints no value.
+  *Proof:* `python3 app/run_live.py --preflight --probe`; `app/out/live/preflight.json`.
+- **AC-15.2** A missing key degrades the mode (`sim`) instead of half-wiring it, and every claim the
+  video may not yet make is listed as blocked. *Proof:* preflight output; `test_live_modules.py`
+  (auto→sim, auto→live, claims matrix).
+- **AC-15.3** Resolution order is explicit overrides > real environment > `.env` (gitignored) >
+  defaults, and unrelated environment variables never enter the config. *Proof:*
+  `test_live_modules.py` (env precedence, `PATH` excluded); `.env.example`.
+
+### US-16 (P0) — As the judge, I want the canvas to make the real decision, policed by the oracle.
+- **AC-16.1** `--via-n8n` posts the `DecisionInput` to the triage webhook and the returned decision,
+  with its execution id, is the one the cycle acts on. *Proof:* `test_live_modules.py` (webhook
+  decision + execution id captured); `canvas` block in `app/out/run_log.jsonl`.
+- **AC-16.2** If the canvas and the Python oracle disagree on action *or* reason codes, the cycle
+  fails closed (no write), marks materiality `ambiguous`, and records both decisions.
+  *Proof:* `test_live_modules.py` (`canvas_agrees`, mismatch detection).
+- **AC-16.3** The exports stay importable: every workflow carries an execute-once guard, a contract
+  sticky-note, the error workflow attached at import, and the triage export embeds the current
+  `policy_node.js` byte-for-byte. *Proof:* `test_contracts.py` (export checks);
+  `python3 app/tools/make_n8n_exports.py --import`.
+
+### US-17 (P0) — As the learner, nothing about me is stored unless I said yes.
+- **AC-17.1** Telemetry refuses a payload without consent *before* storage (HTTP 403) and stores
+  nothing on refusal. *Proof:* `test_live_modules.py` (consent gate); `handlers` in
+  `app/lib/telemetry.py`.
+- **AC-17.2** Learner references are hashed handles only (`learner:<8 hex>`); anything else is
+  refused with a reason. *Proof:* `test_live_modules.py` (handle regex).
+- **AC-17.3** A cohort below `cohort_min` reports `unmeasured` with the reason, never a number; at or
+  above it, the gate value is computed and handed to the revert gate. *Proof:*
+  `test_live_modules.py` (1 < 3 → `unmeasured`; n=6 → `quiz_delta` −0.05);
+  `app/out/live/cohort_gates.json`.
+
+### US-18 (P1) — As the learner, I am told what changed in words I can act on.
+- **AC-18.1** Delivery is per-channel with a record per attempt: file stages, telegram/webhook send,
+  and every attempt lands in `delivery.jsonl`. *Proof:* `test_live_modules.py` (staging, missing-key
+  failure is loud); `app/out/live/delivery.jsonl`.
+- **AC-18.2** The `file` channel never claims `delivered`; a channel without credentials fails
+  loudly rather than silently. *Proof:* `test_live_modules.py`.
+- **AC-18.3** Caps (1/day, 3/week per consented learner) are enforced in code before any channel is
+  called. *Proof:* `test_artifacts.py` (caps); `test_live_modules.py`.
+
+### US-19 (P0) — As the team, I want the wiring proven before a single key exists.
+- **AC-19.1** The live path is covered by the battery with an injected transport (no socket, no
+  key): config, Apify, judge, n8n, telemetry, notify, console, plus one end-to-end dry cycle.
+  *Proof:* `python3 app/tests/test_live_modules.py` (42/42) inside `sh app/check.sh`.
+- **AC-19.2** Live runs use *recorded* datasets/answers under `app/fixtures/` in `sim`, and the sim
+  label appears on receipts, digest, console and the e2e summary. *Proof:* `test_live_modules.py`
+  (`mode: **sim**` on digest + html; receipts `mode=sim`).
+- **AC-19.3** One dry cycle from a clean tree produces ≥1 labelled `PUBLISH` with a real version,
+  diff and regenerated quiz item, and a freeze-free receipt chain. *Proof:* `test_live_modules.py`
+  (end-to-end block); `app/out/live-e2e/`.
 
 ## 3. Non-goals (things this spec refuses to be)
 

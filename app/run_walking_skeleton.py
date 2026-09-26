@@ -405,6 +405,7 @@ def run(tree: Tree, events: list[dict], label: str = "") -> dict:
             "cost": {"tokens": 0, "apify_units": 0, "eur": None,
                      "cost_state": "unmeasured (no vendor prices captured)"},
             "actor": "system", "label": event.get("summary", "")[:160],
+            **({"canvas": event["canvas"]} if event.get("canvas") else {}),
         }
         tree.append_receipt(row)
         if row["artifact"] and row["artifact"].get("new_version"):

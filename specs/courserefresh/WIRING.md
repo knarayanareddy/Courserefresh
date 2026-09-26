@@ -64,16 +64,29 @@ URLs" and "two voices" — the subject's docs site and its GitHub releases are o
 The **`POLICY` node** embeds `app/n8n/policy_node.js` verbatim; `THRESHOLDS` supplies
 `skin/thresholds.json` values. Nothing else in the canvas makes a decision.
 
+### 3.0 How the canvas is actually run (built in round 3)
+
+The exports are the production path and the Python oracle is the test path, and both are used:
+
+| Path | Who calls | What happens | Fail-closed rule |
+|---|---|---|---|
+| **Canvas path** — `python3 app/run_live.py --once --via-n8n` | the engine (the unattended process) | the cycle posts its `DecisionInput` to `POST /webhook/cr/triage`; `wf-cr-1-triage` builds the prompt, calls the judge, runs the **POLICY** node and returns `{decision, execution_id}` | if the canvas is unreachable the engine falls back to the oracle **and says so** in the run log (`canvas.reason`); if the canvas answers and disagrees with the oracle on action *or* reason codes, nothing is written, materiality becomes `ambiguous`, and both decisions are recorded (`canvas.mismatch`) |
+| **Oracle path** — `sh app/check.sh` | CI, the battery, the eval | `specs/courserefresh/skin/policy.py` decides the same `DecisionInput`s; `test_gate_parity.py` replays the gold set through the *JS* mirror and compares | a row that disagrees breaks the build |
+
+Parity is checked on `action` **and** `reason_codes`: two different refusals are not the same
+decision, and an engine that treats them as equal would publish a change nobody can explain.
+
 ### 3.1 n8n build requirements (what "powered by n8n, not decorated with it" means)
 
-| Requirement | Why (review 05, N8N-01…N8N-05) | Where it shows |
+| Requirement | Why (review 05, N8N-01…N8N-05) | Where it shows (built) |
 |---|---|---|
-| Every workflow runs **execute-once**; the scan trigger passes a run key and the workflow refuses a duplicate key | a daily schedule that double-fires must not publish twice | `wf-cr-0-scan` sticky-note + the run key in the receipt |
-| The decision node is a **Code node whose body is the rulebook file** (`policy_node.js`), drift-checked byte-for-byte | "code decides" must be inspectable in the canvas | `test_contracts.py` compares the embedded body to the file |
-| Queue-mode instances: the error branch is `IF error → RETRY(dlq, once) → RECEIPT(degraded) + digest line` | a failure that is not reported is a silent failure | `wf-cr-*` error outputs wired to the shared node |
-| One **error workflow** attached to all five, so an unhandled throw still lands as a receipt row | the loop's honesty must survive its own bugs | instance setting, recorded at D-1 |
-| Instance pin: n8n version recorded in §4 before the hero run; expressions avoid version-added helpers | "works on my canvas" is not evidence | §4 row, filled at D-1 |
-| Apify calls: actor pins include the **build**, and the retry budget is an explicit number, not "a few tries" | the retry policy is part of the unit budget | §1 + receipt `cost.apify_units` |
+| Every workflow runs **execute-once**; the trigger passes a run key and the workflow refuses a duplicate key | a schedule that double-fires must not publish twice | `ONCE` Code node in git every export (`$getWorkflowStaticData('global').lastRunKey`); `test_contracts.py` fails an export without it |
+| The decision node is a **Code node whose body is the rulebook file** (`policy_node.js`), drift-checked byte-for-byte | "code decides" must be inspectable in the canvas | `wf-cr-1-triage` `POLICY` node; `test_contracts.py` compares bytes to `app/n8n/policy_node.js` |
+| On error: `RECEIPT(degraded)` + digest line, never silence | a failure that is not reported is a silent failure | `wf-cr-9-errors` (`ERROR TRIGGER → BUILD_RECEIPT → POST /receipt → POST /degraded`) |
+| One **error workflow** attached to all five, so an unhandled throw still lands as a receipt row | the loop's honesty must survive its own bugs | `settings.errorWorkflow` set by `make_n8n_exports.py --import`; `writer` prints the id it wrote |
+| Instance pin: n8n version recorded in §4 before the hero run; expressions avoid version-added helpers | "works on my canvas" is not evidence | `N8N_INSTANCE_VERSION` in `.env`, echoed by `--preflight` |
+| Apify calls: actor pins include the **build**, and the retry budget is an explicit number, not "a few tries" | the retry policy is part of the unit budget | `skin/sources.json` actor pins; `APIFY_MAX_RETRIES=1`, `APIFY_TIMEOUT_S=300`; receipt `cost.apify_units` |
+| The engine can *use* the canvas for the decision, not just mirror it | "powered by n8n" must be true at runtime, not only in the pitch (criteria in `JUDGING-MAP.md`) | `--via-n8n` + `canvas` block in `run_log.jsonl` (AC-16.1/16.2) |
 
 ## 4. Model pins (recorded, never "latest")
 
@@ -114,8 +127,13 @@ Until this table has values, every cost surface prints `unmeasured` (Art. VI).
 
 ## 7. Credentials (env only; never in the repo, never in a receipt)
 
-`APIFY_TOKEN` · `N8N_WEBHOOK_BASE` · `GITHUB_TOKEN` (branch-scoped) · `SMTP_DSN` (or Telegram bot
-token) · `NOTION_TOKEN` (P1) · `CR_DEMO_TOKEN` · `OBSERVE_MODEL`/`JUDGE_MODEL` keys.
+The authoritative list, with where each value comes from and what it unlocks, is `.env.example` +
+`SETUP.md` §2. In one line: `APIFY_TOKEN` · `N8N_BASE_URL`/`N8N_API_KEY` (+ `N8N_WEBHOOK_URL` for the
+n8n judge path) · `CR_JUDGE_PROVIDER`/`CR_JUDGE_BASE_URL`/`CR_JUDGE_API_KEY`/`CR_JUDGE_MODEL`
+(any OpenAI-compatible key works, including a "jev"-style endpoint) · `CR_NOTIFY_CHANNEL` with
+`CR_TELEGRAM_BOT_TOKEN`+`CR_TELEGRAM_CHAT_ID` or `CR_NOTIFY_WEBHOOK_URL` · optional
+`CR_DEMO_TOKEN`/`CR_TELEMETRY_TOKEN`/`CR_CONSOLE_TOKEN` · `CR_COMMIT=1` + `CR_BOT_BRANCH` for the bot
+commit · `GITHUB_TOKEN` (branch-scoped) only if the commit is pushed from CI.
 Least privilege (Art. XIV.4): the Git token can push `bot/courserefresh` and open a PR; it cannot
 merge to `main` or edit workflows. The receipt writer strips any key matching
 `(?i)(token|key|secret|password)` — `test_hygiene.py` asserts no such string ever lands in

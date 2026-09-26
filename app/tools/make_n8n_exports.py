@@ -55,9 +55,58 @@ def noop(name, position):
             "type": "n8n-nodes-base.noOp", "typeVersion": 1, "position": position}
 
 
+def once(name, position):
+    """Execute-once guard (WIRING §3.1): a duplicate run key stops the workflow instead of repeating it."""
+    js = ("// execute-once: the scan trigger passes a run key; a duplicate key stops this execution.\n"
+          "const key = $json.run_key || $json.run_id || null;\n"
+          "const store = $getWorkflowStaticData('global');\n"
+          "if (key && store.lastRunKey === key) { return []; }\n"
+          "if (key) store.lastRunKey = key;\n"
+          "return $input.all();")
+    return code(name, js, position)
+
+
+def note(name, text, position, width=420, height=220):
+    return {"parameters": {"content": text, "height": height, "width": width, "color": 4},
+            "id": name.lower().replace(" ", "-") + "-note", "name": name,
+            "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": position}
+
+
+CONTRACT_NOTE = (
+    "WIRING.md §3.1 contract:\n"
+    "1. execute-once (this file has the guard)\n"
+    "2. the POLICY node embeds app/n8n/policy_node.js byte-for-byte (drift-checked by test_contracts)\n"
+    "3. errors land as receipts: error branch → RETRY(dlq, once) → RECEIPT(degraded)\n"
+    "4. wf-cr-9-errors is attached to every workflow at import time (make_n8n_exports.py --import)\n"
+    "5. instance version is recorded in WIRING.md §4 at D-1; expressions stay version-safe")
+
+
+def insert_guard(nodes: list[dict]) -> list[dict]:
+    """Put the execute-once guard between the trigger and everything else (WIRING §3.1 #1)."""
+    trigger = nodes[0]
+    if trigger["type"] not in ("n8n-nodes-base.scheduleTrigger", "n8n-nodes-base.webhook"):
+        return nodes
+    guard = once("ONCE", [trigger["position"][0] + 220, trigger["position"][1]])
+    return [trigger, guard] + nodes[1:]
+
+
+def rewire_guard(name: str, nodes: list[dict], connections: dict) -> dict:
+    trigger = nodes[0]
+    if trigger["type"] not in ("n8n-nodes-base.scheduleTrigger", "n8n-nodes-base.webhook"):
+        return connections
+    targets = connections.get(trigger["name"], {"main": [[]]})["main"][0]
+    connections[trigger["name"]] = {"main": [[{"node": "ONCE", "type": "main", "index": 0}]]}
+    connections["ONCE"] = {"main": [targets]}
+    return connections
+
+
 def workflow(name, nodes, connections, notes):
-    return {"name": name, "nodes": nodes, "connections": connections,
-            "settings": {"executionOrder": "v1", "saveManualExecutions": True, "callerPolicy": "workflowsFromSameOwner"},
+    nodes = insert_guard(nodes)
+    connections = rewire_guard(name, nodes, connections)
+    return {"name": name, "nodes": nodes + [note("CONTRACT", CONTRACT_NOTE, [0, -420])],
+            "connections": connections,
+            "settings": {"executionOrder": "v1", "saveManualExecutions": True, "callerPolicy": "workflowsFromSameOwner",
+                         "errorWorkflow": None},   # set to wf-cr-9-errors' id at import time
             "staticData": None, "meta": {"instanceId": "ATTACH_AT_IMPORT",
                                           "templateCredsSetupCompleted": False,
                                           "courserefresh": {"generated_by": "app/tools/make_n8n_exports.py",
@@ -212,10 +261,50 @@ def main() -> None:
         "A broken chain is louder than a missing message: DIGEST FAILED, exit 1.")
     (OUT / "wf-cr-4-digest.json").write_text(json.dumps(digest, indent=2) + "\n")
 
-    print(f"wrote 5 workflow exports · policy_node.js sha256={NODE_HASH[:16]}…")
+    errors = workflow(
+        "CR-9 · errors → receipt",
+        [{"parameters": {}, "id": "error-trigger", "name": "ERROR TRIGGER",
+          "type": "n8n-nodes-base.errorTrigger", "typeVersion": 1, "position": [0, 0]},
+         code("BUILD_RECEIPT",
+              "// an unhandled failure still lands on the ledger (WIRING §3.1, requirement 4)\n"
+              "const err = $json.error || {};\n"
+              "return [{ json: { event_id: 'op-error', kind: 'change', mode: 'live',\n"
+              "  decision: { action: 'ESCALATE', reason_codes: ['write_failed'], authority: 'PA0' },\n"
+              "  artifact: null, actor: 'system', label: (err.message || 'workflow error').slice(0, 160),\n"
+              "  workflow: $json.workflow && $json.workflow.name, execution: $json.execution && $json.execution.id } }];",
+              [220, 0]),
+         http("APPEND_RECEIPT", "http://runner:8081/receipt", "POST",
+              "={{ JSON.stringify($json) }}", [440, 0], "the local runner appends it to the chain"),
+         http("DIGEST_LINE", "http://runner:8081/degraded", "POST",
+              "={{ JSON.stringify({ reason: 'workflow_error', receipt_id: $json.receipt_id }) }}",
+              [660, 0], "the digest must say it out loud")],
+        {"ERROR TRIGGER": {"main": [[{"node": "BUILD_RECEIPT", "type": "main", "index": 0}]]},
+         "BUILD_RECEIPT": {"main": [[{"node": "APPEND_RECEIPT", "type": "main", "index": 0}]]},
+         "APPEND_RECEIPT": {"main": [[{"node": "DIGEST_LINE", "type": "main", "index": 0}]]}},
+        "Attached to every CR workflow's error output at import time; a crash must be a receipt, not silence.")
+    (OUT / "wf-cr-9-errors.json").write_text(json.dumps(errors, indent=2) + "\n")
+
+    print(f"wrote {len(list(OUT.glob('wf-cr-*.json')))} workflow exports · policy_node.js sha256={NODE_HASH[:16]}…")
     for path in sorted(OUT.glob("wf-cr-*.json")):
         print(" ", path.relative_to(ROOT), f"({path.stat().st_size} bytes)")
 
 
+def do_import() -> int:
+    """Import the exports into the configured n8n instance and record the ids (WIRING §6)."""
+    import sys
+    sys.path.insert(0, str(ROOT / "app" / "lib"))
+    import n8n
+    from config import Config
+    cfg = Config()
+    client = n8n.N8nClient(cfg.get("N8N_BASE_URL"), cfg.get("N8N_API_KEY"),
+                           instance_version=cfg.get("N8N_INSTANCE_VERSION"))
+    result = client.import_exports(OUT)
+    print(json.dumps({"ok": result["ok"], "ids": result["ids"], "path": result["path"]}, indent=2))
+    return 0 if result["ok"] else 2
+
+
 if __name__ == "__main__":
+    import sys
+    if "--import" in sys.argv:
+        raise SystemExit(do_import())
     main()

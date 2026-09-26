@@ -1,5 +1,5 @@
 # Courserefresh — video shot list (≤2:00, submitted 15:00 on D2)
-`v0.1 (draft) · Rule: every visual in this sheet exists as a frozen artifact before editing starts`
+`v0.2 · Rule: every visual in this sheet exists as a frozen artifact before editing starts`
 
 **Voice:** dry, specific, unhurried. No "AI", no "revolutionary", no music crescendo. The machine's
 own labels (`mode: live`, `ESCALATE`, `REVERT`) are shown, not paraphrased.
@@ -13,7 +13,8 @@ own labels (`mode: live`, `ESCALATE`, `REVERT`) are shown, not paraphrased.
 | 1:05–1:20 | **The learner who didn't have to ask** | Micro-lesson artifact (one concept, 2 minutes) + dispatch receipt; consent card with hashed handle and opt-out | "Three learners were stuck on this concept before they asked. They got one concept, two minutes, one practice item — and a way to stop hearing from us." |
 | 1:20–1:35 | **The undo clause** | Revert receipt: `revert_gate n_min=5 window_h=48 quiz_delta ≤ 0` → `REVERT` → the restored lesson as a **new** version (v5) with its own diff | "It promised at publish time what would make the change wrong. The gate fired. It reverted itself — as a new version, so nothing is hidden." |
 | 1:35–1:42 | **The quiz moved with the lesson** | The regenerated item (`regenerated_by` visible) + the changed lesson's diff side by side | "The quiz item that tested the old name changed with the lesson. The other two didn't." |
-| 1:42–1:50 | **The rules, and the log a human can open** | n8n canvas: five workflows; the `POLICY` node at readable zoom → the console page, refusals first | "The decision isn't a prompt. It's this node — and this page is the same receipts, in the order I care about: what it refused, first." |
+| 1:42–1:50 | **The rules, and the log a human can open** | n8n canvas: **six** workflows (five + `wf-cr-9-errors`); the `POLICY` node at readable zoom → the console page served by `app/serve.py`, refusals first | "The decision isn't a prompt. It's this node — and this page is the same receipts, in the order I care about: what it refused, first." |
+| (cutaway, 2 s) | **The wiring is checkable, and honest about its gaps** | `python3 app/run_live.py --preflight --probe` output: wired / missing / `claim blocked` lines | "One command says what is wired — and it will not let us claim a platform we have not plugged in." |
 | 1:50–2:00 | **Close** | Digest footer: budgets, authority state, chain ✓; cut to the lesson's "what changed" banner for learners | "It ran for seven hours unattended, stopped itself four times, and told me everything it did. That's the course that stays true." |
 
 ## B-roll / cutaways (each ≤2 s, all from frozen artifacts)

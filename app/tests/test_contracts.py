@@ -31,7 +31,7 @@ ac_ids = set(re.findall(r"\*\*(AC-\d+\.\d+)\*\*", spec))
 trace_ids = set(re.findall(r"\b(AC-\d+\.\d+)\b", trace))
 check("every AC in spec.md is traced", not (ac_ids - trace_ids), f"missing={sorted(ac_ids - trace_ids)}")
 check("no traced AC is orphaned", not (trace_ids - ac_ids), f"orphans={sorted(trace_ids - ac_ids)}")
-check("AC count is as documented", len(ac_ids) == 42, f"n={len(ac_ids)}")
+check("AC count is as documented", len(ac_ids) == 57, f"n={len(ac_ids)}")
 
 # 2. closed sets: data-model §4 tables vs change_taxonomy.json
 row_codes = {}
@@ -125,14 +125,22 @@ checks_names = []
 try:
     for path in exports:
         doc = json.loads(path.read_text())
-        assert doc["name"] in path.name, path.name
         assert isinstance(doc["nodes"], list) and doc["nodes"], path.name
+        # a name may be a human label ("CR-9 · errors → receipt"); the workflow number is the contract
+        number = path.stem.replace("wf-cr-", "").split("-")[0]
+        assert number in doc["name"], f"{path.name} names the wrong workflow: {doc['name']}"
+        assert any(n.get("type") == "n8n-nodes-base.stickyNote" for n in doc["nodes"]), \
+            f"{path.name} carries no contract note"
         if "triage" in path.name:
             policy_nodes = [n for n in doc["nodes"] if n["name"] == "POLICY"]
             assert policy_nodes and policy_nodes[0]["parameters"]["jsCode"] == node_src, "POLICY node drifted"
-    check("five n8n workflow exports are present and importable", len(exports) == 5,
-          f"found={[p.name for p in exports]}")
-    check("the POLICY node in the triage export embeds the current rulebook", True)
+        if path.name != "wf-cr-9-errors.json":
+            guards = [n for n in doc["nodes"] if n["type"] == "n8n-nodes-base.code"
+                      and "execute-once" in n.get("parameters", {}).get("jsCode", "")]
+            assert len(guards) == 1, f"{path.name} has no execute-once guard"
+    check("the six n8n workflow exports are present, importable and carry their contract",
+          len(exports) == 6, f"found={[p.name for p in exports]}")
+    check("every export embeds the current rulebook (triage) and an execute-once guard", True)
 except AssertionError as exc:
     check("n8n exports are consistent", False, str(exc))
 

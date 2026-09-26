@@ -1,11 +1,11 @@
 # Courserefresh — tasks (the TODO, in gated order)
-`v0.4 · Last amended D-0 · Executor: the build agent (see BUILD.md §0) · Depends on: spec.md, plan.md`
+`v0.5 · Last amended D-0 · Executor: the build agent (see BUILD.md §0) · Depends on: spec.md, plan.md`
 
 **Done-done** = the acceptance criterion passes **and** the command in `TRACEABILITY.md` has been
 run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. State vocabulary:
 `[ ]` todo · `[x]` done-done · `[~]` cut/degraded (say what, in the task) · `[!]` blocked (say who).
 
-**TIME-NOW block.** `D-label: D-0 · mode: sim green · hero run: cr-20260926-1421-001 (offline twin) · live wiring: not yet · freeze: off`
+**TIME-NOW block.** `D-label: D-0 · mode: sim green · hero run: cr-20260926-1421-001 (offline twin) · live engine: built, dry-run green (cr-20260926-1436-436; E8) · credentials: the only input left`
 
 ---
 
@@ -27,13 +27,13 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 
 | ID | Task | Done when | Status |
 |---|---|---|---|
-| T10 | Apify actors pinned (id+build) and called from `wf-cr-0-scan`; dataset → snapshot normaliser | one real actor run id in `WIRING.md` §6; snapshots cached | `[~]` — the pin contract and the normaliser exist (`app/n8n/wf-cr-0-scan.json`); no real run id yet (no credentials) |
-| T11 | Scan schedule with dedupe (content hash) and zero-new = `no_delta` | two consecutive runs behave | `[~]` — dedupe proven offline (second run: 0 publishes); no schedule yet |
-| T12 | Triage live: observe + judge calls, quote anchoring, POLICY node, receipt | receipts with judge answers and `input_hash` | `[~]` — logic + parity 57/57; model calls are fixture-fed (no keys) |
-| T13 | Act live: commit to `bot/courserefresh`, card to consented cohort, receipt | `git log` shows the `cr:` commit; card artifact exists | `[~]` — body/diff/notify staged and receipted; the push to the bot branch is unwired |
-| T14 | Telemetry endpoint + learn workflow: consent gate, cohort window | no-consent POST rejected; window row produced | `[~]` — consent gate and window computation exist (fixtures); no HTTP endpoint |
-| T15 | Digest delivery (07:30) + console read routes | digest delivered; console renders a receipt | `[~]` — the console page is **built** (`app/out/digest.html`, tokens only, refusals first, TM11-tested); scheduled delivery and interactive routes are Phase 2 (C-06) |
-| T16 | One witnessed failure handled: degraded receipt + digest line | receipt shows failure and mode | `[~]` — rehearsed offline and frozen (`--chaos write-fail`: one refusal, chain intact, digest + console say it); the live equivalent is pending |
+| T10 | Apify actors pinned (id+build) and called from `wf-cr-0-scan`; dataset → snapshot normaliser | one real actor run id in `WIRING.md` §6; snapshots cached | `[~]` — **built**: `skin/sources.json` pins + `app/lib/apify.py` (run, normalise with reason codes, unit ledger, retries) + `wf-cr-0-scan`; one real run id still needs `APIFY_TOKEN` (E8 ran on recorded datasets) |
+| T11 | Scan schedule with dedupe (content hash) and zero-new = `no_delta` | two consecutive runs behave | `[~]` — **built**: per-source `source_id:hash` dedupe + baselines, `no_delta` path, cadence config, `ONCE` execute-once guard in the export; the live schedule needs an activated canvas |
+| T12 | Triage live: observe + judge calls, quote anchoring, POLICY node, receipt | receipts with judge answers and `input_hash` | `[~]` — **built**: 7-question judge with 4 providers, closed-set fail-closed validation, anchored render contract, POLICY node parity-checked, `--via-n8n` canvas decisions; live model calls need a key (E8 used recorded answers, labelled) |
+| T13 | Act live: commit to `bot/courserefresh`, card to consented cohort, receipt | `git log` shows the `cr:` commit; card artifact exists | `[~]` — **built**: version+diff+CHANGELOG+card, `CR_COMMIT=1` commits on `bot/courserefresh` and refuses any other branch, notify channels with per-attempt records; a real push/delivery needs the git remote + a channel token |
+| T14 | Telemetry endpoint + learn workflow: consent gate, cohort window | no-consent POST rejected; window row produced | `[x]` — `app/lib/telemetry.py` (POST /telemetry: consent checked before storage → 403; hashed handles only; cohort below floor → `unmeasured` with reason) + `wf-cr-3-learn`; proven by `test_live_modules.py` (E8) |
+| T15 | Digest delivery (07:30) + console read routes | digest delivered; console renders a receipt | `[~]` — **built**: `app/lib/console.py` serves the page, `/healthz`, `/api/preflight|receipts|run_log`, `/lesson/{id}`, `/receipt/{id}`, `/eval` + gated POST `/pause|/resume`; `app/serve.py` runs console + telemetry on `0.0.0.0`; delivery at 07:30 is `--watch`'s job and needs the loop running |
+| T16 | One witnessed failure handled: degraded receipt + digest line | receipt shows failure and mode | `[~]` — rehearsed offline (E7 `--chaos write-fail`) and in the live engine (`--inject-failure`), once-only reporting; `wf-cr-9-errors` turns an unhandled canvas throw into a receipt + digest line; the live equivalent on the real instance is pending |
 | T17 | **M1 GATE:** preflight green with `mode: live`; hero run armed | sign-off; preflight artifact | `[!]` — needs live credentials |
 | T21b | n8n exports embedding the rulebook, drift-checked | `test_contracts.py` compares the embedded code to the node file | `[x]` (pulled forward to answer review 02 seat C) |
 
@@ -44,7 +44,7 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 | T18 | Gate evaluation (n≥5, 48 h, `quiz_delta ≤ 0`) → revert queue, `unmeasured` when n<floor | gate row in the run log; `unmeasured` branch | `[~]` — implemented and proven offline (`cr-revert-*` gold rows, `09-revert.json`); live cohort absent |
 | T19 | Stuck detection + micro-lesson dispatch (consent + caps) | dispatch artifact + receipt; rate-limit rows | `[x]` |
 | T20 | Eval harness: three columns on the frozen gold set, report archived | `policy.py --eval` exits 0; report in `app/out/eval/` | `[x]` — columns (b)/(c) offline; (a) is `n/a` (D-06) |
-| T21 | All test files green | `sh app/check.sh` exit 0 | `[x]` — 103 PASS |
+| T21 | All test files green | `sh app/check.sh` exit 0 | `[x]` — **158 PASS** across 12 stages |
 | T22 | `RECEIPTS.md` + `EVIDENCE.md` filled from real outputs (or `unmeasured`) | claims lint green; no orphan numbers | `[x]` |
 | T23 | **M2 GATE:** hostile→publish = 0 and unsupported→publish = 0 on the archived report | excerpt pasted in `reviews/04` §3 | `[x]` |
 
@@ -65,6 +65,19 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 | T29 | Digest email in addition to Telegram | second channel, small win |
 | T30 | Eval column (a) via a proprietary model, prompt frozen | needs a key and a spend decision |
 | T31 | Cadence experiment: 60 → 30 min, measured | more Apify units for a nicer number |
+
+## M5 — Round 3: the build (what round 3 added, and what is left for the keys)
+
+| ID | Task | Done when | Status |
+|---|---|---|---|
+| T32 | Live engine `app/run_live.py` over the twin's writers (notice→verify→decide→act→learn→report) | `--selftest` 12/12; one dry cycle publishes, refuses and digests | `[x]` — `cr-20260926-1436-436` (sim) and E8; `--watch`, `--learn`, `--digest-only`, `--inject-failure`, `--via-n8n` all exist |
+| T33 | n8n build requirements: execute-once guard, error workflow `wf-cr-9-errors`, contract notes, `--import` | `test_contracts.py` green on 6 exports; import prints ids | `[x]` — import is credential-gated (`N8N_BASE_URL`+`N8N_API_KEY`), proven through an injected transport |
+| T34 | Judge with four providers + key probe | probe prints status, never the key; `unknown_state` fails closed | `[x]` — `probe_provider()`; `--preflight --probe` |
+| T35 | Telemetry + console servers, and a demo launcher | console serves a sandbox with `--root`; intake refuses no-consent | `[x]` — `app/serve.py`; see the LIVE preview in this session |
+| T36 | Notify channels (file/telegram/webhook) with delivery records | staged ≠ delivered; missing keys fail loudly | `[x]` — `app/lib/notify.py` |
+| T37 | Preflight, `.env.example`, `SETUP.md`, `OPERATIONS.md` §9–12 | a stranger can paste keys from one page | `[x]` — `--preflight [--probe]` |
+| T38 | Live-path battery (`test_live_modules.py`, 42 checks) with injected transports | green inside `check.sh`, no keys, no sockets | `[x]` — 12 stages, 158 PASS |
+| T39 | Peer-supervised build log (`reviews/06`) | 16 findings, each with a check that fails if it returns | `[x]` — `specs/reviews/06-build-round-3.md` |
 
 ## Blocked list
 

@@ -1,0 +1,30 @@
+{
+  "source_id": "n8n-releases",
+  "run_id": "rec-n8n-releases-01",
+  "usd": 0.061,
+  "recorded_note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch",
+  "items": [
+    {
+      "fixture_key": "n8n-rename",
+      "url": "https://github.com/n8n-io/n8n/releases",
+      "title": "n8n 1.85 release notes",
+      "published_at": "2026-09-25T09:10:00Z",
+      "markdown": "n8n 1.85 renamed `tool_permissions` to `permissions.mode`; the old key is removed in 1.86. Update any settings block you copied from the earlier lessons.",
+      "content_hash": "sha256:f26f61569e5d40164937ef706f43cbeebd3fb31099849a9411ab76cb10c46597",
+      "actor_run_id": "rec-n8n-releases-01",
+      "http_status": 200,
+      "note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch"
+    },
+    {
+      "fixture_key": "n8n-apify-node",
+      "url": "https://github.com/n8n-io/n8n/releases",
+      "title": "Apify node: schema validation",
+      "published_at": "2026-09-25T09:10:00Z",
+      "markdown": "The Apify node passes actor inputs through validation against the actor schema before the run starts, so a malformed input fails before compute is spent.",
+      "content_hash": "sha256:cb79fa2422749ebc1ec06b7902bfd6c8280552306f135f0d97dd87bb9213e086",
+      "actor_run_id": "rec-n8n-releases-01",
+      "http_status": 200,
+      "note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch"
+    }
+  ]
+}

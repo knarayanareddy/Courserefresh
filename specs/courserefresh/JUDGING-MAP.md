@@ -1,5 +1,5 @@
 # Courserefresh — judging map (criterion → evidence → answer)
-`v0.1 (draft) · For: the 2-minute video, the 3-minute live pitch, and the ~5 minutes of Q&A`
+`v0.2 · For: the 2-minute video, the 3-minute live pitch, and the ~5 minutes of Q&A`
 
 Every judging criterion is answered by an artifact that already exists, in a place the judges can
 be shown (not described). The right column is the sentence to say — short, specific, and true.
@@ -36,7 +36,9 @@ be shown (not described). The right column is the sentence to say — short, spe
 | Apify pulls real-world data | Actor list with ids/builds; dataset shapes; run history; **source roles** (`authoritative`/`corroborating`/`none`) so two pages from one vendor are one voice | "Four actors, pinned builds, run history is right here — and the system counts voices, not URLs: a mirror is recorded and never counted." |
 | n8n runs the workflows **and the decisions** | Canvas: the five workflows with the embedded `POLICY` node; execution log | "n8n isn't the plumbing — the decision node on this canvas is the product's rulebook." |
 | Depth (the more they power the system, the better) | `WIRING.md` inventory: which actor feeds which workflow node; cadence; retries | "Every input in this system is an Apify dataset row; nothing is invented." |
-| Why not a Python script? | Parity test | "Python is the oracle we test against; production runs the same rules in the node." |
+| Why not a Python script? | Parity test (`node app/tests/test_gate_parity.py`, 59 rows + 2 probes) | "Python is the oracle we test against; production runs the same rules in the node." |
+| The canvas **decides at runtime**, not just on the canvas tab | `--via-n8n`: the cycle posts the `DecisionInput` to `/webhook/cr/triage` and the receipt carries `canvas.execution_id`; a dissent between canvas and oracle stops the cycle | "The loop asks the canvas for every decision and records the execution id. If the two runtimes ever disagree, nothing ships." |
+| n8n survives its own failures | `wf-cr-9-errors` attached to all six workflows; a throw becomes a receipt + digest line | "If a workflow throws, the error workflow turns it into a receipt — a crash is never silence." |
 
 ## 4. Problem fit — 15%
 

@@ -23,6 +23,19 @@
     },
     {
       "parameters": {
+        "jsCode": "// execute-once: the scan trigger passes a run key; a duplicate key stops this execution.\nconst key = $json.run_key || $json.run_id || null;\nconst store = $getWorkflowStaticData('global');\nif (key && store.lastRunKey === key) { return []; }\nif (key) store.lastRunKey = key;\nreturn $input.all();"
+      },
+      "id": "once",
+      "name": "ONCE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
         "jsCode": "// consented rows only; hashed handles; rejects are counted\nreturn $input.all();"
       },
       "id": "read_telemetry",
@@ -132,6 +145,22 @@
         1320,
         120
       ]
+    },
+    {
+      "parameters": {
+        "content": "WIRING.md \u00a73.1 contract:\n1. execute-once (this file has the guard)\n2. the POLICY node embeds app/n8n/policy_node.js byte-for-byte (drift-checked by test_contracts)\n3. errors land as receipts: error branch \u2192 RETRY(dlq, once) \u2192 RECEIPT(degraded)\n4. wf-cr-9-errors is attached to every workflow at import time (make_n8n_exports.py --import)\n5. instance version is recorded in WIRING.md \u00a74 at D-1; expressions stay version-safe",
+        "height": 220,
+        "width": 420,
+        "color": 4
+      },
+      "id": "contract-note",
+      "name": "CONTRACT",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -420
+      ]
     }
   ],
   "connections": {
@@ -139,7 +168,7 @@
       "main": [
         [
           {
-            "node": "READ_TELEMETRY",
+            "node": "ONCE",
             "type": "main",
             "index": 0
           }
@@ -207,12 +236,24 @@
           }
         ]
       ]
+    },
+    "ONCE": {
+      "main": [
+        [
+          {
+            "node": "READ_TELEMETRY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
     "executionOrder": "v1",
     "saveManualExecutions": true,
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": null
   },
   "staticData": null,
   "meta": {
