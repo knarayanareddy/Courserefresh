@@ -71,6 +71,8 @@ def rebase(root: Path) -> None:
     STATE = OUT / "state"
     SNAPSHOTS = OUT / "snapshots"
     LIVE = OUT / "live"
+    if "telemetry_lib" in globals():
+        telemetry_lib.rebase(ROOT)
 THRESHOLDS = apify_lib.load_thresholds()
 SOURCES = apify_lib.load_sources()
 COHORT_NOTIFY = ("material_breaking", "material_deprecation")
@@ -538,17 +540,20 @@ def learn_phase(cfg: Config, tree: "twin.Tree") -> dict:
     telemetry_rows = read_json(STATE / "learner_consent.json", {})
     events, gates = [], []
     for lesson in lessons:
-        gate = telemetry_lib.cohort_window(lesson["lesson_id"])
+        gate = telemetry_lib.cohort_window(lesson["lesson_id"], path=telemetry_lib.storage_for(ROOT))
         gates.append(gate)
         if gate.get("state") == "measured" and gate.get("quiz_delta") is not None:
+            hours = hours_since_publish(lesson["lesson_id"], tree)
+            # the policy takes the nested `cohort` shape (the same one the fixtures and the gold set
+            # use); passing flat fields is how the live learn phase would silently never revert.
             decision = twin.policy.decide_revert({
                 "authority": "PA1", "freeze_active": tree.frozen(), "revert_gate_present": True,
-                "cohort_n": gate["n"], "window_h": gate["window_h"], "quiz_delta": gate["quiz_delta"],
-                "n_min": THRESHOLDS["revert"]["n_min"], "previous_version_available": True,
-                "stream": "revert"})
+                "previous_version_available": True, "stream": "revert",
+                "cohort": {"n": gate["n"], "quiz_delta": gate["quiz_delta"],
+                           "hours_since_publish": hours}})
+            gate["hours_since_publish"] = hours
             if decision["action"] == "REVERT":
-                events.append(twin.build_revert_event(lesson["lesson_id"], gate, decision) if hasattr(twin, "build_revert_event")
-                              else _revert_event(lesson["lesson_id"], gate))
+                events.append(_revert_event(lesson["lesson_id"], gate, decision))
     stuck = read_json(STATE / "stuck_signals.json", [])
     for signal in stuck:
         events.append(_learner_event(signal, telemetry_rows))
@@ -558,19 +563,50 @@ def learn_phase(cfg: Config, tree: "twin.Tree") -> dict:
     return {"gates": gates, "events": len(events)}
 
 
-def _revert_event(lesson_id: str, gate: dict) -> dict:
+def hours_since_publish(lesson_id: str, tree: "twin.Tree") -> float | None:
+    """Age of the newest publish for this lesson, from receipts (falling back to the CHANGELOG).
+
+    Returns None when nothing published it: the gate then reads `measurement_incomplete`, which is the
+    honest answer — a window that cannot be dated is not a window.
+    """
+    newest = None
+    for row in tree.rows():
+        artifact = row.get("artifact") or {}
+        if artifact.get("lesson_id") == lesson_id and row["decision"]["action"] == "PUBLISH":
+            newest = max(newest or row["ts"], row["ts"])
+    if newest is None:
+        changelog = ROOT / "course" / "agent-ops" / "CHANGELOG.md"
+        if changelog.exists():
+            import re as _re
+            stamps = _re.findall(rf"^## {lesson_id} v\d+ — (\S+)", changelog.read_text(), _re.M)
+            newest = max(stamps) if stamps else None
+    if newest is None:
+        return None
+    try:
+        from datetime import datetime, timezone
+        then = datetime.strptime(newest, "%Y.%m.%dT%H:%M:%SZ").replace(tzinfo=timezone.utc) \
+            if "." in newest[:10] else datetime.strptime(newest, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+    return round((datetime.now(timezone.utc) - then).total_seconds() / 3600, 2)
+
+
+def _revert_event(lesson_id: str, gate: dict, decision: dict) -> dict:
     versions = sorted((ROOT / "course" / "agent-ops" / lesson_id).glob("v*.md"))
     published = versions[-1].stem if versions else "v1"
+    hours = gate.get("hours_since_publish")
     return {"event_id": f"cr-learn-revert-{lesson_id}", "kind": "revert",
-            "summary": f"quiz_delta {gate['quiz_delta']} at n={gate['n']} after {gate['window_h']}h",
+            "summary": (f"{decision['notes'] or 'revert gate satisfied'} — quiz_delta {gate['quiz_delta']} "
+                        f"at n={gate['n']}"),
             "target": {"lesson_id": lesson_id, "published_version": published,
                        "restore_version": versions[-2].stem if len(versions) > 1 else "v1"},
+            "cohort_source": "telemetry",
             "input": {"event_id": f"cr-learn-revert-{lesson_id}", "stream": "revert", "materiality": "cosmetic",
                       "learner_impact": 0.5, "quote_supported": 1.0, "source_agreement": 1.0,
                       "sources_verified": 2, "injection_or_jailbreak": 0.0, "authority": "PA1",
                       "freeze_active": False, "revert_gate_present": True, "previous_version_available": True,
-                      "cohort_n": gate["n"], "window_h": gate["window_h"],
-                      "quiz_delta": gate["quiz_delta"], "n_min": THRESHOLDS["revert"]["n_min"]}}
+                      "cohort": {"n": gate["n"], "quiz_delta": gate["quiz_delta"],
+                                 "hours_since_publish": hours}}}
 
 
 def _learner_event(signal: dict, consent: dict) -> dict:

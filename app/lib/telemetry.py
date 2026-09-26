@@ -24,7 +24,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "app" / "lib"))
 from config import Config  # noqa: E402
 
-STORAGE = ROOT / "app" / "out" / "telemetry" / "events.jsonl"
+# One canonical location, shared by the intake server and the engine's learner gate. If these two
+# ever disagree, consent-checked events silently never reach the cohort and the gate says
+# `no_telemetry` while real learners are posting — round 3 shipped exactly that bug once.
+STORAGE = ROOT / "app" / "out" / "state" / "telemetry.jsonl"
 THRESHOLDS = json.loads((ROOT / "specs" / "courserefresh" / "skin" / "thresholds.json").read_text())
 HANDLE = re.compile(r"^learner:[0-9a-f]{8}$")
 
@@ -143,6 +146,13 @@ def rebase(root: Path) -> None:
     """Point telemetry at another tree's storage (a sandbox rehearsal, a demo)."""
     global STORAGE
     STORAGE = Path(root).resolve() / "app" / "out" / "state" / "telemetry.jsonl"
+
+
+def storage_for(root: Path | None = None) -> Path:
+    """The single place a root becomes a telemetry path (the engine and the server both call this)."""
+    if root is None:
+        return STORAGE
+    return Path(root).resolve() / "app" / "out" / "state" / "telemetry.jsonl"
 
 
 def serve(port: int | None = None, token: str | None = None, storage: Path | None = None,

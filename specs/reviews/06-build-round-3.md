@@ -54,6 +54,8 @@ the code; `Proof` names the check that now fails if it comes back. Nothing here 
 | B-15 | SRE → N8N | `--via-n8n` compared only the *action*: `ESCALATE` for a missing voice and `ESCALATE` for a hostile page would have looked like agreement | `canvas_agrees()` compares action **and** sorted reason codes; mismatch fails closed and records both decisions | `test_live_modules.py` (`canvas_agrees` + mismatch detection) |
 | B-16 | N8N → SRE | the canvas path had no defined behaviour when the webhook answered nothing usable | `canvas_decide()` returns typed failures (`not_configured`, `webhook_http_…`, `payload_invalid`); the cycle degrades to the oracle and writes `canvas.reason` into the run log | `test_live_modules.py` (unreachable canvas degrades; AC-16.2) |
 
+| B-17 | SRE → JEV | the live learn phase could **never** revert: it handed `decide_revert` flat fields (`cohort_n`, `window_h`) while the rulebook takes the nested `cohort {n, quiz_delta, hours_since_publish}` — the same shape the fixtures and the gold set use. The path looked implemented and was dead | `hours_since_publish()` measured from receipts (falling back to the CHANGELOG), the nested cohort built at the call site, and the gate's own arithmetic written onto the receipt label | `test_live_modules.py` (measured cohort + closed window ⇒ `REVERT(revert_gate_satisfied)`, restored version on disk); `--learn` on the demo |
+
 Two of these (B-01, B-05) were the kind that would have cost the hackathon run rather than the score:
 one made credentials silently inert, the other made corroboration silently wrong. Both were found by
 the seat that did **not** write the line, which is the only reason they were found before the video.
@@ -97,6 +99,6 @@ number that does not exist. **T** signed this one too; it is the seat's own roun
 | SRE | **sign** | conditions 3 and 4 |
 
 The seven seats agree on the built system the way they agreed on the spec: *the parts that can be
-proven without credentials are proven by the battery (12 stages, 158 checks), and the parts that need
+proven without credentials are proven by the battery (12 stages, 163 checks), and the parts that need
 the real world are named, gated and listed above rather than asserted.* What remains is pasting keys —
 and the preflight that will tell you, in one screen, exactly what that unlocks.

@@ -199,7 +199,7 @@ Priority: **P0** = the demo dies without it · **P1** = proves the "learns" clau
 ### US-19 (P0) — As the team, I want the wiring proven before a single key exists.
 - **AC-19.1** The live path is covered by the battery with an injected transport (no socket, no
   key): config, Apify, judge, n8n, telemetry, notify, console, plus one end-to-end dry cycle.
-  *Proof:* `python3 app/tests/test_live_modules.py` (42/42) inside `sh app/check.sh`.
+  *Proof:* `python3 app/tests/test_live_modules.py` (47/47) inside `sh app/check.sh`.
 - **AC-19.2** Live runs use *recorded* datasets/answers under `app/fixtures/` in `sim`, and the sim
   label appears on receipts, digest, console and the e2e summary. *Proof:* `test_live_modules.py`
   (`mode: **sim**` on digest + html; receipts `mode=sim`).

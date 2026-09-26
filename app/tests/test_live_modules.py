@@ -346,12 +346,79 @@ if publishes:
           "actor schema" in (SANDBOX / "course" / artifact["body_path"]).read_text(),
           artifact["body_path"])
 
+# --- 7b. the intake and the gate must read the same file (the bug this test exists for) --------
+import http.client  # noqa: E402
+from http.server import ThreadingHTTPServer as _Server  # noqa: E402
+
+telemetry_lib.rebase(SANDBOX)
+intake_path = telemetry_lib.storage_for(SANDBOX)
+intake_path.unlink(missing_ok=True)
+telemetry_lib.TelemetryHandler.storage = intake_path
+intake = _Server(("127.0.0.1", 0), telemetry_lib.TelemetryHandler)
+intake_port = intake.server_address[1]
+threading.Thread(target=intake.serve_forever, daemon=True).start()
+conn = http.client.HTTPConnection("127.0.0.1", intake_port, timeout=5)
+for i in range(6):     # ≥5 so the revert gate's n_min is met, not just the cohort floor
+    conn.request("POST", "/telemetry", json.dumps(
+        {"learner_ref": f"learner:cafe00{i:02d}", "consent": True, "lesson_id": "lesson-03-apify-inputs",
+         "version": "v3", "events": [{"kind": "quiz_delta", "correct": -0.06}]}),
+        {"Content-Type": "application/json"})
+    conn.getresponse().read()
+conn.request("POST", "/telemetry", json.dumps(
+    {"learner_ref": "learner:cafe0099", "consent": False, "lesson_id": "lesson-03-apify-inputs",
+     "events": [{"kind": "quiz_delta", "correct": -0.9}]}), {"Content-Type": "application/json"})
+refused = conn.getresponse()
+refused_code = refused.status
+refused.read()
+intake.shutdown()
+gate_from_engine_path = telemetry_lib.cohort_window("lesson-03-apify-inputs", path=telemetry_lib.storage_for(SANDBOX))
+check("events posted to the intake are the events the learner gate reads",
+      refused_code == 403 and gate_from_engine_path["n"] == 6
+      and gate_from_engine_path["quiz_delta"] == -0.06, f"n={gate_from_engine_path['n']}")
+check("the intake writes exactly where the engine looks",
+      live.STATE / "telemetry.jsonl" == telemetry_lib.storage_for(live.ROOT),
+      f"{live.STATE / 'telemetry.jsonl'}")
+
 check("the dry cycle leaves the sim labels on every evidence surface",
       "mode: **sim**" in (SANDBOX / "app" / "out" / "digest.md").read_text()
       and "sim" in (SANDBOX / "app" / "out" / "digest.html").read_text(), "labels present")
 check("a dry cycle makes no live claim and stages rather than sends",
       summary.get("delivery", {}).get("delivered", 0) == 0
       and summary.get("delivery", {}).get("staged", 0) == 0, str(summary.get("delivery")))
+
+# --- 8b. the learn phase actually reverts when the gate is genuinely satisfied -----------------
+# The gate needs a publish that is ≥48 h old; the sandbox's own receipt is minutes old, so the test
+# ages it (and says so) instead of pretending the window closed.
+receipts_path = SANDBOX / "app" / "out" / "receipts.jsonl"
+aged = set()
+for line in receipts_path.read_text().splitlines():
+    row = json.loads(line)
+    if (row.get("artifact") or {}).get("lesson_id") == "lesson-03-apify-inputs" \
+            and row["decision"]["action"] == "PUBLISH":
+        aged.add(row["receipt_id"])
+rows_back = [json.loads(l) for l in receipts_path.read_text().splitlines()]
+for row in rows_back:
+    if row["receipt_id"] in aged:
+        row["ts"] = "2026-09-20T00:00:00Z"          # six days old: the 48 h window has closed
+receipts_path.write_text("\n".join(json.dumps(r, sort_keys=True) for r in rows_back) + "\n")
+
+live.rebase(SANDBOX)
+learn = live.learn_phase(Config({"CR_MODE": "sim"}), live.tree_for("sim"))
+reverts = [json.loads(l) for l in receipts_path.read_text().splitlines()
+           if json.loads(l)["decision"]["action"] == "REVERT"]
+check("a measured cohort with a closed window makes the live learn phase revert",
+      learn["events"] >= 1 and bool(reverts), f"events={learn['events']} reverts={len(reverts)}")
+if reverts:
+    check("the revert restores the named version and records the gate's arithmetic",
+          reverts[-1]["decision"]["reason_codes"] == ["revert_gate_satisfied"]
+          and "quiz_delta" in reverts[-1].get("label", "")
+          and reverts[-1]["cohort_source"] == "fixture (simulated)"      # sim mode must say so
+          and (SANDBOX / "course" / (reverts[-1]["artifact"].get("body_path") or "x")).exists(),
+          str(reverts[-1].get("label"))[:90])
+gate_after = [g for g in learn["gates"] if g["lesson_id"] == "lesson-03-apify-inputs"][0]
+check("the gate reports the publish's age it measured, not a configured assumption",
+      isinstance(gate_after.get("hours_since_publish"), float)
+      and gate_after["hours_since_publish"] > 48, str(gate_after.get("hours_since_publish")))
 
 ledger_rows = (SANDBOX / "app" / "out" / "state" / "apify_units.jsonl").read_text()
 check("the cycle accounted its Apify units with a declared source of truth",
