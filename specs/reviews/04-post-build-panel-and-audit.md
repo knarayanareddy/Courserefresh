@@ -75,7 +75,8 @@ test_design: 5/5 checks passed
 ALL GREEN
 ```
 
-`92 PASS · exit 0`. Archived at `app/out/evidence/battery.txt`.
+`92 PASS · exit 0`. Archived at `app/out/evidence/battery.log` (the file is overwritten by every
+battery run, so the number here is the panel's own run, not a claim about the current one).
 
 ### 3.2 Decision eval (`policy.py --eval specs/courserefresh/skin/gold.jsonl`)
 

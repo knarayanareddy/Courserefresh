@@ -107,7 +107,8 @@
     "publish": [
       "material_breaking",
       "material_deprecation",
-      "material_new_capability"
+      "material_new_capability",
+      "human_signoff"
     ]
   },
   "rule_order": [

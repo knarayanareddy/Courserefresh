@@ -36,7 +36,8 @@ sys.path.insert(0, str(SKIN))
 import policy  # noqa: E402  (the oracle — same rules as the n8n node)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib.guard import host_allowed, safe_course_path, within_size_cap  # noqa: E402
+from lib import rulings  # noqa: E402  (D-32: an author ruling that still describes the world decides)
+from lib.guard import bootstrap_course, host_allowed, safe_course_path, within_size_cap  # noqa: E402
 
 THRESHOLDS = policy.THRESHOLDS
 MODES = policy.TAXONOMY["modes"]
@@ -235,7 +236,10 @@ def revert_version(tree: Tree, event: dict, run: str) -> dict | None:
         fh.write(f"\n## {target['lesson_id']} {fm['version']} — {now()}\nREVERT to {target['restore_version']}: {event['summary']}\n"
                  f"- diff: {lesson_dir.name}/diffs/v{n+1}.diff\n")
     update_readme(tree, target["lesson_id"], fm["version"])
-    return {"lesson_id": target["lesson_id"], "previous_version": target["published_version"],
+    # `previous_version` is the head this revert moves *from*; the version whose change is being
+    # undone is named separately (`revert_of`), so the receipt reads "v6 → v7, reverting v4".
+    return {"lesson_id": target["lesson_id"], "previous_version": f"v{n}",
+            "revert_of": target["published_version"], "restore_version": target["restore_version"],
             "new_version": fm["version"], "body_path": str(new_path.relative_to(tree.root)),
             "diff_path": str((lesson_dir / 'diffs' / f'v{n+1}.diff').relative_to(tree.root)),
             "payload_hash": sha(new_text), "diff_hash": sha(diff)}
@@ -337,6 +341,28 @@ def dispatch_micro_lesson(tree: Tree, event: dict, run: str) -> dict:
 
 # --- the loop ------------------------------------------------------------------------------------
 
+def decide_for_event(event: dict, inp: dict, author: dict | None = None) -> tuple[dict, str]:
+    """Who decides this event: the author, else the canvas when it answered and agreed, else the oracle.
+
+    Precedence is `human > canvas > oracle` (D-32, AC-16.1). `author` is the plan `rulings.plan()`
+    produced for this event — already checked against the evidence fingerprint and against the
+    machine's current verdict — and it is re-validated here against the closed sets like any other
+    override, so a hand-edited `author_decisions.jsonl` cannot make the loop emit a value the rulebook
+    could not. The oracle's verdict stays on the receipt either way: what a human overruled is visible
+    to whoever audits the chain.
+    """
+    override = (author or {}).get("override") or event.get("decision_override")
+    if isinstance(override, dict):
+        actions = set(policy.TAXONOMY["change_actions"]) | set(policy.TAXONOMY["learner_actions"])
+        action, reasons = override.get("action"), override.get("reason_codes") or []
+        if action in actions and reasons and all(r in policy.REASON_CODES for r in reasons):
+            planned_by = "human:author" if (author or {}).get("override") else "canvas"
+            return ({"action": action, "reason_codes": list(reasons),
+                     "authority": override.get("authority") or inp.get("authority", "PA0"),
+                     "notes": override.get("notes", "")}, planned_by)
+    return policy.decide(inp), "oracle"
+
+
 def event_input(event: dict, tree: Tree, publishes_used: int) -> dict:
     inp = json.loads(json.dumps(event["input"]))
     inp["freeze_active"] = tree.frozen()
@@ -349,22 +375,47 @@ def event_input(event: dict, tree: Tree, publishes_used: int) -> dict:
     return inp
 
 
-def run(tree: Tree, events: list[dict], label: str = "") -> dict:
+def run(tree: Tree, events: list[dict], label: str = "", extra: dict | None = None) -> dict:
     run = run_id()
     decisions: dict[str, int] = {}
     artifacts: list[dict] = []
     publishes_used = 0
     seen = tree.seen()
+    # D-32: author rulings that still describe the world are the decision of record. Read once per
+    # run from this tree's own state, so a rehearsal root never inherits the repo's rulings.
+    ruling_rows = rulings.load(tree.out / "state" / "author_decisions.jsonl")
+    rulings_seen: list[dict] = []
+    pending_cap = int(THRESHOLDS.get("review", {}).get("pending_cap", rulings.PENDING_DEFAULT_CAP))
+    # A refused-but-approvable delta an author has since approved comes back for decision now: the
+    # evidence has not changed (or the ruling would be stale), so this is the same question with a
+    # person's answer on it. Replayed events bypass the seen-dedupe on purpose — that is the point.
+    withheld = rulings.load_pending(tree.out, pending_cap)
+    replays = {row["event_id"]: row for row in rulings.replays(withheld, ruling_rows)}
+    if replays:
+        # a delta that is also in this cycle's event list is *replaced* by its replay: the patch has
+        # to survive, and the dedupe must not swallow the question a person already answered
+        events = [replays.pop(e["event_id"], e) for e in events] + list(replays.values())
+    decided_by_author: list[str] = []
     for event in events:
         key = event["event_id"]
-        if event["kind"] == "change" and key in seen:
+        if event["kind"] == "change" and key in seen and not event.get("ruling_replay"):
             continue
         if tree.chaos == "write-fail" and event.get("patch"):
             event = json.loads(json.dumps(event))
             event["patch"]["find"] = "text that is not in the lesson (chaos rehearsal)"
             tree.chaos = None      # one failed write per run, then normal service
         inp = event_input(event, tree, publishes_used)
-        out = policy.decide(inp)
+        ruling = rulings.for_event(ruling_rows, event["event_id"])
+        author = rulings.plan(ruling, event, inp, policy.decide(inp))
+        if author["status"] != "unknown":
+            event["author_ruling"] = author["record"]
+            event["author_ruling_status"] = author["status"]
+            rulings_seen.append({**author["record"], "event_id": event["event_id"],
+                                 "status": author["status"]})
+            if author["status"] == "applied":
+                event["author_approved"] = True
+                decided_by_author.append(event["event_id"])
+        out, decided_by = decide_for_event(event, inp, author)
         record = None
         if out["action"] == "PUBLISH" and event["kind"] == "change":
             record = apply_patch(tree, event, out, run)
@@ -389,6 +440,8 @@ def run(tree: Tree, events: list[dict], label: str = "") -> dict:
         elif out["action"] == "DISPATCH":
             record = dispatch_micro_lesson(tree, event, run)
         decisions[out["action"]] = decisions.get(out["action"], 0) + 1
+        # a refusal a person could lift is kept (patch and all) until a person lifts it or rejects it
+        rulings.remember(tree.out, event, out, pending_cap)
         if event["kind"] == "change":
             tree.mark_seen(key)
         cohort_label = None
@@ -400,11 +453,24 @@ def run(tree: Tree, events: list[dict], label: str = "") -> dict:
             "event_id": key, "mode": tree.mode, "stream": event["kind"],
             "sources": event.get("sources", []), "quotes": event.get("quotes", []),
             "judge": {"model": "fixture-judge", "answers": {"q1_materiality": inp["materiality"]}},
-            "decision": {"action": out["action"], "reason_codes": out["reason_codes"], "authority": out["authority"]},
+            "decision": {"action": out["action"], "reason_codes": out["reason_codes"],
+                         "authority": out["authority"], "decided_by": decided_by},
+            # the inputs the decision was actually made from. Without them a reader can see the
+            # verdict but not reproduce it, and the Teacher/Author canvas would have to guess which
+            # numbers the rulebook read — the opposite of Art. VI.
+            "inputs": {k: v for k, v in inp.items() if k in (
+                "materiality", "learner_impact", "breaking_probability", "source_agreement",
+                "quote_supported", "injection_or_jailbreak", "sources_verified", "authority",
+                "freeze_active", "stream", "event_id", "stuck", "concept", "grade_impacting",
+                "consent", "concept_recently_dispatched", "caps")},
             "artifact": record,
             "cost": {"tokens": 0, "apify_units": 0, "eur": None,
                      "cost_state": "unmeasured (no vendor prices captured)"},
-            "actor": "system", "label": event.get("summary", "")[:160],
+            **({"author_ruling": event["author_ruling"],
+                "author_ruling_status": event["author_ruling_status"]}
+               if event.get("author_ruling_status") else {}),
+            "actor": "human:author" if event.get("author_approved") else "system",
+            "label": event.get("summary", "")[:160],
             **({"canvas": event["canvas"]} if event.get("canvas") else {}),
         }
         tree.append_receipt(row)
@@ -412,13 +478,22 @@ def run(tree: Tree, events: list[dict], label: str = "") -> dict:
             update_changelog_receipt(tree, row["artifact"]["lesson_id"], row["artifact"]["new_version"], row["receipt_id"])
         if record:
             artifacts.append(record)
+    # a delta a person has ruled on is decided; it does not need to wait in the queue any more
+    resolved = rulings.resolve(tree.out, decided_by_author, pending_cap)
     ok, n = tree.verify_chain()
     log = {"run_id": run, "mode": tree.mode, "started_at": now(), "ended_at": now(),
            "label": label, "sources_scanned": sum(len(e.get("sources", [])) for e in events),
            "deltas": sum(1 for e in events if e["kind"] == "change"),
            "decisions": decisions, "publishes_used": publishes_used,
            "receipts": len(tree.rows()), "chain_verified_at_end": ok, "chain_rows": n,
-           "freeze_at_end": tree.frozen()}
+           "freeze_at_end": tree.frozen(),
+           **({"author_rulings": rulings_seen} if rulings_seen else {}),
+           "withheld_deltas": len(rulings.load_pending(tree.out, pending_cap)),
+           **({"rulings_applied": len(decided_by_author), "withheld_resolved": resolved}
+              if decided_by_author or resolved else {}),
+           # the caller's context (discovery gaps, the canvas' confidence routing): the digest is the
+           # report, so anything worth a human's attention has to be in it at render time, not after
+           **(extra or {})}
     with tree.run_log_path.open("a") as fh:
         fh.write(json.dumps(log, sort_keys=True) + "\n")
     tree.digest_path.write_text(render_digest(tree, log))
@@ -441,16 +516,20 @@ def render_digest(tree: Tree, log: dict) -> str:
     lines += ["", "## 2. What changed"]
     changed = [r for r in rows if r["decision"]["action"] in ("PUBLISH", "REVERT")]
     downstream: set[str] = set()
+    rewritten: set[str] = set()
     for r in changed:
         a = r["artifact"] or {}
+        if a.get("lesson_id"):
+            rewritten.add(a["lesson_id"])
         quiz = f" · quiz {a['quiz_item']} regenerated" if a.get("quiz_path") else ""
         lines.append(f"- {r['decision']['action']} `{a.get('lesson_id')}` {a.get('previous_version')} → {a.get('new_version')} · {a.get('diff_path', '')}{quiz}")
         if r["decision"]["action"] == "PUBLISH":
             downstream.update(downstream_lessons(a.get("lesson_id", "")))
     if not changed:
         lines.append("- nothing")
-    if downstream:
-        lines.append(f"- downstream to revisit (not rewritten tonight): {', '.join(sorted(downstream))}")
+    revisit = sorted(downstream - rewritten)
+    if revisit:
+        lines.append(f"- downstream to revisit (not rewritten tonight): {', '.join(revisit)}")
     lines += ["", "## 3. Learners"]
     dispatches = [r for r in rows if r["decision"]["action"] == "DISPATCH"]
     consent_blocked = [r for r in rows if "consent_missing" in r["decision"]["reason_codes"]]
@@ -465,6 +544,33 @@ def render_digest(tree: Tree, log: dict) -> str:
         lines.append(f"- notifications held by cap: {skipped} (Art. XIV.2)")
     lines.append(f"- blocked for missing consent: {len(consent_blocked)}")
     lines.append("- cohort quiz delta: unmeasured (sim run: no consented live cohort)")
+    # the Teacher/Author canvas' queue: rows where the decision is arguable, or where the rulebook
+    # needs something a person has. Named here so nobody has to remember to open the canvas.
+    for ruling in (log.get("author_rulings") or []):
+        verdict = {"applied": "applied — the ruling decided this event",
+                   "stale": "ignored — the evidence changed after the ruling",
+                   "superseded": "ignored — the machine's verdict changed since the ruling",
+                   "not_approvable": "refused — this refusal is not a judgement call"}.get(
+                       ruling["status"], ruling["status"])
+        lines.append(f"- author ruling {ruling['receipt_id']} ({ruling['ruling']}, "
+                     f"{ruling.get('reason_code')}): {verdict}")
+    from lib.canvas import review_queue  # noqa: E402  (imported lazily: the digest is the hot path)
+    queue = review_queue(tree.receipts_path, tree.root)
+    if queue:
+        lines.append(f"- decisions wanting a human ({len(queue)}): "
+                     + "; ".join(f"{q['receipt_id']} {q['action']} — {q['why'][0] if q['why'] else 'review'}"
+                                 for q in queue[:3])
+                     + " → app/out/canvas.html")
+    # Discovery (Tavily) is a lead generator, never a voice. Its output belongs to a human's queue,
+    # not to the decision log, so it is reported here and nowhere in the counts above (Art. III).
+    scan_state_path = tree.out / "state" / "scan_state.json"
+    gaps = (log.get("source_gaps")
+            if log.get("source_gaps") is not None
+            else (json.loads(scan_state_path.read_text()).get("source_gaps") or [])
+            if scan_state_path.exists() else [])
+    if gaps:
+        lines.append(f"- source gaps found by discovery ({len(gaps)}, not counted as voices): "
+                     + ", ".join(g["url"] for g in gaps[:3]))
     lines += ["", "## 4. Discipline"]
     used: dict[str, int] = {}
     for r in rows:
@@ -652,6 +758,10 @@ def main() -> int:
     if args.selftest:
         return selftest()
     root = (Path(args.root) if args.root else ROOT).resolve()
+    if args.root:
+        note = bootstrap_course(root, ROOT / "course")
+        if note:
+            print(note)
     tree = Tree(root / "course" if (root / "course").exists() else root, root / "app" / "out",
                 mode=args.mode, chaos=args.chaos)
     if args.pause:

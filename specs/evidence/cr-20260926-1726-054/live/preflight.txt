@@ -1,0 +1,11 @@
+mode: sim
+  runtime  wired
+  apify    missing ['APIFY_TOKEN']
+  judge    missing ['CR_JUDGE_API_KEY']
+  n8n      missing ['N8N_BASE_URL', 'N8N_API_KEY']
+  notify   wired
+  claim blocked  apify powers the system
+  claim blocked  n8n runs the decisions
+  claim blocked  live model calls
+  claim blocked  learner cards delivered
+live needs: apify:APIFY_TOKEN, judge:CR_JUDGE_API_KEY

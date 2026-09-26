@@ -28,7 +28,7 @@ criterion → evidence → sentence mapping).
 
 | | |
 |---|---|
-| Battery | `sh app/check.sh` → **179 PASS · 13 stages · `ALL GREEN` · exit 0**, **with zero credentials** |
+| Battery | `sh app/check.sh` → **288 PASS (13 measured stages + the 32-check claims audit) · `ALL GREEN` · exit 0**, **with zero credentials** |
 | Live path | Built and exercised end-to-end through injected transports (47/47, `test_live_modules.py`); **never called a real API** — that is deliberate |
 | Blocking input | **keys only.** `python3 app/run_live.py --preflight` prints exactly what is missing, by name |
 | Round status | Rounds 1–3 (package → panel → specialist debate → peer-supervised build) are complete and recorded in `specs/reviews/01…06` |
@@ -43,7 +43,7 @@ single credential.*
 ### Step 0 — prove the wiring before any key (2 min)
 
 ```bash
-sh app/check.sh                       # expect: ALL GREEN (179 PASS, 13 stages), no network, no keys
+sh app/check.sh                       # expect: ALL GREEN (288 PASS: 13 measured stages + the claims audit), no network, no keys
 python3 app/run_live.py --preflight   # expect: mode: sim, apify/judge/n8n "missing", 4 claims blocked
 ```
 
@@ -56,8 +56,10 @@ cp .env.example .env                  # .env is gitignored; the file is the chec
 The authoritative table (where each value comes from, what it unlocks, what happens without it) is
 `specs/courserefresh/SETUP.md` §2. Minimum set for "live": `APIFY_TOKEN` (Apify console → Settings →
 Integrations), `N8N_BASE_URL` + `N8N_API_KEY` (n8n → Settings → API), `CR_JUDGE_PROVIDER` /
-`CR_JUDGE_BASE_URL` / `CR_JUDGE_API_KEY` / `CR_JUDGE_MODEL` (any OpenAI-compatible endpoint, including
-a "jev"-style one), `CR_NOTIFY_CHANNEL` + `CR_TELEGRAM_BOT_TOKEN`/`CR_TELEGRAM_CHAT_ID` (or
+`CR_JUDGE_BASE_URL` / `CR_JUDGE_API_KEY` / `CR_JUDGE_MODEL` (any OpenAI-compatible endpoint; the typed-decision
+provider is its own switch — `CR_JUDGE_PROVIDER=jev` + `CR_JEV_BASE_URL`/`CR_JEV_API_KEY`/`CR_JEV_MODEL`),
+`TAVILY_API_KEY` (the second discovery source; optional if Apify alone is enough),
+`CR_NOTIFY_CHANNEL` + `CR_TELEGRAM_BOT_TOKEN`/`CR_TELEGRAM_CHAT_ID` (or
 `CR_NOTIFY_WEBHOOK_URL`). `CR_COMMIT=1` turns artifacts into commits on `CR_BOT_BRANCH`
 (`bot/courserefresh`). Optional: `CR_DEMO_TOKEN`, `CR_TELEMETRY_TOKEN`, `CR_CONSOLE_TOKEN`,
 `N8N_INSTANCE_VERSION`.
@@ -124,7 +126,7 @@ Then the paperwork — it is part of the build, not an afterthought:
 4. `tasks.md` — T10/T11/T12/T13/T15/T16/T17 move from `[~]`/`[!]` when the artifact exists; T09/T25/T26 are human.
 5. `AMENDMENTS.md` — one row per change; a finding is `open` until its output is pasted.
 6. `sh app/check.sh` again (the counts will not move unless files changed — if they do, sweep **all**
-   occurrences, including backticked ones: `179 PASS`, `13 stages`, `59 rows + 2 probes`, per-suite numbers).
+   occurrences, including backticked ones: `288 PASS`, `13 stages + audit`, `59 rows + 2 probes`, per-suite numbers).
 7. Commit on this branch and push (`git push origin arena/01a0ddea-courserefresh`).
 
 ### Step 7 — film
@@ -137,16 +139,23 @@ received a card) and **`sim`** (no live Apify/n8n execution). The console header
 
 - **Spec corpus**: `specs/constitution.md` (16 articles), `shared/{harness,data-model,interfaces,eval}.md`,
   `security/threat-model.md` (TM01–TM18), `design/MASTER.md` (paper-and-ink lockfile),
-  `courserefresh/spec.md` (US-1…US-19, 57 ACs) → `plan.md` → `tasks.md` → `BUILD.md` → `TRACEABILITY.md`
+  `courserefresh/spec.md` (US-1…US-19, 59 ACs) → `plan.md` → `tasks.md` → `BUILD.md` → `TRACEABILITY.md`
   (every AC → the command that proves it) → `JUDGING-MAP.md`; kickoff pre-registration docs; six reviews.
 - **Policy**: `specs/courserefresh/skin/policy.py` (oracle) ≡ `app/n8n/policy_node.js` (production);
   `node app/tests/test_gate_parity.py` → PASS over 59 gold rows + 2 named probes. Gold is `gold-v0.3`,
   n=59, frozen (`app/out/eval/gold-v0.3/report.txt`: action/reason 1.000, hostile→publish 0,
   unsupported→publish 0).
 - **Offline twin**: `app/run_walking_skeleton.py` (writes real artifacts into `course/**`), frozen hero
-  run `cr-20260926-1421-001` (19 files), witnessed-failure run `cr-20260926-1420-924`.
-- **Live engine**: `app/run_live.py` + `app/lib/{config,apify,judge,n8n,notify,telemetry,console}.py`,
-  `app/tools/make_apify_fixtures.py`; round-3 rehearsal `cr-20260926-1441-130` (14 files).
+  run shipped in `specs/evidence/` (19 files, hashed); witnessed-failure run `cr-20260926-1420-924`
+  regenerates locally.
+- **The author's round (D-32)**: refusals a person could lift are kept as *withheld deltas*
+  (`app/out/state/pending.jsonl`) and the canvas at `GET /canvas` is where a teacher approves or
+  rejects them. A ruling binds the next cycle (`authority: PA3`, `decided_by: human:author`,
+  `human_signoff`) and expires when the evidence it was made about changes — see `OPERATIONS.md` §9b
+  for the runbook and `specs/reviews/07` for the panel that demanded it.
+- **Live engine**: `app/run_live.py` + `app/lib/{config,apify,judge,n8n,notify,telemetry,console,jev,tavily,rulings,canvas}.py`,
+  `app/tools/make_apify_fixtures.py`; the dry cycle is shipped as `specs/evidence/cr-20260926-1726-054/`
+  (20 files: receipts, digest, the preflight transcript that names what the missing keys block).
 - **n8n**: 6 exports with the rulebook embedded byte-for-byte, an execute-once `ONCE` guard after every
   trigger, contract sticky notes, `wf-cr-9-errors` attached to all five, `--import` upserts in place.
 - **Surfaces**: read-only console (+ gated pause/resume), telemetry intake, digest, learner card,
@@ -195,7 +204,7 @@ received a card) and **`sim`** (no live Apify/n8n execution). The console header
 ## 7. Traps distilled (from the build's own error log)
 
 - **Count sweeps**: after a battery change, grep *every* count reference (backticks get missed).
-  Current: 179 PASS · 13 stages · contracts 14/14 · live modules 47/47 · handoff 15/15 · live selftest
+  Current: 288 PASS (13 stages + 32 audit checks) · contracts 16/16 · live modules 47/47 · handoff 15/15 · live selftest
   12/12 · skeleton selftest 14/14 · policy 18/18 · threats 18/18 · artifacts 8/8 · curriculum 8/8 ·
   gold floor 8/8 · claims 3/3 · hygiene 7/7 · design 6/6 · parity 59 rows + 2 probes.
 - **Hygiene**: no wall-clock dates outside `kickoff/PREREGISTRATION.md` (use `D-0`); no email-shaped

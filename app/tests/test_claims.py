@@ -81,6 +81,33 @@ for line in rows:
         bad.append(cells[1].strip())
 check("measured rows name artifact and command", not bad, f"rows missing evidence: {bad}")
 
+# --- the shipped bundles: a frozen run is a claim, so it is checked like one ----------------------
+# A bundle whose manifest was written before its README advertises a hash list that misses a file;
+# a digest that knows about the human queue but does not say so silos the canvas. Both were real.
+import hashlib                                                        # noqa: E402
+import sys as _sys                                                    # noqa: E402
+_sys.path.insert(0, str(ROOT / "app"))                                # noqa: E402
+from lib.canvas import review_queue                                   # noqa: E402
+
+bundles = sorted((ROOT / "specs" / "evidence").glob("cr-*"))
+unhashed, unqueued = [], []
+for bundle in bundles:
+    manifest = (bundle / "MANIFEST.sha256").read_text()
+    listed = {line.split("  ", 1)[1] for line in manifest.splitlines() if "  " in line}
+    present = {str(f.relative_to(bundle)) for f in bundle.rglob("*")
+               if f.is_file() and f.name != "MANIFEST.sha256"}
+    if listed != present:
+        unhashed.append(f"{bundle.name}: manifest lists {sorted(listed - present)} as re-hashes "
+                        f"and misses {sorted(present - listed)}")
+    queue = review_queue(bundle / "receipts.jsonl", bundle)
+    digest = (bundle / "digest.md").read_text()
+    if queue and f"wanting a human ({len(queue)})" not in digest:
+        unqueued.append(f"{bundle.name}: canvas wants {len(queue)} row(s), the digest names none")
+check("every shipped bundle hashes every file it ships (README included)",
+      not unhashed, "; ".join(unhashed[:3]))
+check("a shipped digest names the human queue the canvas would show",
+      not unqueued, "; ".join(unqueued[:3]))
+
 passed = sum(1 for _, ok, _ in CHECKS if ok)
 width = max(len(c[0]) for c in CHECKS)
 for name, ok, detail in CHECKS:

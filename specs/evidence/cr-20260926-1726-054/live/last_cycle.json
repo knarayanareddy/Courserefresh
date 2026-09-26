@@ -1,0 +1,172 @@
+{
+  "canvas": [],
+  "deferred_publishes": [],
+  "events": [
+    {
+      "decision_input": {
+        "assessment_touched": false,
+        "authority": "PA2",
+        "budgets": {
+          "publishes_used": 0,
+          "tokens_used": 489
+        },
+        "diff_lines": 0,
+        "event_id": "cr-n8n-068a1ed5ec",
+        "freeze_active": false,
+        "injection_or_jailbreak": 0.0,
+        "learner_impact": 0.82,
+        "lesson_touched": "lesson-04-tool-permissions",
+        "materiality": "material_breaking",
+        "previous_version_available": true,
+        "q3_breaking_probability": 0.74,
+        "q7_lesson_touched": "lesson-04",
+        "quote_supported": 0.95,
+        "revert_gate_present": true,
+        "source_agreement": 0.9,
+        "sources": [
+          {
+            "actor_run_id": "rec-n8n-releases-01",
+            "content_hash": "sha256:f26f61569e5d40164937ef706f43cbeebd3fb31099849a9411ab76cb10c46597",
+            "fixture_key": "n8n-rename",
+            "independence_group": "n8n-vendor",
+            "markdown": "n8n 1.85 renamed `tool_permissions` to `permissions.mode`; the old key is removed in 1.86. Update any settings block you copied from the earlier lessons.",
+            "published_at": "2026-09-25T09:10:00Z",
+            "publisher": "n8n",
+            "raw_path": "app/out/e8/app/out/snapshots/n8n-releases-f26f61569e5d4016.md",
+            "role": "authoritative",
+            "source_id": "n8n-releases",
+            "status": 200,
+            "title": "n8n 1.85 release notes",
+            "url": "https://github.com/n8n-io/n8n/releases"
+          },
+          {
+            "actor_run_id": "rec-n8n-docs-01",
+            "content_hash": "sha256:f26f61569e5d40164937ef706f43cbeebd3fb31099849a9411ab76cb10c46597",
+            "fixture_key": "n8n-docs-rename",
+            "independence_group": "n8n-vendor",
+            "markdown": "n8n 1.85 renamed `tool_permissions` to `permissions.mode`; the old key is removed in 1.86. Update any settings block you copied from the earlier lessons.",
+            "published_at": "2026-09-25T10:02:00Z",
+            "publisher": "n8n",
+            "raw_path": "app/out/e8/app/out/snapshots/n8n-docs-f26f61569e5d4016.md",
+            "role": "authoritative",
+            "source_id": "n8n-docs",
+            "status": 200,
+            "title": "Workflow settings",
+            "url": "https://docs.n8n.io/"
+          }
+        ],
+        "sources_verified": 1,
+        "stream": "change"
+      },
+      "event_id": "cr-n8n-068a1ed5ec",
+      "sources": [
+        {
+          "publisher": "n8n",
+          "role": "authoritative",
+          "source_id": "n8n-releases",
+          "url": "https://github.com/n8n-io/n8n/releases"
+        },
+        {
+          "publisher": "n8n",
+          "role": "authoritative",
+          "source_id": "n8n-docs",
+          "url": "https://docs.n8n.io/"
+        }
+      ]
+    },
+    {
+      "decision_input": {
+        "assessment_touched": false,
+        "authority": "PA2",
+        "budgets": {
+          "publishes_used": 0,
+          "tokens_used": 1009
+        },
+        "diff_lines": 0,
+        "event_id": "cr-apify-n8n-5ede71b47d",
+        "freeze_active": false,
+        "injection_or_jailbreak": 0.0,
+        "learner_impact": 0.66,
+        "lesson_touched": "lesson-03-apify-inputs",
+        "materiality": "material_new_capability",
+        "previous_version_available": true,
+        "q3_breaking_probability": 0.2,
+        "q7_lesson_touched": "lesson-03",
+        "quote_supported": 0.92,
+        "revert_gate_present": true,
+        "source_agreement": 0.85,
+        "sources": [
+          {
+            "actor_run_id": "rec-n8n-releases-01",
+            "content_hash": "sha256:cb79fa2422749ebc1ec06b7902bfd6c8280552306f135f0d97dd87bb9213e086",
+            "fixture_key": "n8n-apify-node",
+            "independence_group": "n8n-vendor",
+            "markdown": "The Apify node passes actor inputs through validation against the actor schema before the run starts, so a malformed input fails before compute is spent.",
+            "published_at": "2026-09-25T09:10:00Z",
+            "publisher": "n8n",
+            "raw_path": "app/out/e8/app/out/snapshots/n8n-releases-cb79fa2422749ebc.md",
+            "role": "authoritative",
+            "source_id": "n8n-releases",
+            "status": 200,
+            "title": "Apify node: schema validation",
+            "url": "https://github.com/n8n-io/n8n/releases"
+          },
+          {
+            "actor_run_id": "rec-apify-changelog-01",
+            "content_hash": "sha256:0374601a3ed6d33e0bd9660c2833b443a22d9d6f405d1995443e24951ea4faff",
+            "fixture_key": "apify-schema",
+            "independence_group": "apify-vendor",
+            "markdown": "Actor runs now validate inputs against the actor schema before the run starts; runs that fail validation do not consume compute. No input changes are required for correctly typed actors.",
+            "published_at": "2026-09-25T08:40:00Z",
+            "publisher": "apify",
+            "raw_path": "app/out/e8/app/out/snapshots/apify-changelog-0374601a3ed6d33e.md",
+            "role": "authoritative",
+            "source_id": "apify-changelog",
+            "status": 200,
+            "title": "Input validation before the run",
+            "url": "https://apify.com/changelog"
+          }
+        ],
+        "sources_verified": 2,
+        "stream": "change"
+      },
+      "event_id": "cr-apify-n8n-5ede71b47d",
+      "sources": [
+        {
+          "publisher": "n8n",
+          "role": "authoritative",
+          "source_id": "n8n-releases",
+          "url": "https://github.com/n8n-io/n8n/releases"
+        },
+        {
+          "publisher": "apify",
+          "role": "authoritative",
+          "source_id": "apify-changelog",
+          "url": "https://apify.com/changelog"
+        }
+      ]
+    }
+  ],
+  "judge": [
+    {
+      "event_id": "cr-n8n-068a1ed5ec",
+      "model": "gpt-4o-mini",
+      "ok": true,
+      "prompt_hash": "sha256:4a65f104732e5cb376422fc8a3424fb0d5273a232cede71424d6f03d38490ff4",
+      "provider": "mock",
+      "reason_codes": [],
+      "tokens": 489
+    },
+    {
+      "event_id": "cr-apify-n8n-5ede71b47d",
+      "model": "gpt-4o-mini",
+      "ok": true,
+      "prompt_hash": "sha256:769c75f20b45cadc39718501665176abefa6f76e76a6eda7b120197be1da6391",
+      "provider": "mock",
+      "reason_codes": [],
+      "tokens": 520
+    }
+  ],
+  "mode": "sim",
+  "run_id": "cr-20260926-1726-054"
+}

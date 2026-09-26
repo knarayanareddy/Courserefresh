@@ -111,6 +111,27 @@ Exit codes are the contract: `0` clean · `1` cycle failed · `2` preflight bloc
 `CR_BOT_BRANCH` (default `bot/courserefresh`); the engine refuses to commit on any other branch, so it
 can never rewrite `main`.
 
+## 9b. Reviewing what the loop refused (the author's round)
+
+The digest ends with `decisions wanting a human (n)` and the canvas at `GET /canvas` is where the
+ruling happens. Open it with the token (`/canvas?token=$CR_CONSOLE_TOKEN`), read the row — the diff,
+the sources with the "is this a voice?" column, the plain-language reason, and how close the decision
+was to turning over — then Approve or Reject with a reason code from the closed set.
+
+* **Approve** is offered only where it can work: an evidence-class refusal
+  (`insufficient_corroboration`, `source_conflict`) whose withheld delta still carries a proposed
+  change. A conflict with no proposed text can only be closed; the page says so instead of returning
+  an error. A safety, consent or budget refusal is never approvable from the console (D-32).
+* The ruling is **bound to the evidence**: it is stored with a fingerprint of the inputs, sources and
+  quotes it was made about, and the next cycle publishes it (`authority: PA3`,
+  `decided_by: human:author`, reason `human_signoff`) only while that fingerprint still matches. New
+  evidence → the ruling is stale, the row is back in the queue, and both the page and the receipt say
+  why. Re-run it any time; a ruling is a decision, not a setting.
+* **Reject** closes the delta with your reason code; it will not be re-raised while the evidence is
+  unchanged.
+* Every ruling is a row in the same receipt chain (`op-author-approve` / `op-author-reject`) and is
+  listed in the next digest, so a human's call is auditable exactly like the machine's.
+
 ## 10. Canvas parity, in operation
 
 - At least one watched cycle a day should run with `--via-n8n`, so the receipts show a canvas

@@ -71,14 +71,22 @@ def _decision(action: str, reasons: list[str], authority: str, notes: str = "") 
 def independent_publishers(sources) -> int | None:
     """Count distinct *voices* in the source list (constitution Art. III.1).
 
-    Two pages from one vendor are one voice. A source whose declared role is "none" (a mirror, a
-    re-post, a scraper of the same upstream) is recorded on the receipt and never counted
-    (review 05, AP-01). Returns None when the list is absent (older rows keep the legacy count).
+    Two pages from one vendor are one voice. A source whose role is listed in
+    `thresholds.evidence.discovery_roles` is recorded on the receipt and never counted:
+
+      * "none"      — a mirror, a re-post, a scraper of the same upstream (review 05, AP-01);
+      * "discovery" — a search hit (Tavily) whose page has not been fetched from its own publisher
+                      yet. One search engine returning three pages is one voice, not three, so a lead
+                      can be quoted but can never be the second independent publisher the evidence
+                      rule needs (Art. III).
+
+    Returns None when the list is absent (older rows keep the legacy count).
     """
     if not isinstance(sources, list) or not sources:
         return None
+    quiet = set(EVIDENCE.get("discovery_roles", ["none"]))
     voices = {str(s.get("publisher") or s.get("source_id") or "?").lower()
-              for s in sources if isinstance(s, dict) and s.get("role") != "none"}
+              for s in sources if isinstance(s, dict) and s.get("role") not in quiet}
     return len(voices)
 
 
@@ -135,10 +143,13 @@ def decide_change(inp: dict) -> dict:
                          "SEEDED REHEARSAL — not a vendor release")
     publishers = independent_publishers(inp.get("sources"))
     if publishers is not None and publishers < EVIDENCE["min_sources"]:
-        mirrors = sum(1 for s in inp.get("sources") or [] if isinstance(s, dict) and s.get("role") == "none")
+        quiet = set(EVIDENCE.get("discovery_roles", ["none"]))
+        sources = len(inp.get("sources") or [])
+        mirrors = sum(1 for s in inp.get("sources") or []
+                      if isinstance(s, dict) and s.get("role") in quiet)
         note = f"{publishers} independent voice(s) in {sources} source(s)"
         if mirrors:
-            note += f" ({mirrors} mirror/re-post source(s) not counted)"
+            note += f" ({mirrors} source(s) not independent: mirrors, re-posts or discovery leads)"
         return _decision("ESCALATE", ["insufficient_corroboration"], authority, note)
     if sources < EVIDENCE["min_sources"] or agreement < EVIDENCE["source_agreement_min"]:
         return _decision("ESCALATE", ["insufficient_corroboration"], authority,

@@ -36,5 +36,12 @@
       "tokens_used": 20000,
       "tokens_cap": 60000
     }
-  }
+  },
+  "patch": {
+    "file": "lesson-04-tool-permissions/v3.md",
+    "find": "- No corroboration for a claim that would change behaviour.",
+    "replace": "- No corroboration for a claim that would change behaviour. One release note saying the\n  legacy queue mode is deprecated is exactly this case: recorded on the receipt, not\n  published, until a second voice carries it."
+  },
+  "parent": "lesson-04-tool-permissions",
+  "learner_facing": "The lesson now records that the legacy queue mode is deprecated once a second publisher confirms it."
 }

@@ -108,7 +108,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "ATTACH_AT_IMPORT/webhook/triage",
+        "url": "ATTACH_AT_IMPORT/webhook/cr/triage",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\"run_id\":\"{{$json.actor_run_id}}\",\"snapshots\":{{JSON.stringify($json)}}}",
@@ -256,7 +256,7 @@
     "templateCredsSetupCompleted": false,
     "courserefresh": {
       "generated_by": "app/tools/make_n8n_exports.py",
-      "policy_node_sha256": "1885efcb791872c4f5a2ace13af2fb87914868c5a5e7d441617785d6b59eaad4",
+      "policy_node_sha256": "ee181d275c1b2809008647f15a40f48e1bbb785a32d7e79f890425249fe93d83",
       "notes": "Apify actor runs are the system's only eyes; a zero-delta run still writes a receipt."
     }
   },
@@ -266,6 +266,6 @@
     }
   ],
   "pinData": {},
-  "versionId": "1885efcb",
+  "versionId": "ee181d27",
   "active": false
 }

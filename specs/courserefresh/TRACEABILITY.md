@@ -54,13 +54,15 @@ direction (an AC with no row, a row with no AC). **Nothing is "verified" until t
 | AC-16.1 | `test_live_modules.py` (webhook decision) | `canvas` block in `run_log.jsonl`; `wf-cr-1-triage.json` | 1:40 canvas |
 | AC-16.2 | `test_live_modules.py::canvas_agrees` | mismatch row in run log (fails closed) | 1:40 |
 | AC-16.3 | `test_contracts.py` export checks | `app/n8n/wf-cr-*.json` (6 exports) | 1:40 |
+| AC-16.4 | `test_live_modules.py` §13 (ruling binds / expires / only where a person may) | `specs/evidence/*/receipts.jsonl` + `app/out/state/author_decisions.jsonl`; D-32 | 1:45 author canvas |
+| AC-16.5 | `test_live_modules.py` (`canvas_decision_valid`) | `canvas.invalid` row in `run_log.jsonl` | 1:44 |
 | AC-17.1 | `test_live_modules.py` (consent) | `app/lib/telemetry.py` refusal (403) | 1:05 learner |
 | AC-17.2 | `test_live_modules.py` (handle) | `telemetry.jsonl` rows (hashed handles only) | 1:05 |
 | AC-17.3 | `test_live_modules.py` (cohort) | `app/out/live/cohort_gates.json` | 1:20 revert |
 | AC-18.1 | `test_live_modules.py` (channels) | `app/out/live/delivery.jsonl` | 1:05 |
 | AC-18.2 | `test_live_modules.py` (staged ≠ delivered) | delivery records; `notify.py` | 1:05 |
 | AC-18.3 | `test_artifacts.py` (caps) | skipped rows with `rate_limited` | — |
-| AC-19.1 | `test_live_modules.py` in `check.sh` | battery.txt (13 stages) | 0:00 proof |
+| AC-19.1 | `test_live_modules.py` in `check.sh` | battery.log (13 stages + audit) | 0:00 proof |
 | AC-19.2 | `test_live_modules.py` (sim labels) | receipts `mode=sim`; digest header | 0:12 |
 | AC-19.3 | `test_live_modules.py` (end-to-end) | `app/out/live-e2e/` (run + artefacts) | 0:45 |
 | AC-3.1 | `node app/tests/test_gate_parity.py` | parity output (59 rows + 2 probes) | 1:40 canvas |

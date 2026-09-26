@@ -1,6 +1,6 @@
 {
- "version": "sources-v1.1",
- "note": "Machine-readable SOURCE-PLAN (kickoff/SOURCE-PLAN.md) + WIRING.md §2/§2b. The live engine reads this file and nothing else for fetching. test_sources.py keeps it in step with WIRING §2, the allowlist guard and the fixtures' publishers. Pins are build numbers, never `latest`: the two website-content-crawler configs are pinned to 0.3.97 (build id u8gClHFAIyDHCQq0J), verified from the public actor record at D-0 because this sandbox has no Apify egress.",
+ "version": "sources-v1.2",
+ "note": "Machine-readable SOURCE-PLAN (kickoff/SOURCE-PLAN.md) + WIRING.md §2/§2b. The live engine reads this file and nothing else for fetching. test_sources.py keeps it in step with WIRING §2, the allowlist guard and the fixtures' publishers. Pins are build numbers, never `latest`: the two website-content-crawler configs are pinned to 0.3.97 (build id u8gClHFAIyDHCQq0J), verified from the public actor record at D-0 because this sandbox has no Apify egress. v1.2 adds the Tavily discovery source: it searches for where a change landed and returns leads. It carries `role: \"discovery\"` and `counts_as_independent: false`, and both policy mirrors exclude that role from the voice count, so a search engine can never be the second independent publisher the evidence rule requires.",
  "subject": "agent-ops",
  "budget_note": "1 actor run is counted as 1 apify unit until WIRING.md §5 carries a unit price; the approximation is declared here and printed on every receipt (units_source).",
  "units_per_run": 1,
@@ -276,6 +276,38 @@
    "concepts": [
     "autonomy",
     "escalation"
+   ]
+  },
+  {
+   "source_id": "tavily-discovery",
+   "publisher": "tavily",
+   "independence_group": "search-engine",
+   "role": "discovery",
+   "counts_as_independent": false,
+   "why_not_a_voice": "One search engine returning three pages is one voice, not three. A hit is a lead: the page it points at is fetched through the allowlist and attributed to its own publisher before it can corroborate anything.",
+   "url": "https://api.tavily.com/search",
+   "fetch": {
+    "kind": "tavily",
+    "search_depth": "advanced",
+    "max_results": 5,
+    "topic": "general",
+    "include_raw_content": true,
+    "credits_per_search": 2,
+    "query": "n8n OR apify OR modelcontextprotocol changelog breaking change autonomy"
+   },
+   "fallback": {
+    "kind": "none"
+   },
+   "required_dataset_fields": [
+    "url",
+    "content"
+   ],
+   "cadence_minutes": 120,
+   "concepts": [
+    "autonomy",
+    "determinism",
+    "policy-node",
+    "tool-permissions"
    ]
   }
  ]

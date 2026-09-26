@@ -1,18 +1,26 @@
 {
   "version": "thresholds-v0.1",
-  "note": "Every threshold this system uses. Frozen at kickoff (kickoff/PREREGISTRATION.md §3); changing one is an AMENDMENTS.md row. Hashed into every run header.",
+  "note": "Every threshold this system uses. Frozen at kickoff (kickoff/PREREGISTRATION.md \u00a73); changing one is an AMENDMENTS.md row. Hashed into every run header.",
   "authority": {
     "default": "PA0",
     "pa2_consecutive_accepted": 3,
     "pa2_rollbacks_allowed": 0,
     "demote_to": "PA0",
-    "cohort_notify_materialities": ["material_breaking", "material_deprecation"]
+    "cohort_notify_materialities": [
+      "material_breaking",
+      "material_deprecation"
+    ]
   },
   "evidence": {
     "min_sources": 2,
     "source_agreement_min": 0.5,
     "quote_supported_min": 0.8,
-    "stale_hours": 12
+    "stale_hours": 12,
+    "discovery_roles": [
+      "none",
+      "discovery"
+    ],
+    "discovery_note": "Roles that may be quoted but never counted toward min_sources. `none` is a mirror (a copy of another voice); `discovery` is a lead (a search hit whose page has not been fetched from its own publisher yet). Both are excluded by both policy mirrors."
   },
   "relevance": {
     "learner_impact_min": 0.4
@@ -28,7 +36,9 @@
     "notify_per_learner_day": 1,
     "notify_per_learner_week": 3,
     "micro_lesson_per_concept_days": 7,
-    "digest_bytes": 4096
+    "digest_bytes": 4096,
+    "tavily_credits_per_day": 30,
+    "tavily_credit_note": "Tavily bills 1 credit per basic search and 2 per advanced; the discovery source searches every 120 minutes, so 30/day leaves headroom on the 1 000/month free tier."
   },
   "learner": {
     "stuck_consecutive_wrong": 2,
@@ -40,6 +50,10 @@
     "window_h": 48,
     "metric": "quiz_delta",
     "condition": "<= 0"
+  },
+  "review": {
+    "pending_cap": 20,
+    "note": "how many refused-but-approvable deltas the loop keeps (with their patches) so an author ruling made later can still be acted on (D-32). Oldest first out; the drop is on the run log."
   },
   "diff": {
     "max_lines": 400

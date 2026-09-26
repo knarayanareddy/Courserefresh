@@ -12,7 +12,9 @@
  */
 
 const THRESHOLDS = {
-  evidence: { min_sources: 2, source_agreement_min: 0.5, quote_supported_min: 0.8 },
+  // discovery_roles: quoted, never counted as independent voices (mirrors + Tavily leads)
+  evidence: { min_sources: 2, source_agreement_min: 0.5, quote_supported_min: 0.8,
+              discovery_roles: ["none", "discovery"] },
   relevance: { learner_impact_min: 0.4 },
   safety: { injection_min: 0.5 },
   budgets: { publishes_per_day: 6, tokens_per_change: 60000, notify_per_learner_day: 1, notify_per_learner_week: 3 },
@@ -39,15 +41,19 @@ function out(action, reasons, authority, notes = "") {
 
 function independentPublishers(sources) {
   if (!Array.isArray(sources) || sources.length === 0) return null;
-  // a mirror or re-post is recorded, never counted as a voice (review 05, AP-01)
-  const set = new Set(sources.filter((s) => s && typeof s === "object" && s.role !== "none")
+  // Roles in thresholds.evidence.discovery_roles are recorded, never counted as a voice:
+  // "none" is a mirror or re-post (review 05, AP-01); "discovery" is a Tavily lead whose page has
+  // not been fetched from its own publisher yet. One search engine is one voice, not three.
+  const quiet = (THRESHOLDS.evidence.discovery_roles || ["none"]);
+  const set = new Set(sources.filter((s) => s && typeof s === "object" && !quiet.includes(s.role))
     .map((s) => String(s.publisher || s.source_id || "?").toLowerCase()));
   return set.size;
 }
 
 function mirrorCount(sources) {
   if (!Array.isArray(sources)) return 0;
-  return sources.filter((s) => s && typeof s === "object" && s.role === "none").length;
+  const quiet = (THRESHOLDS.evidence.discovery_roles || ["none"]);
+  return sources.filter((s) => s && typeof s === "object" && quiet.includes(s.role)).length;
 }
 
 function malformed(inp) {
@@ -81,7 +87,7 @@ function decideChange(inp) {
   if (publishers !== null && publishers < THRESHOLDS.evidence.min_sources) {
     const mirrors = mirrorCount(inp.sources);
     let note = publishers + " independent voice(s) in " + Number(inp.sources_verified) + " source(s)";
-    if (mirrors) note += " (" + mirrors + " mirror/re-post source(s) not counted)";
+    if (mirrors) note += " (" + mirrors + " source(s) not independent: mirrors, re-posts or discovery leads)";
     return out("ESCALATE", ["insufficient_corroboration"], a, note);
   }
   if (Number(inp.sources_verified) < THRESHOLDS.evidence.min_sources ||

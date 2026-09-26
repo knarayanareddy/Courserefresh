@@ -1,0 +1,82 @@
+{
+  "blocking_for_live": [
+    "apify:APIFY_TOKEN",
+    "judge:CR_JUDGE_API_KEY"
+  ],
+  "channel": "file",
+  "checked_at": "2026-09-26T17:26:17Z",
+  "claims_allowed": {
+    "apify powers the system": false,
+    "learner cards delivered": false,
+    "live model calls": false,
+    "n8n runs the decisions": false
+  },
+  "mode": "sim",
+  "platforms": {
+    "apify": {
+      "keys_missing_required": [
+        "APIFY_TOKEN"
+      ],
+      "keys_present": [
+        "APIFY_BASE_URL",
+        "APIFY_TIMEOUT_S",
+        "APIFY_MAX_RETRIES"
+      ],
+      "required": [
+        "APIFY_TOKEN"
+      ],
+      "wired": false
+    },
+    "judge": {
+      "keys_missing_required": [
+        "CR_JUDGE_API_KEY"
+      ],
+      "keys_present": [
+        "CR_JUDGE_PROVIDER",
+        "CR_JUDGE_BASE_URL",
+        "CR_JUDGE_MODEL",
+        "CR_OBSERVE_MODEL",
+        "CR_JUDGE_TIMEOUT_S"
+      ],
+      "required": [
+        "CR_JUDGE_API_KEY"
+      ],
+      "wired": false
+    },
+    "n8n": {
+      "keys_missing_required": [
+        "N8N_BASE_URL",
+        "N8N_API_KEY"
+      ],
+      "keys_present": [],
+      "required": [
+        "N8N_BASE_URL",
+        "N8N_API_KEY"
+      ],
+      "wired": false
+    },
+    "notify": {
+      "keys_missing_required": [],
+      "keys_present": [
+        "CR_NOTIFY_CHANNEL"
+      ],
+      "required": [],
+      "wired": true
+    },
+    "runtime": {
+      "keys_missing_required": [],
+      "keys_present": [
+        "CR_MODE",
+        "CR_LIVE_SCAN_MINUTES",
+        "CR_BOT_BRANCH",
+        "CR_REPO_REMOTE",
+        "CR_TELEMETRY_PORT",
+        "CR_CONSOLE_PORT",
+        "CR_COMMIT"
+      ],
+      "required": [],
+      "wired": true
+    }
+  },
+  "secrets": {}
+}

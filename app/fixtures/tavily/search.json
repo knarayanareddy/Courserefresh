@@ -1,0 +1,35 @@
+{
+  "recorded_at": "2026-09-26",
+  "note": "A recorded Tavily /search response for the dry-run path. It carries one hit per case the wiring must tell apart: two that duplicate a tracked source URL (dropped, counted), one on an allowlisted but *untracked* page (a source gap the digest names), and one off-allowlist mirror (recorded, never quoted).",
+  "query": "n8n OR apify OR modelcontextprotocol changelog breaking change autonomy",
+  "answer": "n8n and Apify both published changes to permission-related settings this month.",
+  "results": [
+    {
+      "title": "n8n release notes \u2014 permissions and execution order",
+      "url": "https://github.com/n8n-io/n8n/releases",
+      "content": "## 1.71.0\n\n### Breaking changes\n\n- The permissions setting was replaced by a single `tool_permissions` block.\n",
+      "score": 0.94
+    },
+    {
+      "title": "Apify changelog \u2014 actor run budgets",
+      "url": "https://apify.com/changelog",
+      "content": "Actor runs now take a `budget` object with `max_total_charge_usd`.\n",
+      "score": 0.88
+    },
+    {
+      "title": "n8n hosting guide \u2014 permissions mode migration",
+      "url": "https://docs.n8n.io/hosting/permissions-mode/",
+      "content": "How to migrate workflows from the removed `permissions` setting to the `tool_permissions` block.\n",
+      "score": 0.79
+    },
+    {
+      "title": "aggregator mirror of the n8n release notes",
+      "url": "https://not-allowlisted.example/mirror/n8n-1710",
+      "content": "Copy of the n8n release notes.\n",
+      "score": 0.55
+    }
+  ],
+  "usage": {
+    "credits": 2
+  }
+}

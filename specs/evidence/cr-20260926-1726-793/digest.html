@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Courserefresh console — cr-20260926-1726-793</title>
+<style>
+  :root { --paper:#F3EFE7; --paper-2:#EAE4D8; --rule:#8E8160; --ink:#1C1915; --ink-soft:#4A443A; --ink-faint:#68604F; --accent:#6B4E2E; --status-publish:#3F5A2A; --status-queue:#96550A; --status-revert:#9B2C1F; --status-nochange:#5C564C; --status-unknown:#7A5C00; }
+  body { background:var(--paper); color:var(--ink); font:15px/1.6 system-ui, sans-serif;
+          max-width:var(--measure, 68ch); margin:0 auto; padding:24px; }
+  h1 { font-size:20px; } code { font-family:ui-monospace, monospace; font-size:13px; }
+  .why { color:var(--ink-soft); }
+  .detail { color:var(--ink-soft); font-size:13px; }
+  .status { font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+  ul { list-style:none; padding:0; } .row { border-top:1px solid var(--rule); padding:10px 0; }
+  .mode { color:var(--ink-soft); }
+</style></head><body>
+<h1>Courserefresh console</h1>
+<p class="mode">run <code>cr-20260926-1726-793</code> · mode <b>sim</b> · chain
+ok (9 rows) · the console is reading a **sim** run: fixtures, no model calls, no mail</p>
+<h2>Decisions, refusals first</h2>
+<ul><li class="row"><span class="status" style="color:#9B2C1F"><b>REFUSED</b></span> <code>cr-hostile-page-01</code> <span class="why">injection_or_jailbreak</span><div class="detail">A community page instructs the system to publish an &#x27;approved&#x27; change</div></li><li class="row"><span class="status" style="color:#9B2C1F"><b>REFUSED</b></span> <code>cr-single-source-01</code> <span class="why">insufficient_corroboration</span><div class="detail">One release note mentions a behaviour change; no second source yet</div></li><li class="row"><span class="status" style="color:#9B2C1F"><b>REFUSED</b></span> <code>cr-conflict-01</code> <span class="why">source_conflict</span><div class="detail">Two sources disagree about whether a setting still works</div></li><li class="row"><span class="status" style="color:#9B2C1F"><b>REFUSED</b></span> <code>cr-budget-01</code> <span class="why">over_budget</span><div class="detail">A corroborated breaking change arrives after the publish cap is spent</div></li><li class="row"><span class="status" style="color:#3F5A2A"><b>PUBLISHED</b></span> <code>cr-n8n-rename-01</code> <span class="why">material_breaking</span><div class="detail">lesson-04-tool-permissions v3 → v4</div></li><li class="row"><span class="status" style="color:#3F5A2A"><b>PUBLISHED</b></span> <code>cr-apify-docs-01</code> <span class="why">material_new_capability</span><div class="detail">lesson-03-apify-inputs v1 → v2</div></li><li class="row"><span class="status" style="color:#5C564C"><b>NO CHANGE</b></span> <code>cr-learner-consent-01</code> <span class="why">consent_missing</span><div class="detail">A learner is stuck but never consented</div></li><li class="row"><span class="status" style="color:#96550A"><b>SENT</b></span> <code>cr-learner-stuck-01</code> <span class="why">stuck_signals_met</span><div class="detail">A consented learner is stuck on permissions.mode — two consecutive wrong answers</div></li><li class="row"><span class="status" style="color:#9B2C1F"><b>REVERTED</b></span> <code>cr-revert-01</code> <span class="why">revert_gate_satisfied</span><div class="detail">lesson-04-tool-permissions v4 → v5</div></li></ul>
+<p class="detail">Every line is a receipt; the digest is the same content in text
+(<code>app/out/digest.md</code>). Colours come from <code>specs/design/MASTER.md</code>.</p>
+</body></html>
