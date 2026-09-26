@@ -1,0 +1,173 @@
+{
+  "name": "wf-cr-4-digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1440
+            }
+          ]
+        }
+      },
+      "id": "07:30-daily",
+      "name": "07:30 daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// the last 24h, chained; verify_chain() before rendering\nreturn $input.all();"
+      },
+      "id": "read_receipts",
+      "name": "READ_RECEIPTS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// refusals first, then what changed, learners, discipline\nreturn $input.all();"
+      },
+      "id": "order_sections",
+      "name": "ORDER_SECTIONS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// trims oldest-first, never refusals; prints `unmeasured` where true\nreturn $input.all();"
+      },
+      "id": "render_4kb",
+      "name": "RENDER_4KB",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "ATTACH_AT_IMPORT",
+        "text": "={{$json.digest}}",
+        "additionalFields": {}
+      },
+      "id": "send-digest",
+      "name": "SEND (Telegram)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// exit 1 with a DIGEST FAILED banner if any row hash is off\nreturn $input.all();"
+      },
+      "id": "verify_chain",
+      "name": "VERIFY_CHAIN",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "07:30 daily": {
+      "main": [
+        [
+          {
+            "node": "READ_RECEIPTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "READ_RECEIPTS": {
+      "main": [
+        [
+          {
+            "node": "ORDER_SECTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ORDER_SECTIONS": {
+      "main": [
+        [
+          {
+            "node": "RENDER_4KB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RENDER_4KB": {
+      "main": [
+        [
+          {
+            "node": "SEND (Telegram)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEND (Telegram)": {
+      "main": [
+        [
+          {
+            "node": "VERIFY_CHAIN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "instanceId": "ATTACH_AT_IMPORT",
+    "templateCredsSetupCompleted": false,
+    "courserefresh": {
+      "generated_by": "app/tools/make_n8n_exports.py",
+      "policy_node_sha256": "07021432fd293c76cf3192fab0e80c86fb570c6ef4a9feba72c0ba394ff7d6a8",
+      "notes": "A broken chain is louder than a missing message: DIGEST FAILED, exit 1."
+    }
+  },
+  "tags": [
+    {
+      "name": "courserefresh"
+    }
+  ],
+  "pinData": {},
+  "versionId": "07021432",
+  "active": false
+}

@@ -1,0 +1,214 @@
+{
+  "name": "wf-cr-2-act",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "act",
+        "responseMode": "lastNode"
+      },
+      "id": "from-triage",
+      "name": "From triage",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// writes course/<lesson>/v<n+1>.md from the previous version + the anchored edit\nreturn $input.all();"
+      },
+      "id": "render_body",
+      "name": "RENDER_BODY",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// unified diff of previous vs new; refuses if > thresholds.diff.max_lines\nreturn $input.all();"
+      },
+      "id": "render_diff",
+      "name": "RENDER_DIFF",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "commit",
+        "repository": "ATTACH_AT_IMPORT",
+        "branch": "bot/courserefresh",
+        "filePath": "={{$json.body_path}}",
+        "commitMessage": "=cr: {{$json.decision.action}} {{$json.lesson_id}} {{$json.previous_version}} \u2192 {{$json.new_version}} [{{$json.receipt_id}}]"
+      },
+      "id": "git-commit",
+      "name": "COMMIT (bot branch)",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        660,
+        0
+      ],
+      "notes": "Never main; the human merges (Art. XIV.4)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.decision.action === 'PUBLISH' && $json.notify }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ]
+        }
+      },
+      "id": "notify-the-cohort?",
+      "name": "Notify the cohort?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "ATTACH_AT_IMPORT",
+        "toEmail": "={{$json.learner_ref}}",
+        "subject": "=Lesson updated: {{$json.title}} ({{$json.previous_version}} \u2192 {{$json.new_version}})",
+        "text": "={{$json.card_text}}"
+      },
+      "id": "card",
+      "name": "CARD (consented only)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1100,
+        -80
+      ],
+      "notes": "Three lines; opt-out in every message (Art. IV.3)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// chain row: action, artifact hashes, notified handles (hashed), cost\nreturn $input.all();"
+      },
+      "id": "receipt",
+      "name": "RECEIPT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "From triage": {
+      "main": [
+        [
+          {
+            "node": "RENDER_BODY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RENDER_BODY": {
+      "main": [
+        [
+          {
+            "node": "RENDER_DIFF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RENDER_DIFF": {
+      "main": [
+        [
+          {
+            "node": "COMMIT (bot branch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "COMMIT (bot branch)": {
+      "main": [
+        [
+          {
+            "node": "Notify the cohort?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify the cohort?": {
+      "main": [
+        [
+          {
+            "node": "CARD (consented only)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "CARD (consented only)": {
+      "main": [
+        [
+          {
+            "node": "RECEIPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "instanceId": "ATTACH_AT_IMPORT",
+    "templateCredsSetupCompleted": false,
+    "courserefresh": {
+      "generated_by": "app/tools/make_n8n_exports.py",
+      "policy_node_sha256": "07021432fd293c76cf3192fab0e80c86fb570c6ef4a9feba72c0ba394ff7d6a8",
+      "notes": "One commit per decision; the receipt names the commit and the commit names the receipt."
+    }
+  },
+  "tags": [
+    {
+      "name": "courserefresh"
+    }
+  ],
+  "pinData": {},
+  "versionId": "07021432",
+  "active": false
+}

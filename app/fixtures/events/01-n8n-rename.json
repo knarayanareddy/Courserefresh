@@ -1,0 +1,60 @@
+{
+  "event_id": "cr-n8n-rename-01",
+  "kind": "change",
+  "summary": "n8n 1.85 renames tool_permissions to permissions.mode; release notes, docs and the community package agree",
+  "sources": [
+    {
+      "source_id": "n8n-releases",
+      "publisher": "n8n",
+      "url": "https://github.com/n8n-io/n8n/releases"
+    },
+    {
+      "source_id": "n8n-docs",
+      "publisher": "n8n",
+      "url": "https://docs.n8n.io/"
+    },
+    {
+      "source_id": "community-npm",
+      "publisher": "community",
+      "url": "https://www.npmjs.com/package/n8n-nodes-base"
+    }
+  ],
+  "quotes": [
+    "The tool-permission setting is now declared under permissions.mode (was tool_permissions)."
+  ],
+  "parent": "lesson-04-tool-permissions",
+  "patch": {
+    "file": "lesson-04-tool-permissions/v3.md",
+    "find": "The tools, and their parameters, are declared in `tool_permissions.tools` in the workflow settings.",
+    "replace": "The tools, and their parameters, are declared in `permissions.mode.tools` in the workflow settings (renamed from `tool_permissions` in n8n 1.85)."
+  },
+  "input": {
+    "event_id": "cr-n8n-rename-01",
+    "stream": "change",
+    "materiality": "material_breaking",
+    "learner_impact": 0.7,
+    "source_agreement": 0.9,
+    "quote_supported": 0.95,
+    "sources_verified": 2,
+    "injection_or_jailbreak": 0.02,
+    "authority": "PA2",
+    "freeze_active": false,
+    "assessment_touched": false,
+    "revert_gate_present": true,
+    "diff_lines": 40,
+    "previous_version_available": true,
+    "lesson_touched": "lesson-04",
+    "budgets": {
+      "publishes_used": 1,
+      "publishes_cap": 6,
+      "tokens_used": 20000,
+      "tokens_cap": 60000
+    }
+  },
+  "gate": {
+    "n_min": 5,
+    "window_h": 48,
+    "metric": "quiz_delta",
+    "condition": "<= 0"
+  }
+}

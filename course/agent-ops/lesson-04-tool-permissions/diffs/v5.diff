@@ -1,0 +1,25 @@
+--- v4.md
++++ v5.md
+@@ -1,13 +1,14 @@
+ ---
+ lesson_id: "lesson-04-tool-permissions"
+ title: "Tool permissions and the human exit"
+-version: "v3"
++version: "v5"
+ concepts: ["tool-permissions", "human-exit", "stop-conditions"]
+ assessment: "quizzes/lesson-04.json"
+ sources: ["https://docs.n8n.io/", "https://github.com/n8n-io/n8n/releases"]
+ revert_gate: {"n_min": 5, "window_h": 48, "metric": "quiz_delta", "condition": "<= 0"}
+-generated: false
++generated: true
+ reviewed_by: "author"
++revert_of: "v4"
+ ---
+ 
+ # Tool permissions and the human exit
+@@ -41,3 +42,5 @@
+ ## Practice
+ Rewrite one workflow you own so that `http_request` is host-scoped, and write the sentence a judge
+ would ask for: *"here is where it refuses."*
++
++> **Reverted.** This version restores v3: the published change was measured and did not help (see the receipt). Sources and gate for the reverted change remain in the changelog.

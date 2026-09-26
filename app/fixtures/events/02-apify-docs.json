@@ -1,0 +1,56 @@
+{
+  "event_id": "cr-apify-docs-01",
+  "kind": "change",
+  "summary": "Apify validates actor inputs against the actor schema; the changelog and the client's release agree",
+  "sources": [
+    {
+      "source_id": "apify-changelog",
+      "publisher": "apify",
+      "url": "https://apify.com/changelog"
+    },
+    {
+      "source_id": "community-npm",
+      "publisher": "community",
+      "url": "https://www.npmjs.com/package/apify-client"
+    }
+  ],
+  "quotes": [
+    "Actor inputs are validated against the actor's input schema before a run starts."
+  ],
+  "parent": "lesson-03-apify-inputs",
+  "patch": {
+    "file": "lesson-03-apify-inputs/v1.md",
+    "find": "Fetch first, hash immediately, cache the bytes.",
+    "replace": "Fetch first, hash immediately, cache the bytes. Actor inputs are validated against the actor's input schema before a run starts."
+  },
+  "input": {
+    "event_id": "cr-apify-docs-01",
+    "stream": "change",
+    "materiality": "material_new_capability",
+    "learner_impact": 0.7,
+    "source_agreement": 0.9,
+    "quote_supported": 0.95,
+    "sources_verified": 2,
+    "injection_or_jailbreak": 0.02,
+    "authority": "PA1",
+    "freeze_active": false,
+    "assessment_touched": false,
+    "revert_gate_present": true,
+    "diff_lines": 40,
+    "previous_version_available": true,
+    "lesson_touched": "lesson-03",
+    "budgets": {
+      "publishes_used": 1,
+      "publishes_cap": 6,
+      "tokens_used": 20000,
+      "tokens_cap": 60000
+    },
+    "budget": null
+  },
+  "gate": {
+    "n_min": 5,
+    "window_h": 48,
+    "metric": "quiz_delta",
+    "condition": "<= 0"
+  }
+}

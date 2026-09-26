@@ -1,0 +1,44 @@
+{
+  "event_id": "cr-conflict-01",
+  "kind": "change",
+  "summary": "Two sources disagree about whether a setting still works",
+  "sources": [
+    {
+      "source_id": "n8n-releases",
+      "publisher": "n8n",
+      "url": "https://github.com/n8n-io/n8n/releases"
+    },
+    {
+      "source_id": "apify-docs",
+      "publisher": "apify",
+      "url": "https://docs.apify.com/"
+    }
+  ],
+  "quotes": [
+    "n8n: the setting is deprecated and ignored from 1.85.",
+    "Apify: the setting remains supported for actor runs."
+  ],
+  "input": {
+    "event_id": "cr-conflict-01",
+    "stream": "change",
+    "materiality": "contradictory",
+    "learner_impact": 0.7,
+    "source_agreement": 0.2,
+    "quote_supported": 0.95,
+    "sources_verified": 2,
+    "injection_or_jailbreak": 0.02,
+    "authority": "PA2",
+    "freeze_active": false,
+    "assessment_touched": false,
+    "revert_gate_present": true,
+    "diff_lines": 40,
+    "previous_version_available": true,
+    "lesson_touched": "lesson-04",
+    "budgets": {
+      "publishes_used": 1,
+      "publishes_cap": 6,
+      "tokens_used": 20000,
+      "tokens_cap": 60000
+    }
+  }
+}

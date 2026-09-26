@@ -1,0 +1,53 @@
+{
+  "event_id": "cr-seeded-01",
+  "kind": "change",
+  "seed": true,
+  "summary": "Labelled rehearsal: a seeded deprecation event exercises the publish path end to end",
+  "sources": [
+    {
+      "source_id": "seed-rehearsal",
+      "independence_group": "seed",
+      "url": "https://example.invalid/seed",
+      "publisher": "seed"
+    }
+  ],
+  "quotes": [
+    "SEEDED REHEARSAL: the legacy queue mode is deprecated with a sunset of 1.90."
+  ],
+  "parent": "lesson-05-receipts-and-reverts",
+  "patch": {
+    "file": "lesson-05-receipts-and-reverts/v1.md",
+    "find": "Hash-chain the rows and verify at the end of\nevery run.",
+    "replace": "Hash-chain the rows and verify at the end of\nevery run. (Seeded rehearsal: the legacy queue mode is deprecated with a sunset of 1.90.)"
+  },
+  "input": {
+    "event_id": "cr-seeded-01",
+    "stream": "change",
+    "materiality": "material_deprecation",
+    "learner_impact": 0.7,
+    "source_agreement": 0.9,
+    "quote_supported": 0.95,
+    "sources_verified": 2,
+    "injection_or_jailbreak": 0.02,
+    "authority": "PA2",
+    "freeze_active": false,
+    "assessment_touched": false,
+    "revert_gate_present": true,
+    "diff_lines": 40,
+    "previous_version_available": true,
+    "lesson_touched": "lesson-05",
+    "budgets": {
+      "publishes_used": 1,
+      "publishes_cap": 6,
+      "tokens_used": 20000,
+      "tokens_cap": 60000
+    },
+    "seed": true
+  },
+  "gate": {
+    "n_min": 5,
+    "window_h": 48,
+    "metric": "quiz_delta",
+    "condition": "<= 0"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "event_id": "cr-learner-stuck-01",
+  "kind": "learner",
+  "summary": "A consented learner is stuck on permissions.mode \u2014 two consecutive wrong answers",
+  "learner_ref": "learner:5b7c1e4a",
+  "consent": true,
+  "stuck": true,
+  "concept": "permissions-mode",
+  "input": {
+    "event_id": "cr-learner-stuck-01",
+    "stream": "learner",
+    "materiality": "cosmetic",
+    "learner_impact": 0.5,
+    "source_agreement": 0.9,
+    "quote_supported": 0.9,
+    "sources_verified": 2,
+    "injection_or_jailbreak": 0.0,
+    "authority": "PA1",
+    "freeze_active": false,
+    "consent": true,
+    "grade_impacting": false,
+    "stuck": true,
+    "concept": "permissions-mode",
+    "caps": {
+      "notifications_today": 0,
+      "notifications_week": 0
+    }
+  }
+}
