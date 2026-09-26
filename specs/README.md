@@ -66,7 +66,7 @@ ain't-happened list, and a review that closes findings only with pasted output.
 sh app/check.sh
 ```
 
-That command is the only “it works” claim this package makes. Last run: **163 PASS, exit 0
+That command is the only “it works” claim this package makes. Last run: **164 PASS, exit 0
 (`ALL GREEN`)**, output archived at `app/out/evidence/battery.txt`; the frozen hero run is
 `app/out/evidence/cr-20260926-1421-001/` (hero, 19 files) and
 `app/out/evidence/cr-20260926-1441-130/` (round-3 live-engine rehearsal, 14 files). Anything that has not been measured

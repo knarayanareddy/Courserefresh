@@ -1,101 +1,282 @@
 {
-  "version": "sources-v1.0",
-  "note": "Machine-readable SOURCE-PLAN (kickoff/SOURCE-PLAN.md) + WIRING.md §2/§2b. The live engine reads this file and nothing else for fetching. test_sources.py keeps it in step with WIRING §2, the allowlist guard and the fixtures' publishers.",
-  "subject": "agent-ops",
-  "budget_note": "1 actor run is counted as 1 apify unit until WIRING.md §5 carries a unit price; the approximation is declared here and printed on every receipt (units_source).",
-  "units_per_run": 1,
-  "sources": [
-    {
-      "source_id": "n8n-releases",
-      "publisher": "n8n",
-      "independence_group": "n8n-vendor",
-      "role": "authoritative",
-      "url": "https://github.com/n8n-io/n8n/releases",
-      "fetch": {"kind": "apify", "actor_id": "apify/website-content-crawler", "build": "latest",
-                "input": {"startUrls": [{"url": "https://github.com/n8n-io/n8n/releases"}], "maxPages": 5,
-                          "crawlerType": "cheerio", "proxy": {"useApifyProxy": true}},
-                "budget": {"max_total_charge_usd": 0.25}},
-      "fallback": {"kind": "http", "url": "https://api.github.com/repos/n8n-io/n8n/releases?per_page=5",
-                   "accept": "application/vnd.github+json"},
-      "required_dataset_fields": ["url", "markdown"],
-      "cadence_minutes": 60,
-      "concepts": ["autonomy", "determinism", "policy-node", "tool-permissions"]
+ "version": "sources-v1.1",
+ "note": "Machine-readable SOURCE-PLAN (kickoff/SOURCE-PLAN.md) + WIRING.md §2/§2b. The live engine reads this file and nothing else for fetching. test_sources.py keeps it in step with WIRING §2, the allowlist guard and the fixtures' publishers. Pins are build numbers, never `latest`: the two website-content-crawler configs are pinned to 0.3.97 (build id u8gClHFAIyDHCQq0J), verified from the public actor record at D-0 because this sandbox has no Apify egress.",
+ "subject": "agent-ops",
+ "budget_note": "1 actor run is counted as 1 apify unit until WIRING.md §5 carries a unit price; the approximation is declared here and printed on every receipt (units_source).",
+ "units_per_run": 1,
+ "sources": [
+  {
+   "source_id": "n8n-releases",
+   "publisher": "n8n",
+   "independence_group": "n8n-vendor",
+   "role": "authoritative",
+   "url": "https://github.com/n8n-io/n8n/releases",
+   "fetch": {
+    "kind": "apify",
+    "actor_id": "apify/website-content-crawler",
+    "input": {
+     "startUrls": [
+      {
+       "url": "https://github.com/n8n-io/n8n/releases"
+      }
+     ],
+     "maxPages": 5,
+     "crawlerType": "cheerio",
+     "proxy": {
+      "useApifyProxy": true
+     }
     },
-    {
-      "source_id": "n8n-docs",
-      "publisher": "n8n",
-      "independence_group": "n8n-vendor",
-      "role": "authoritative",
-      "url": "https://docs.n8n.io/",
-      "fetch": {"kind": "apify", "actor_id": "apify/website-content-crawler", "build": "latest",
-                "input": {"startUrls": [{"url": "https://docs.n8n.io/"}], "maxPages": 5,
-                          "crawlerType": "cheerio", "proxy": {"useApifyProxy": true}},
-                "budget": {"max_total_charge_usd": 0.25}},
-      "fallback": {"kind": "http", "url": "https://docs.n8n.io/", "accept": "text/html"},
-      "required_dataset_fields": ["url", "markdown"],
-      "cadence_minutes": 60,
-      "concepts": ["policy-node", "tool-permissions"]
+    "budget": {
+     "max_total_charge_usd": 0.25
     },
-    {
-      "source_id": "apify-changelog",
-      "publisher": "apify",
-      "independence_group": "apify-vendor",
-      "role": "authoritative",
-      "url": "https://apify.com/changelog",
-      "fetch": {"kind": "apify", "actor_id": "apify/website-content-crawler", "build": "latest",
-                "input": {"startUrls": [{"url": "https://apify.com/changelog"}], "maxPages": 5,
-                          "crawlerType": "cheerio", "proxy": {"useApifyProxy": true}},
-                "budget": {"max_total_charge_usd": 0.25}},
-      "fallback": {"kind": "http", "url": "https://apify.com/changelog", "accept": "text/html"},
-      "required_dataset_fields": ["url", "markdown"],
-      "cadence_minutes": 60,
-      "concepts": ["actors", "apify", "cadence-honesty"]
+    "build": "0.3.97",
+    "build_id": "u8gClHFAIyDHCQq0J",
+    "build_tag": "version-0",
+    "build_verified": "D-0",
+    "build_source": "public actor metadata (apify.com, no key)"
+   },
+   "fallback": {
+    "kind": "http",
+    "url": "https://api.github.com/repos/n8n-io/n8n/releases?per_page=5",
+    "accept": "application/vnd.github+json"
+   },
+   "required_dataset_fields": [
+    "url",
+    "markdown"
+   ],
+   "cadence_minutes": 60,
+   "concepts": [
+    "autonomy",
+    "determinism",
+    "policy-node",
+    "tool-permissions"
+   ]
+  },
+  {
+   "source_id": "n8n-docs",
+   "publisher": "n8n",
+   "independence_group": "n8n-vendor",
+   "role": "authoritative",
+   "url": "https://docs.n8n.io/",
+   "fetch": {
+    "kind": "apify",
+    "actor_id": "apify/website-content-crawler",
+    "input": {
+     "startUrls": [
+      {
+       "url": "https://docs.n8n.io/"
+      }
+     ],
+     "maxPages": 5,
+     "crawlerType": "cheerio",
+     "proxy": {
+      "useApifyProxy": true
+     }
     },
-    {
-      "source_id": "apify-docs",
-      "publisher": "apify",
-      "independence_group": "apify-vendor",
-      "role": "authoritative",
-      "url": "https://docs.apify.com/",
-      "fetch": {"kind": "apify", "actor_id": "apify/website-content-crawler", "build": "latest",
-                "input": {"startUrls": [{"url": "https://docs.apify.com/"}], "maxPages": 5,
-                          "crawlerType": "cheerio", "proxy": {"useApifyProxy": true}},
-                "budget": {"max_total_charge_usd": 0.25}},
-      "fallback": {"kind": "http", "url": "https://docs.apify.com/", "accept": "text/html"},
-      "required_dataset_fields": ["url", "markdown"],
-      "cadence_minutes": 60,
-      "concepts": ["actors", "apify"]
+    "budget": {
+     "max_total_charge_usd": 0.25
     },
-    {
-      "source_id": "mcp-spec",
-      "publisher": "modelcontextprotocol",
-      "independence_group": "mcp-org",
-      "role": "corroborating",
-      "url": "https://github.com/modelcontextprotocol/specification/releases",
-      "fetch": {"kind": "apify", "actor_id": "apify/website-content-crawler", "build": "latest",
-                "input": {"startUrls": [{"url": "https://github.com/modelcontextprotocol/specification/releases"}],
-                          "maxPages": 5, "crawlerType": "cheerio", "proxy": {"useApifyProxy": true}},
-                "budget": {"max_total_charge_usd": 0.25}},
-      "fallback": {"kind": "http", "url": "https://api.github.com/repos/modelcontextprotocol/specification/releases?per_page=5",
-                   "accept": "application/vnd.github+json"},
-      "required_dataset_fields": ["url", "markdown"],
-      "cadence_minutes": 120,
-      "concepts": ["autonomy", "escalation"]
+    "build": "0.3.97",
+    "build_id": "u8gClHFAIyDHCQq0J",
+    "build_tag": "version-0",
+    "build_verified": "D-0",
+    "build_source": "public actor metadata (apify.com, no key)"
+   },
+   "fallback": {
+    "kind": "http",
+    "url": "https://docs.n8n.io/",
+    "accept": "text/html"
+   },
+   "required_dataset_fields": [
+    "url",
+    "markdown"
+   ],
+   "cadence_minutes": 60,
+   "concepts": [
+    "policy-node",
+    "tool-permissions"
+   ]
+  },
+  {
+   "source_id": "apify-changelog",
+   "publisher": "apify",
+   "independence_group": "apify-vendor",
+   "role": "authoritative",
+   "url": "https://apify.com/changelog",
+   "fetch": {
+    "kind": "apify",
+    "actor_id": "apify/website-content-crawler",
+    "input": {
+     "startUrls": [
+      {
+       "url": "https://apify.com/changelog"
+      }
+     ],
+     "maxPages": 5,
+     "crawlerType": "cheerio",
+     "proxy": {
+      "useApifyProxy": true
+     }
     },
-    {
-      "source_id": "mcp-blog",
-      "publisher": "modelcontextprotocol",
-      "independence_group": "mcp-org",
-      "role": "corroborating",
-      "url": "https://blog.modelcontextprotocol.io/",
-      "fetch": {"kind": "apify", "actor_id": "apify/website-content-crawler", "build": "latest",
-                "input": {"startUrls": [{"url": "https://blog.modelcontextprotocol.io/"}], "maxPages": 5,
-                          "crawlerType": "cheerio", "proxy": {"useApifyProxy": true}},
-                "budget": {"max_total_charge_usd": 0.25}},
-      "fallback": {"kind": "http", "url": "https://blog.modelcontextprotocol.io/", "accept": "text/html"},
-      "required_dataset_fields": ["url", "markdown"],
-      "cadence_minutes": 120,
-      "concepts": ["autonomy", "escalation"]
-    }
-  ]
+    "budget": {
+     "max_total_charge_usd": 0.25
+    },
+    "build": "0.3.97",
+    "build_id": "u8gClHFAIyDHCQq0J",
+    "build_tag": "version-0",
+    "build_verified": "D-0",
+    "build_source": "public actor metadata (apify.com, no key)"
+   },
+   "fallback": {
+    "kind": "http",
+    "url": "https://apify.com/changelog",
+    "accept": "text/html"
+   },
+   "required_dataset_fields": [
+    "url",
+    "markdown"
+   ],
+   "cadence_minutes": 60,
+   "concepts": [
+    "actors",
+    "apify",
+    "cadence-honesty"
+   ]
+  },
+  {
+   "source_id": "apify-docs",
+   "publisher": "apify",
+   "independence_group": "apify-vendor",
+   "role": "authoritative",
+   "url": "https://docs.apify.com/",
+   "fetch": {
+    "kind": "apify",
+    "actor_id": "apify/website-content-crawler",
+    "input": {
+     "startUrls": [
+      {
+       "url": "https://docs.apify.com/"
+      }
+     ],
+     "maxPages": 5,
+     "crawlerType": "cheerio",
+     "proxy": {
+      "useApifyProxy": true
+     }
+    },
+    "budget": {
+     "max_total_charge_usd": 0.25
+    },
+    "build": "0.3.97",
+    "build_id": "u8gClHFAIyDHCQq0J",
+    "build_tag": "version-0",
+    "build_verified": "D-0",
+    "build_source": "public actor metadata (apify.com, no key)"
+   },
+   "fallback": {
+    "kind": "http",
+    "url": "https://docs.apify.com/",
+    "accept": "text/html"
+   },
+   "required_dataset_fields": [
+    "url",
+    "markdown"
+   ],
+   "cadence_minutes": 60,
+   "concepts": [
+    "actors",
+    "apify"
+   ]
+  },
+  {
+   "source_id": "mcp-spec",
+   "publisher": "modelcontextprotocol",
+   "independence_group": "mcp-org",
+   "role": "corroborating",
+   "url": "https://github.com/modelcontextprotocol/specification/releases",
+   "fetch": {
+    "kind": "apify",
+    "actor_id": "apify/website-content-crawler",
+    "input": {
+     "startUrls": [
+      {
+       "url": "https://github.com/modelcontextprotocol/specification/releases"
+      }
+     ],
+     "maxPages": 5,
+     "crawlerType": "cheerio",
+     "proxy": {
+      "useApifyProxy": true
+     }
+    },
+    "budget": {
+     "max_total_charge_usd": 0.25
+    },
+    "build": "0.3.97",
+    "build_id": "u8gClHFAIyDHCQq0J",
+    "build_tag": "version-0",
+    "build_verified": "D-0",
+    "build_source": "public actor metadata (apify.com, no key)"
+   },
+   "fallback": {
+    "kind": "http",
+    "url": "https://api.github.com/repos/modelcontextprotocol/specification/releases?per_page=5",
+    "accept": "application/vnd.github+json"
+   },
+   "required_dataset_fields": [
+    "url",
+    "markdown"
+   ],
+   "cadence_minutes": 120,
+   "concepts": [
+    "autonomy",
+    "escalation"
+   ]
+  },
+  {
+   "source_id": "mcp-blog",
+   "publisher": "modelcontextprotocol",
+   "independence_group": "mcp-org",
+   "role": "corroborating",
+   "url": "https://blog.modelcontextprotocol.io/",
+   "fetch": {
+    "kind": "apify",
+    "actor_id": "apify/website-content-crawler",
+    "input": {
+     "startUrls": [
+      {
+       "url": "https://blog.modelcontextprotocol.io/"
+      }
+     ],
+     "maxPages": 5,
+     "crawlerType": "cheerio",
+     "proxy": {
+      "useApifyProxy": true
+     }
+    },
+    "budget": {
+     "max_total_charge_usd": 0.25
+    },
+    "build": "0.3.97",
+    "build_id": "u8gClHFAIyDHCQq0J",
+    "build_tag": "version-0",
+    "build_verified": "D-0",
+    "build_source": "public actor metadata (apify.com, no key)"
+   },
+   "fallback": {
+    "kind": "http",
+    "url": "https://blog.modelcontextprotocol.io/",
+    "accept": "text/html"
+   },
+   "required_dataset_fields": [
+    "url",
+    "markdown"
+   ],
+   "cadence_minutes": 120,
+   "concepts": [
+    "autonomy",
+    "escalation"
+   ]
+  }
+ ]
 }

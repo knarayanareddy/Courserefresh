@@ -47,8 +47,8 @@ in its own tree (the witnessed-failure run is frozen that way). The current free
 | Row | Claim | Status | Artifact | Command | Date |
 |---|---|---|---|---|---|
 | E1 | gold eval run (n≥40, hostile/unsupported counters) | **measured** — gold-v0.3, n=59, action match 1.000 | `app/out/eval/gold-v0.3/report.txt` | `python3 specs/courserefresh/skin/policy.py --eval specs/courserefresh/skin/gold.jsonl` | D-0 |
-| E2 | loop selftest (chain, budget, freeze, refusals) | **measured** — 13/13 checks | `app/out/selftest/out/receipts.jsonl` | `python3 app/run_walking_skeleton.py --selftest` | D-0 |
-| E3 | full battery | **measured** — **163 PASS across 12 stages**, exit 0, `ALL GREEN` (round 3 added the live-path stage) | `app/out/evidence/battery.txt` | `sh app/check.sh` | D-0 |
+| E2 | loop selftest (chain, budget, freeze, refusals) | **measured** — 14/14 checks | `app/out/selftest/out/receipts.jsonl` | `python3 app/run_walking_skeleton.py --selftest` | D-0 |
+| E3 | full battery | **measured** — **164 PASS across 12 stages**, exit 0, `ALL GREEN` (round 3 added the live-path stage) | `app/out/evidence/battery.txt` | `sh app/check.sh` | D-0 |
 | E4 | hero run (sources → publish → notify staging) | **measured (sim)** — 2 publishes, 4 refusals, 1 revert, 1 dispatch, 9 receipts, 1 quiz item regenerated | `app/out/evidence/cr-20260926-1421-001/` | `python3 app/run_walking_skeleton.py && python3 app/tools/freeze_evidence.py` | D-0 |
 | E5 | revert on a satisfied gate | **measured (sim cohort, labelled)** — `revert_gate_satisfied`, `cohort_source: fixture (simulated)` | receipt `rcpt-…-008` + `course/agent-ops/lesson-04-tool-permissions/v5.md` | as E4 | D-0 |
 | E6 | stuck-learner dispatch (consent + caps) | **measured (fixture cohort, labelled)** — `stuck_signals_met` → `ml-permissions-mode-k-01.md` | `app/out/micro-lessons/` | as E4 | D-0 |

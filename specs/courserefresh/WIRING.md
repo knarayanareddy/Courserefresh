@@ -10,7 +10,7 @@ opening the platform it names.
 
 | Actor | Source family | Input | Output → snapshot field | Run id (first) |
 |---|---|---|---|---|
-| `apify/website-content-crawler` | Docs/changelog pages (vendor docs) | `startUrls` (≤5), `maxPages`, `crawlerType=cheerio` | `markdown`, `url`, `published_at` | `<…>` |
+| `apify/website-content-crawler` @ **0.3.97** (build `u8gClHFAIyDHCQq0J`, tag `version-0`, verified at D-0 from the public actor record) | Docs/changelog pages (vendor docs) | `startUrls` (≤5), `maxPages`, `crawlerType=cheerio` | `markdown`, `url`, `published_at` | `<…>` |
 | `apify/website-content-crawler` (second config) | Release notes / blog index | same, different start urls | same | `<…>` |
 | GitHub releases actor (pinned id at D-1) | Spec repo releases | `owner/repo`, `perPage` | `markdown`, `published_at` | `<…>` |
 | RSS/changelog actor (pinned id at D-1) | Vendor changelog feed | feed url | `markdown` | `<…>` |
@@ -75,6 +75,13 @@ The exports are the production path and the Python oracle is the test path, and 
 
 Parity is checked on `action` **and** `reason_codes`: two different refusals are not the same
 decision, and an engine that treats them as equal would publish a change nobody can explain.
+
+### 3.05 Apify pins in `skin/sources.json` (sources-v1.1)
+
+Every `fetch` block carries `build` + `build_id` + `build_verified` + `build_source`. `latest` is
+refused by review (Art. XIII.2) and by `test_contracts.py`'s path/format checks: a run that cannot say
+which build produced its dataset cannot be replayed. `build_verified` was read from the actor's public
+record, since the build sandbox has no Apify egress.
 
 ### 3.1 n8n build requirements (what "powered by n8n, not decorated with it" means)
 

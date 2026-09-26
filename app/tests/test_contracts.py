@@ -141,8 +141,16 @@ try:
     check("the six n8n workflow exports are present, importable and carry their contract",
           len(exports) == 6, f"found={[p.name for p in exports]}")
     check("every export embeds the current rulebook (triage) and an execute-once guard", True)
+
 except AssertionError as exc:
     check("n8n exports are consistent", False, str(exc))
+
+# 9b. Apify pins are builds, not `latest` (Art. XIII.2)
+sources = json.loads((ROOT / "specs" / "courserefresh" / "skin" / "sources.json").read_text())
+apify_fetches = [s["fetch"] for s in sources["sources"] if (s.get("fetch") or {}).get("kind") == "apify"]
+loose = [f.get("actor_id") for f in apify_fetches if not f.get("build") or f["build"] == "latest"]
+check("every Apify actor call carries a pinned build (never `latest`)",
+      bool(apify_fetches) and not loose, f"pinned={len(apify_fetches)} loose={loose}")
 
 passed = sum(1 for _, ok, _ in checks if ok)
 width = max(len(c[0]) for c in checks)

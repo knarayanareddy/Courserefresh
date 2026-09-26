@@ -29,7 +29,7 @@ bad edits without being asked**. It refuses to act on one source, and it says so
 | 9 | [`specs/reviews/06-build-round-3.md`](specs/reviews/06-build-round-3.md) | **The build, peer-supervised**: who built what, who watched, the 16 defects found in each other's work, and the check that fails if one returns |
 | 10 | [`specs/courserefresh/SETUP.md`](specs/courserefresh/SETUP.md) | **The only page you need to go live**: paste the keys, `--preflight --probe`, import the canvas, run the first cycle |
 
-**Verify it yourself:** `sh app/check.sh` → `ALL GREEN` (**163 checks, 12 stages**) on a clean checkout
+**Verify it yourself:** `sh app/check.sh` → `ALL GREEN` (**164 checks, 12 stages**) on a clean checkout
 with **no credentials** — the live path (Apify client, judge, n8n client, telemetry intake, console,
 notify channels, one end-to-end dry cycle) is exercised through injected transports. The frozen hero run
 `cr-20260926-1421-001` (19 files) and the round-3 engine rehearsal `cr-20260926-1441-130` (14 files) are

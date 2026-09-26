@@ -14,7 +14,7 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 | ID | Task | Done when | Status |
 |---|---|---|---|
 | T01 | Real course artifact: six lessons (v1/v3 bodies), quizzes, CHANGELOG | front matter parses; the twin reads and rewrites it | `[x]` |
-| T02 | `app/run_walking_skeleton.py`: notice→verify→decide→act→learn→report over fixtures | `--selftest` 13/13; `--report` renders | `[x]` |
+| T02 | `app/run_walking_skeleton.py`: notice→verify→decide→act→learn→report over fixtures | `--selftest` 14/14; `--report` renders | `[x]` |
 | T03 | Receipts: append-only JSONL, linked chain, 100% coverage, `verify_chain()` | selftest chain+coverage checks; TM15 tamper check | `[x]` |
 | T04 | Publish path: `v<n>.md`, diff, CHANGELOG line, gate recorded | `lesson-04` v3→v4 in the hero run; receipt names it | `[x]` |
 | T05 | Refusal path: hostile event escalates, quote preserved, publish = 0 | receipt `injection_or_jailbreak`; TM01 | `[x]` |
@@ -44,7 +44,7 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 | T18 | Gate evaluation (n≥5, 48 h, `quiz_delta ≤ 0`) → revert queue, `unmeasured` when n<floor | gate row in the run log; `unmeasured` branch | `[~]` — implemented and proven offline (`cr-revert-*` gold rows, `09-revert.json`); live cohort absent |
 | T19 | Stuck detection + micro-lesson dispatch (consent + caps) | dispatch artifact + receipt; rate-limit rows | `[x]` |
 | T20 | Eval harness: three columns on the frozen gold set, report archived | `policy.py --eval` exits 0; report in `app/out/eval/` | `[x]` — columns (b)/(c) offline; (a) is `n/a` (D-06) |
-| T21 | All test files green | `sh app/check.sh` exit 0 | `[x]` — **163 PASS** across 12 stages |
+| T21 | All test files green | `sh app/check.sh` exit 0 | `[x]` — **164 PASS** across 12 stages |
 | T22 | `RECEIPTS.md` + `EVIDENCE.md` filled from real outputs (or `unmeasured`) | claims lint green; no orphan numbers | `[x]` |
 | T23 | **M2 GATE:** hostile→publish = 0 and unsupported→publish = 0 on the archived report | excerpt pasted in `reviews/04` §3 | `[x]` |
 
@@ -76,7 +76,7 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 | T35 | Telemetry + console servers, and a demo launcher | console serves a sandbox with `--root`; intake refuses no-consent | `[x]` — `app/serve.py`; see the LIVE preview in this session |
 | T36 | Notify channels (file/telegram/webhook) with delivery records | staged ≠ delivered; missing keys fail loudly | `[x]` — `app/lib/notify.py` |
 | T37 | Preflight, `.env.example`, `SETUP.md`, `OPERATIONS.md` §9–12 | a stranger can paste keys from one page | `[x]` — `--preflight [--probe]` |
-| T38 | Live-path battery (`test_live_modules.py`, 47 checks) with injected transports | green inside `check.sh`, no keys, no sockets | `[x]` — 12 stages, 163 PASS |
+| T38 | Live-path battery (`test_live_modules.py`, 47 checks) with injected transports | green inside `check.sh`, no keys, no sockets | `[x]` — 12 stages, 164 PASS |
 | T39 | Peer-supervised build log (`reviews/06`) | 16 findings, each with a check that fails if it returns | `[x]` — `specs/reviews/06-build-round-3.md` |
 
 ## Blocked list
