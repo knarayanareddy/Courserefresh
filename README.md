@@ -31,7 +31,7 @@ bad edits without being asked**. It refuses to act on one source, and it says so
 | 10 | [`specs/reviews/07-author-canvas-panel.md`](specs/reviews/07-author-canvas-panel.md) | The canvas panel (teacher · author · learner · UX · claims · SRE · n8n · Tavily · JEV · cost): what the review surface proves, the one blocking condition — **a ruling must bind the next cycle** — and the complementary features it wants |
 | 11 | [`specs/courserefresh/SETUP.md`](specs/courserefresh/SETUP.md) | **The only page you need to go live**: paste the keys, `--preflight --probe`, import the canvas, run the first cycle |
 
-**Verify it yourself:** `sh app/check.sh` → `ALL GREEN` (**288 checks: 256 PASS in 13 measured stages + the 32-check claims audit**) on a clean checkout
+**Verify it yourself:** `sh app/check.sh` → `ALL GREEN` (**295 checks: 263 PASS in 13 measured stages + the 32-check claims audit**) on a clean checkout
 with **no credentials** — the live path (Apify client, judge, n8n client, telemetry intake, console,
 notify channels, one end-to-end dry cycle) is exercised through injected transports. The frozen hero run ships in
 `specs/evidence/` (19 files, every hash re-checked by the battery); `specs/courserefresh/EVIDENCE.md` §4

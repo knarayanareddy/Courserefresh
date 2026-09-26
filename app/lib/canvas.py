@@ -394,6 +394,11 @@ def build(root: Path | None = None, receipts_path: Path | None = None,
                     not withheld_row.get("patch") else
                     "" if all(c in rulings_lib.APPROVABLE for c in codes) else
                     "this refusal is not a judgement call: " + ", ".join(codes or ["(no codes)"])),
+            # what the author's *approve* would actually write: the withheld delta's own proposal,
+            # so the queue can be ordered by learner consequence (C-05) and the page can name the file
+            "proposed_path": ((withheld_row.get("patch") or {}).get("file") or None),
+            "proposed_lesson": ((withheld_row.get("input") or {}).get("lesson_touched") or None),
+            "assessment_touched": bool((withheld_row.get("input") or {}).get("assessment_touched")),
         }
     for item in decisions:
         # A ruling is about an *event*, not about the receipt that happened to record it: when the
@@ -409,12 +414,21 @@ def build(root: Path | None = None, receipts_path: Path | None = None,
             if expired:
                 ruling["expired_why"] = expired["why"]
 
+    # C-05: the queue is a worklist, so it is ordered by what the author should look at first.
+    # Rule, in words: (1) rows that want a human come before the ones the loop settled on its own;
+    # (2) within that, learner consequence — a row that regenerates a *quiz item* is a graded thing
+    # and outranks a lesson body, which outranks rows that touch no learner-facing file at all;
+    # (3) then by how close the decision was to turning over (smallest flip margin first: the fragile
+    # ones are the ones worth a second pair of eyes); (4) receipt id, so the order is stable and a
+    # re-run that changes nothing does not shuffle the page.
+    order = sorted(decisions, key=review_key)
     verdict = {"total": len(decisions),
                "ruled_by_author": sum(1 for d in decisions if d.get("author_decisions")),
                "publishes": sum(1 for d in decisions if d["decision"]["action"] == "PUBLISH"),
                "refusals": sum(1 for d in decisions if d["decision"]["action"] == "ESCALATE"),
                "needs_review": [d["receipt_id"] for d in decisions
-                                if d["confidence"]["needs_review"] and not d.get("author_decisions")]}
+                                if d["confidence"]["needs_review"] and not d.get("author_decisions")],
+               "queue": [d["receipt_id"] for d in order]}
     # the diff is read here, not stored on the receipt: the course tree is where the truth lives.
     # The read cap is the page's budget, so the *size* of what was cut is recorded with it.
     for item in decisions:
@@ -456,6 +470,38 @@ def review_queue(receipts_path: Path, course: Path) -> list[dict]:
             and not any(not d.get("expired") for d in row.get("author_decisions") or [])]
 
 
+# learner consequence, in the order an author should care (C-05)
+CONSEQUENCE = {"assessment": 0, "lesson": 1, "metadata": 2}
+
+
+def consequence(item):
+    """How learner-facing a queued row is: a regenerated quiz item, a lesson body, or neither.
+
+    A queued row has usually not written a version yet — its proposed change is still in the withheld
+    delta — so the proposal counts too, and an assessment flag on the delta outranks everything.
+    """
+    lesson = item.get("lesson") or {}
+    review = item.get("review") or {}
+    if lesson.get("quiz_item") or review.get("assessment_touched"):
+        return CONSEQUENCE["assessment"]
+    proposed = str(review.get("proposed_path") or "")
+    if "quizzes/" in proposed:
+        return CONSEQUENCE["assessment"]
+    if proposed or lesson.get("body_path") or lesson.get("diff_path"):
+        return CONSEQUENCE["lesson"]
+    return CONSEQUENCE["metadata"]
+
+
+def review_key(item):
+    """The queue order: human rows first, graded files before prose, then the closest call."""
+    confidence = item.get("confidence") or {}
+    margin = confidence.get("margin")
+    return (not confidence.get("needs_review"),
+            consequence(item),
+            margin if isinstance(margin, (int, float)) else 9.99,
+            str(item.get("receipt_id")))
+
+
 def render_html(doc: dict, action_url: str | None = None, token: str | None = None) -> str:
     """The reading view. No scripts, no external assets, refusals and review rows first.
 
@@ -495,15 +541,21 @@ def render_html(doc: dict, action_url: str | None = None, token: str | None = No
              f"<p class='muted'>{doc['verdict']['total']} decisions · "
              f"{doc['verdict']['publishes']} published · {doc['verdict']['refusals']} refused · "
              f"{len(doc['verdict']['needs_review'])} want a human</p>",
+             f"<p class='muted'>queue: graded files first (a rebuilt quiz item, then a lesson body, ",
+             f"then the rest), closest call first inside each class, rows wanting a human above the rest</p>",
              f"<p class='muted'>run {html.escape(str(prov.get('run_id')))} · "
              f"{prov.get('receipts')} receipts · policy {html.escape(str(prov.get('policy')))} · "
              f"built {html.escape(str(prov.get('built_at')))}</p>"]
-    ordered = sorted(doc["decisions"], key=lambda d: (not d["confidence"]["needs_review"],
-                                                      d["decision"]["action"] != "ESCALATE"))
+    # the page follows the same order the JSON records (`verdict.queue`), so what an author sees and
+    # what an API reads cannot drift apart.
+    by_id = {d["receipt_id"]: d for d in doc["decisions"]}
+    queue = [by_id[r] for r in doc["verdict"].get("queue", []) if r in by_id]
+    ordered = queue or doc["decisions"]
     for item in ordered:
         d = item["decision"]
         klass = "row " + str(d["action"]) + (" review" if item["confidence"]["needs_review"] else "")
-        lines.append(f"<div class='{klass}'>")
+        # the row carries its receipt id as an anchor, so a teacher can paste a link to the exact row
+        lines.append(f"<div class='{klass}' id='{html.escape(str(item['receipt_id']))}'>")
         lines.append(f"<b>{html.escape(str(d['action']))}</b> "
                      f"<span class='pill'>{html.escape(str(item['lesson'].get('lesson_id') or '—'))}</span>"
                      f"<span class='pill'>{html.escape(str(d['decided_by']))} · "

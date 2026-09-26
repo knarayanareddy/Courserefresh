@@ -28,8 +28,8 @@ criterion → evidence → sentence mapping).
 
 | | |
 |---|---|
-| Battery | `sh app/check.sh` → **288 PASS (13 measured stages + the 32-check claims audit) · `ALL GREEN` · exit 0**, **with zero credentials** |
-| Live path | Built and exercised end-to-end through injected transports (47/47, `test_live_modules.py`); **never called a real API** — that is deliberate |
+| Battery | `sh app/check.sh` → **295 PASS (13 measured stages + the 32-check claims audit) · `ALL GREEN` · exit 0**, **with zero credentials** |
+| Live path | Built and exercised end-to-end through injected transports (127/127, `test_live_modules.py`, including the Tavily, JEV-fixture, canvas and author-ruling paths); **never called a real API** — that is deliberate |
 | Blocking input | **keys only.** `python3 app/run_live.py --preflight` prints exactly what is missing, by name |
 | Round status | Rounds 1–3 (package → panel → specialist debate → peer-supervised build) are complete and recorded in `specs/reviews/01…06` |
 | Today | **D1.** Keys → first live cycle → `--watch` overnight → harvest in the morning → film → submit 15:00 |
@@ -43,7 +43,7 @@ single credential.*
 ### Step 0 — prove the wiring before any key (2 min)
 
 ```bash
-sh app/check.sh                       # expect: ALL GREEN (288 PASS: 13 measured stages + the claims audit), no network, no keys
+sh app/check.sh                       # expect: ALL GREEN (295 PASS: 13 measured stages + the claims audit), no network, no keys
 python3 app/run_live.py --preflight   # expect: mode: sim, apify/judge/n8n "missing", 4 claims blocked
 ```
 
@@ -126,7 +126,7 @@ Then the paperwork — it is part of the build, not an afterthought:
 4. `tasks.md` — T10/T11/T12/T13/T15/T16/T17 move from `[~]`/`[!]` when the artifact exists; T09/T25/T26 are human.
 5. `AMENDMENTS.md` — one row per change; a finding is `open` until its output is pasted.
 6. `sh app/check.sh` again (the counts will not move unless files changed — if they do, sweep **all**
-   occurrences, including backticked ones: `288 PASS`, `13 stages + audit`, `59 rows + 2 probes`, per-suite numbers).
+   occurrences, including backticked ones: `295 PASS`, `13 stages + audit`, `59 rows + 2 probes`, per-suite numbers).
 7. Commit on this branch and push (`git push origin arena/01a0ddea-courserefresh`).
 
 ### Step 7 — film
@@ -204,7 +204,7 @@ received a card) and **`sim`** (no live Apify/n8n execution). The console header
 ## 7. Traps distilled (from the build's own error log)
 
 - **Count sweeps**: after a battery change, grep *every* count reference (backticks get missed).
-  Current: 288 PASS (13 stages + 32 audit checks) · contracts 16/16 · live modules 47/47 · handoff 15/15 · live selftest
+  Current: 295 PASS (13 stages + 32 audit checks) · contracts 16/16 · live modules 127/127 · handoff 15/15 · live selftest
   12/12 · skeleton selftest 14/14 · policy 18/18 · threats 18/18 · artifacts 8/8 · curriculum 8/8 ·
   gold floor 8/8 · claims 3/3 · hygiene 7/7 · design 6/6 · parity 59 rows + 2 probes.
 - **Hygiene**: no wall-clock dates outside `kickoff/PREREGISTRATION.md` (use `D-0`); no email-shaped

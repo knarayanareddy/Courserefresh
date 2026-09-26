@@ -16,10 +16,10 @@ tools ship — every pixel of it is a receipt — but it was not a *decision* su
 author did changed what the loop did next. That is the same defect the review found in the engine
 (`REVIEW.md` F2), seen from the other side, and it was the panel's single blocking condition.
 
-**Status (after the build).** C-01, C-02, C-03, C-04, C-06, C-07, TV-03, JV-02 and the label half of
-JV-03 are **implemented and checked**; TV-02's *action* half (proposals from the canvas), C-05, C-08,
-JV-05 and the calibration record are **open**, each with the check that will close it named in its
-row. What the panel refused stays refused.
+**Status (after the build).** C-01–C-07, TV-03, JV-02, JV-04 and the label half of JV-03 are
+**implemented and checked**; TV-02's *action* half (proposals from the canvas), C-08 (a human revert),
+and the calibration record are **open**, each with the check that will close it named in its row.
+JV-05 stays refused on purpose. What the panel refused stays refused.
 
 ---
 
@@ -99,15 +99,19 @@ ambiguous the moment it is screenshotted into a review.
 *Built:* `provenance {run_id, mode, receipts, policy, built_at}` in the JSON and the same line on the
 page. *Proof:* §12.
 
-### C-05 · **open** · the queue is not ordered by consequence *(T, AU)*
+### C-05 · **closed** · the queue is not ordered by consequence *(T, AU)*
 
 Ordering today is "queued first, then ESCALATE" — defensible, but a quiz item that changes what
 learners are assessed on sits at the same rank as a typo in a docs sentence. The two hero rows happen
 to be right; the rule is not written down.
 
-*Open.* The sort is still queued-first, then ESCALATE. Consequence ordering needs the assessment flag
-carried onto the canvas row. *Closing check:* two queued rows, one touching `quizzes/…` — the quiz row
-renders first.
+*Built:* `canvas.review_key` orders the queue — human rows first, then learner consequence (a
+regenerated quiz item or a proposal under `quizzes/` → a lesson body → metadata), then the smallest
+flip margin, then receipt id so the order is stable. The withheld delta's own proposal is what counts
+for a queued row, since it has not written a version yet. `verdict.queue` is the order the page renders
+and the JSON records, and each row now carries its receipt id as an anchor.
+*Proof:* §12 — graded before prose before metadata, fragile before safe inside a class, and the page's
+row order equals `verdict.queue`.
 
 ### C-06 · **low** · "robust" overstates what was measured *(ART)*
 
@@ -188,11 +192,15 @@ calibration record itself (n ≥ 20 published decisions with an observed outcome
 page may turn those numbers into an accuracy claim (Art. VI). *Closing check:* the calibration file
 exists and the page prints the measured rate instead of `unmeasured`.
 
-*JV-04 · low · alternate hosts are a feature, not a hack.* `CR_JEV_BASE_URL` already accepts the
+*JV-04 · closed · alternate hosts are a feature, not a hack.* `CR_JEV_BASE_URL` already accepts the
 OpenRouter / requesty / rout.my forms; the panel notes the keyless local JEV servers
 (`githubnext/localjev`, `amithgc/local-jev`) as the way to exercise this path in CI without
-credentials — the same roll own. Document it in `SETUP.md` (already: the trio is listed) and add a
-fixture replay so the adapter is tested with no network at all.
+credentials — the same roll own. *Built:* `SETUP.md` names the keyless servers as a way to exercise the path before the real key
+exists, and `app/fixtures/jev/systemone-response.json` (the published wire shape, explicitly **not** a
+recording) is replayed in §10 through an injected transport: a proxy base URL
+(`…/v1/systemone`), the key in the `Authorization` header only, a keyless `127.0.0.1` host with no
+header invented, and a drift guard that keeps the fixture's option keys equal to the closed sets in
+`skin/questions.json`. No socket, no key.
 
 *JV-05 · refused: a `score` question for "materiality".* JEV supports `score`; the repo's seven
 questions are closed on purpose and the materiality decision belongs to the rulebook, not to a

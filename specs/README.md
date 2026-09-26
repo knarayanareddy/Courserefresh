@@ -67,7 +67,7 @@ ain't-happened list, and a review that closes findings only with pasted output.
 sh app/check.sh
 ```
 
-That command is the only “it works” claim this package makes. Last run: **288 PASS (13 measured stages + the 32-check claims audit), exit 0
+That command is the only “it works” claim this package makes. Last run: **295 PASS (13 measured stages + the 32-check claims audit), exit 0
 (`ALL GREEN`)**, output archived at `app/out/evidence/battery.log` (counts frozen in
 `battery-summary.json`); the frozen hero run ships in `specs/evidence/` (19 files, hashes re-checked
 by that same battery). `app/out/…` is where a local re-run lands. Anything that has not been measured

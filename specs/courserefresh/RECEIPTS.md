@@ -64,8 +64,8 @@ from memory.
 | N29 | live-engine dry cycle: decisions | `PUBLISH 1` · `ESCALATE 1` · `NO_CHANGE 0` (run `cr-20260926-1726-054`, shipped) | **measured** (sim) | `specs/evidence/cr-20260926-1726-054/receipts.jsonl` | E9 command |
 | N30 | judge calls on the live path | `2` (recorded answers, provider `mock`, fixture printed on the digest) | **measured** (sim) | E9 receipts (`judge.provider`) | E9 command |
 | N31 | Apify units accounted in a live cycle | `6` units, ledger row carries the declared approximation `1 run = 1 unit` | **measured** (sim) | `app/out/e8/app/out/state/apify_units.jsonl` | E9 command |
-| N32 | battery, after the review fixes | `256` PASS lines across the `13` measured stages, plus stage 14 (the claims audit: see the block in §6), exit 0 | **measured** | `app/out/evidence/battery.log` + `battery-summary.json` | `sh app/check.sh` |
-| N33 | live-path checks that run with no credentials | `120` (47 at round 3 + 73 review-fix checks: canvas path, canvas-decides, crash-retry, consent, probe, dwell, bootstrap, JEV, Tavily, canvas, author rulings) | **measured** | `app/tests/test_live_modules.py` | E11 command |
+| N32 | battery, after the review fixes | `263` PASS lines across the `13` measured stages, plus stage 14 (the claims audit: see the block in §6), exit 0 | **measured** | `app/out/evidence/battery.log` + `battery-summary.json` | `sh app/check.sh` |
+| N33 | live-path checks that run with no credentials | `127` (47 at round 3 + 80 review-fix checks: canvas path, canvas-decides, crash-retry, consent, probe, dwell, bootstrap, JEV including the fixture replay, Tavily, canvas, author rulings, queue order) | **measured** | `app/tests/test_live_modules.py` | E11 command |
 
 | N34 | handoff collector checks | `15` (redaction, secret scan, self-verified chain + session totals, manifest re-hash, canvas/Apify ids, telemetry counts-only, archive, empty-tree refusal) | **measured** | `app/tests/test_handoff.py` | stage 13/13 |
 
@@ -131,7 +131,7 @@ battery stayed green (review F5 — a wrong sha256 for the frozen gold set sat h
   },
   "battery": {
     "stages_before_audit": 13,
-    "pass_lines_before_audit": 256,
+    "pass_lines_before_audit": 263,
     "parity": [
       59,
       2
@@ -180,8 +180,8 @@ battery stayed green (review F5 — a wrong sha256 for the frozen gold set sat h
       7
     ],
     "test_live_modules": [
-      120,
-      120
+      127,
+      127
     ],
     "test_policy": [
       18,

@@ -625,6 +625,54 @@ check("JEV renders nothing: a render request on that provider is refused, not ha
                                     body="The lesson says the old thing.", event=event_for_jev)["ok"] is False,
       "typed decisions are not prose")
 
+# JV-04: the adapter is exercised with no network *and no key at all*, from a fixture, and the same
+# call works against an alternate host (an OpenRouter/requesty/rout.my proxy, or one of the keyless
+# local JEV servers the panel named) — the alt-host path is a feature, not a hack.
+jev_fixture = json.loads((ROOT / "app" / "fixtures" / "jev" / "systemone-response.json").read_text())
+alt_requests = []
+
+
+def alt_transport(method, url, headers, body, timeout=30):
+    alt_requests.append({"url": url, "headers": headers, "body": body})
+    return 200, jev_fixture
+
+
+alt_cfg = Config({"CR_JUDGE_PROVIDER": "jev", "CR_JEV_API_KEY": "ts_alt",
+                  "CR_JEV_BASE_URL": "https://router.requesty.ai/v1"})
+alt_provider = judge_lib.build_provider(alt_cfg, alt_transport)
+alt_judgement = judge_lib.ask_judge(event_for_jev, alt_provider, "typesafe/jev-1.13.0")
+check("JV-04: a proxy base URL is honoured (…/v1/systemone), and the fixture replay validates",
+      alt_requests and alt_requests[-1]["url"] == "https://router.requesty.ai/v1/systemone"
+      and alt_requests[-1]["body"]["model"] == "typesafe/jev-1.13.0"
+      and alt_judgement["ok"] and alt_judgement["answers"]["q1_materiality"] == "material_breaking",
+      f"{alt_requests[-1]['url'] if alt_requests else 'no call'} · ok={alt_judgement['ok']}")
+_skin_questions = json.loads((ROOT / "specs" / "courserefresh" / "skin" / "questions.json").read_text())["questions"]
+check("JV-04: the fixture's option keys are the closed sets the request carries (no drift)",
+      all((fx.get("choice") or fx.get("noul")) is not None for fx in jev_fixture["answers"].values())
+      and all(jf.get("choice") in (q.get("options") or [])
+              for q in _skin_questions if q["type"] == "Choice"
+              for jf in [jev_fixture["answers"][q["id"]]])
+      and set(jev_fixture["answers"]) == {q["id"] for q in _skin_questions},
+      f"{len(jev_fixture['answers'])} answers")
+check("JV-04: the key travels in the Authorization header only — never in the body or the URL",
+      alt_requests[-1]["headers"].get("Authorization") == "Bearer ts_alt"
+      and "ts_alt" not in json.dumps(alt_requests[-1]["body"])
+      and "ts_alt" not in alt_requests[-1]["url"], "header-only")
+keyless_cfg = Config({"CR_JUDGE_PROVIDER": "jev", "CR_JEV_BASE_URL": "http://127.0.0.1:8765"})
+keyless_requests = []
+
+
+def keyless_transport(method, url, headers, body, timeout=30):
+    keyless_requests.append({"url": url, "headers": headers})
+    return 200, jev_fixture
+
+
+keyless = judge_lib.ask_judge(event_for_jev, judge_lib.build_provider(keyless_cfg, keyless_transport),
+                              "jev-latest")
+check("JV-04: a keyless local JEV server works (no Authorization header is invented)",
+      keyless["ok"] and keyless_requests[-1]["url"] == "http://127.0.0.1:8765/v1/systemone"
+      and "Authorization" not in keyless_requests[-1]["headers"], keyless_requests[-1]["url"])
+
 # JV-02: JEV numbers are model output, so the closed sets decide — an out-of-set option and a
 # probability outside [0,1] must fail the judgement closed, end to end through the judge contract
 bad_jev = {"model": "jev-1.13.0", "answers": {
@@ -1051,6 +1099,38 @@ check("the canvas marks the superseded ruling instead of showing a settled row",
       str([(d.get("ruling"), d.get("expired")) for d in single_rows[-1]["author_decisions"]])
       if single_rows else "no row")
 server3.shutdown()
+
+# C-05: the queue is a worklist, ordered by learner consequence — a regenerated quiz item first, then
+# a lesson body, then rows that touch no learner-facing file — and the fragile calls before the safe
+# ones within a class. The page must follow the same order the JSON records.
+def _row(receipt, quiz=None, body=None, margin=None, needs=True, proposal=None, assessment=False):
+    return {"receipt_id": receipt, "confidence": {"needs_review": needs, "margin": margin},
+            "lesson": {"quiz_item": quiz, "body_path": body, "diff_path": None},
+            "review": {"proposed_path": proposal, "assessment_touched": assessment}}
+
+order = [r["receipt_id"] for r in sorted(
+    [_row("meta", margin=0.01), _row("body", body="agent-ops/lesson-01/v2.md", margin=0.4),
+     _row("quiz", quiz="q2", margin=0.45), _row("settled", needs=False, margin=0.1),
+     _row("proposal", proposal="agent-ops/lesson-09/v2.md", margin=0.2),
+     _row("graded", proposal="agent-ops/quizzes/q1.json", margin=0.6)],
+    key=canvas_lib.review_key)]
+# graded files (quiz item rebuilt, or a proposal under quizzes/) outrank lesson bodies, which
+# outrank metadata rows; inside a class the smaller flip margin comes first, and a settled row is last
+check("C-05 consequence order: graded files beat prose, prose beats metadata, human rows first",
+      order.index("quiz") < order.index("graded") < order.index("proposal") < order.index("body")
+      < order.index("meta") < order.index("settled"), " < ".join(order))
+margin_order = [r["receipt_id"] for r in sorted(
+    [_row("safe", body="agent-ops/lesson-01/v2.md", margin=0.9),
+     _row("fragile", body="agent-ops/lesson-01/v2.md", margin=0.05)], key=canvas_lib.review_key)]
+check("C-05: within a class the closest call (smallest flip margin) comes first",
+      margin_order == ["fragile", "safe"], " < ".join(margin_order))
+queue = stale_canvas["verdict"]["queue"]
+rendered = canvas_lib.render_html(stale_canvas)
+on_page = [r for r in queue if f"id='{r}'" in rendered]
+positions = [rendered.index(f"id='{r}'") for r in on_page]
+check("C-05: the page renders the queued rows in the JSON queue's order",
+      len(on_page) == len(queue) and positions == sorted(positions),
+      f"queue={len(queue)} rows, on page in order={positions == sorted(positions)}")
 
 passed = sum(1 for _, ok, _ in CHECKS if ok)
 width = max(len(c[0]) for c in CHECKS)

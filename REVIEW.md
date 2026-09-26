@@ -416,7 +416,7 @@ require `seconds` for `dwell` in `validate_payload`, and use `statistics.median`
 ## 7. Fix log (added after the fixes landed)
 
 Every finding above was resolved in the session that followed this review, on the no-key path, and each
-one is now held by a check that fails if it comes back. `sh app/check.sh` → **288 PASS (256 in 13
+one is now held by a check that fails if it comes back. `sh app/check.sh` → **295 PASS (263 in 13
 measured stages + the 32-check claims audit), `ALL GREEN`, exit 0** with no credentials; the two shipped
 bundles under `specs/evidence/` are re-hashed by the battery on every run. The numbers in §6 above are
 what I measured *at review time* and are left as they were found.
