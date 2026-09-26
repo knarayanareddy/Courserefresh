@@ -17,6 +17,7 @@ OUT = ROOT / "app" / "n8n"
 SKIN = ROOT / "specs" / "courserefresh" / "skin"
 NODE_SRC = (OUT / "policy_node.js").read_text()
 NODE_HASH = hashlib.sha256(NODE_SRC.encode()).hexdigest()
+ERR_NAME = "CR-9 · errors → receipt"          # the one workflow whose id belongs in every other's settings
 # one source of truth for the canvas paths (skin/wiring.json); the engine reads the same file
 WIRING = json.loads((SKIN / "wiring.json").read_text())["webhooks"]
 
@@ -306,6 +307,102 @@ def do_import() -> int:
     return 0 if result["ok"] else 2
 
 
+def verify_import(client) -> dict:
+    """Audit the instance's own copies against the import contract (review C2).
+
+    The demo-day failure mode this gate exists for: `--import` says OK, the canvas looks right,
+    and the first run dies on a node that still says `ATTACH_AT_IMPORT` (a placeholder URL the
+    export was never allowed to fill) or on an error workflow nobody attached. So the gate reads
+    every workflow back from the instance and checks the three things a rehearsal can't paper
+    over -- whatever `--import` just claimed is irrelevant here; only the stored object counts:
+
+      1. present: every generated workflow name exists on the instance (by id or by name);
+      2. no placeholders: no `ATTACH_AT_IMPORT` anywhere in any stored parameter or credential
+         ref, and every offender is reported as workflow · node · parameter;
+      3. error wiring: `wf-cr-9-errors`' id is in `settings.errorWorkflow` of the other five.
+
+    Returns {ok, checked, problems: [{workflow, node, parameter, problem}]} — never print secrets:
+    placeholders are constants in the exports, so naming them leaks nothing.
+    """
+    problems = []
+    ids: dict = {}
+    listing = client.list_workflows()
+    if not listing["ok"]:
+        return {"ok": False, "checked": 0,
+                "problems": [{"workflow": "*", "node": "-", "parameter": "-",
+                              "problem": f"cannot list workflows: {listing.get('message', 'not ok')}"}]}
+    by_name = {w.get("name"): w for w in listing.get("workflows", [])}
+    for path in sorted(OUT.glob("wf-cr-*.json")):
+        export = json.loads(path.read_text())
+        name = export.get("name")
+        match = next((w for w in listing.get("workflows", []) if w.get("name") == name
+                      and w.get("id") is not None), None)
+        # fall back to the ids the importer recorded, so the gate also works later, offline of a
+        # fresh import (the ids file is the deployment's memory of what it pushed)
+        if match is None:
+            ids_path = ROOT / "app" / "out" / "live" / "n8n-ids.json"
+            if ids_path.exists():
+                recorded = json.loads(ids_path.read_text()).get("ids", {})
+                wid = recorded.get(name)
+            else:
+                wid = None
+        else:
+            wid = match["id"]
+        if not wid:
+            problems.append({"workflow": name, "node": "-", "parameter": "-",
+                             "problem": "not found on the instance (run --import first)"})
+            continue
+        ids[name] = wid
+        fetched = client.get_workflow(wid)
+        if not fetched["ok"]:
+            problems.append({"workflow": name, "node": "-", "parameter": "-",
+                             "problem": f"read-back failed: {fetched.get('message', 'not ok')}"})
+            continue
+        stored = fetched["workflow"] or {}
+        for node in stored.get("nodes", []):
+            for key, value in (node.get("parameters") or {}).items():
+                if isinstance(value, str) and "ATTACH_AT_IMPORT" in value:
+                    problems.append({"workflow": name, "node": node.get("name"), "parameter": key,
+                                     "problem": "still a placeholder: attach the real value (SETUP §3)"})
+            for key, value in (node.get("credentials") or {}).items():
+                if isinstance(value, dict) and "ATTACH_AT_IMPORT" in json.dumps(value):
+                    problems.append({"workflow": name, "node": node.get("name"), "parameter": f"credentials.{key}",
+                                     "problem": "credential is a placeholder, not an attached id"})
+    error_id = ids.get(ERR_NAME)
+    for name, wid in ids.items():
+        if name == ERR_NAME:
+            continue
+        fetched = client.get_workflow(wid)
+        if fetched["ok"]:
+            attached = ((fetched["workflow"] or {}).get("settings") or {}).get("errorWorkflow")
+            if attached != error_id:
+                problems.append({"workflow": name, "node": "-", "parameter": "settings.errorWorkflow",
+                                 "problem": f"error workflow not attached (is {attached}, want {error_id})"})
+    return {"ok": not problems, "checked": len(ids) + sum(1 for p in problems if "not found" in p["problem"]),
+            "problems": problems}
+
+
+def do_verify_import() -> int:
+    import sys
+    sys.path.insert(0, str(ROOT / "app" / "lib"))
+    import n8n
+    from config import Config
+    cfg = Config()
+    client = n8n.N8nClient(cfg.get("N8N_BASE_URL"), cfg.get("N8N_API_KEY"),
+                           instance_version=cfg.get("N8N_INSTANCE_VERSION"))
+    if not client.configured():
+        print("verify-import: N8N_BASE_URL / N8N_API_KEY missing (SETUP §2)")
+        return 2
+    verdict = verify_import(client)
+    for problem in verdict["problems"]:
+        p = problem["problem"][0].upper() + problem["problem"][1:]
+        print(f"  BROKEN  {problem['workflow']} · {problem['node']} · {problem['parameter']}: {p}")
+    print(f"verify-import: {'OK' if verdict['ok'] else 'BROKEN'} — "
+          f"{verdict['checked']} workflows checked, {len(verdict['problems'])} problem(s)")
+    return 0 if verdict["ok"] else 2
+
+
+
 def check() -> int:
     """--check: regenerate in memory and fail if any export on disk would change."""
     before = {p.name: p.read_text() for p in sorted(OUT.glob("wf-cr-*.json"))}
@@ -323,6 +420,8 @@ if __name__ == "__main__":
     import sys
     if "--import" in sys.argv:
         raise SystemExit(do_import())
+    if "--verify-import" in sys.argv:
+        raise SystemExit(do_verify_import())
     if "--check" in sys.argv:
         raise SystemExit(check())
     main()

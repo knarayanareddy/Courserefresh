@@ -104,6 +104,23 @@ class N8nClient:
         return {"ok": status == 200, "active": active,
                 "message": (body or {}).get("message", "") if status != 200 else ""}
 
+    def get_workflow(self, workflow_id: str) -> dict:
+        """Read one workflow's live copy back from the instance — what the verify gate audits.
+
+        The public API returns the stored object, so this is the canvas as n8n actually holds it:
+        nodes, parameters, connections and settings -- not what the export file says it sent.
+        """
+        if not self.configured():
+            return {"ok": False, "error": "not_configured", "code": "payload_invalid",
+                    "message": "N8N_BASE_URL / N8N_API_KEY missing"}
+        status, body = self.transport("GET", f"{self.base}/api/v1/workflows/{workflow_id}",
+                                      self._headers(), None, self.timeout)
+        if status != 200:
+            return {"ok": False, "error": "n8n_error", "code": "payload_invalid",
+                    "message": (body or {}).get("message", f"HTTP {status}")}
+        workflow = body.get("data") if isinstance(body, dict) and isinstance(body.get("data"), dict) else body
+        return {"ok": True, "workflow": workflow}
+
     def executions(self, workflow_id: str, limit: int = 5) -> dict:
         if not self.configured():
             return {"ok": False, "error": "not_configured", "code": "payload_invalid"}

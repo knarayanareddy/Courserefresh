@@ -89,6 +89,19 @@ duplicates), attaches `wf-cr-9-errors` as the error workflow for all five, then 
 `ATTACH_AT_IMPORT` (credentials, telegram thread), and activate. Record the instance version in
 `WIRING.md` §4 and the first execution ids in §6.
 
+Then close the loop — never trust the canvas' word for it, read the instance back:
+
+```bash
+python3 app/tools/make_n8n_exports.py --verify-import
+```
+
+The gate re-reads every workflow *from the instance* and checks the three things a rehearsal
+cannot paper over: every workflow present, no parameter still a `ATTACH_AT_IMPORT` placeholder
+(it names the exact workflow · node · parameter), and `wf-cr-9-errors` attached as the error
+workflow of the other five. It prints `OK` or names what is broken; exit `0` or `2`. The offline
+half of the contract is in `test_contracts.py` (§9d), so the gate itself is regression-tested
+with no credentials and no network.
+
 If the exports were edited in the canvas instead of in `app/n8n/*.json`, the drift test
 (`test_contracts.py`) will fail on the next `sh app/check.sh` — that is intended: the file is the
 source of truth, the canvas is a deployment.

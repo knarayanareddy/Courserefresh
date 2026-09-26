@@ -175,6 +175,71 @@ check("the ceiling is sent as `maxTotalChargeUsd` on the run, never inside the a
 check("every Apify actor call carries a pinned build (never `latest`)",
       bool(apify_fetches) and not loose, f"pinned={len(apify_fetches)} loose={loose}")
 
+# 9d. the import-verify gate (review C2): read-back audit of the instance's own copies. The
+# offline contract half: against a fake instance holding *dirty* stored copies, the gate must
+# name the exact workflow · node · parameter that still needs a human; against clean copies it
+# must print OK and nothing else. The live half is `make_n8n_exports.py --verify-import`.
+sys.path.insert(0, str(ROOT / "app" / "tools"))
+sys.path.insert(0, str(ROOT / "app" / "lib"))
+import make_n8n_exports as maker  # noqa: E402
+
+exports = {json.loads(p.read_text())["name"]: json.loads(p.read_text())
+           for p in (ROOT / "app" / "n8n").glob("wf-cr-*.json")}
+ERR = maker.ERR_NAME
+named = sorted(exports.items())
+err_wid = next(f"wf-{i:03d}" for i, (nm, _) in enumerate(named) if nm == ERR)
+
+
+class _FakeN8n:
+    """The N8nClient contract ({ok, ...}, list + get), backed by a dict of stored workflows."""
+
+    def __init__(self, stored: dict):
+        self.stored = stored
+
+    def list_workflows(self):
+        return {"ok": True, "workflows": [{"id": wid, "name": w["name"]} for wid, w in self.stored.items()]}
+
+    def get_workflow(self, wid):
+        return {"ok": True, "workflow": self.stored[wid]}
+
+
+def _clean_store() -> dict:
+    stored = {}
+    for i, (name, wf) in enumerate(named):
+        fw = json.loads(json.dumps(wf))
+        for n in fw["nodes"]:
+            for k, v in list((n.get("parameters") or {}).items()):
+                if isinstance(v, str) and "ATTACH_AT_IMPORT" in v:
+                    n["parameters"][k] = "https://real.example/" + k
+        fw["settings"]["errorWorkflow"] = err_wid if name != ERR else None
+        stored[f"wf-{i:03d}"] = fw
+    return stored
+
+
+clean_verdict = maker.verify_import(_FakeN8n(_clean_store()))
+check("verify-import says OK over a fully attached fake instance",
+      clean_verdict["ok"] and clean_verdict["checked"] == len(named) and not clean_verdict["problems"],
+      f"checked={clean_verdict['checked']} problems={len(clean_verdict['problems'])}")
+_dirty = {wid: json.loads(json.dumps(fw)) for wid, fw in _clean_store().items()}
+_orig_url = next(n for n in exports["wf-cr-0-scan"]["nodes"] if n["name"] == "APIFY_RUN_ACTOR")["parameters"]["url"]
+_scan = next(fw for fw in _dirty.values() if fw["name"] == "wf-cr-0-scan")
+next(n for n in _scan["nodes"] if n["name"] == "APIFY_RUN_ACTOR")["parameters"]["url"] = _orig_url
+_act = next(fw for fw in _dirty.values() if fw["name"] == "wf-cr-2-act")
+_act["settings"]["errorWorkflow"] = None
+dirty_verdict = maker.verify_import(_FakeN8n(_dirty))
+_dirty_kinds = {(p["workflow"], p["parameter"]) for p in dirty_verdict["problems"]}
+check("verify-import names the exact stale placeholder and the unattached error workflow",
+      not dirty_verdict["ok"] and ("wf-cr-0-scan", "url") in _dirty_kinds
+      and ("wf-cr-2-act", "settings.errorWorkflow") in _dirty_kinds,
+      "; ".join(f"{p['workflow']}·{p['node']}·{p['parameter']}" for p in dirty_verdict["problems"]))
+_missing = {wid: fw for wid, fw in _clean_store().items() if fw["name"] != "wf-cr-4-digest"}
+_missing_verdict = maker.verify_import(_FakeN8n(_missing))
+check("verify-import reports a workflow that was never imported instead of trusting the file",
+      not _missing_verdict["ok"]
+      and any(p["workflow"] == "wf-cr-4-digest" and "not found" in p["problem"]
+              for p in _missing_verdict["problems"]),
+      "; ".join(f"{p['workflow']}: {p['problem'][:40]}" for p in _missing_verdict["problems"]))
+
 passed = sum(1 for _, ok, _ in checks if ok)
 width = max(len(c[0]) for c in checks)
 for name, ok, detail in checks:
