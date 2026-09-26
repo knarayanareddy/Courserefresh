@@ -19,6 +19,7 @@ bad edits without being asked**. It refuses to act on one source, and it says so
 | # | File | Why |
 |---|---|---|
 | 1 | [`Idea.md`](Idea.md) | The originating idea, in the author's words |
+| 1b | [`HANDOFF.md`](HANDOFF.md) | **Continuing this session?** Where the project stands, what is left, and every command in order |
 | 2 | [`specs/README.md`](specs/README.md) | The package index, status, and the 10-minute verification path |
 | 3 | [`specs/constitution.md`](specs/constitution.md) | The 16 non-negotiables; the rest of the package is machinery for these |
 | 4 | [`specs/reviews/01-4prd-structure-review.md`](specs/reviews/01-4prd-structure-review.md) | What the reference corpus (4prd) got right and wrong — the source of this package's shape |

@@ -6,6 +6,7 @@ source of truth; if code disagrees with the spec, the spec wins until the spec i
 
 ## Read, in this order, before touching anything
 
+0. `HANDOFF.md` — the session handoff: current state, the critical path, the traps. Then come back here.
 1. `specs/constitution.md` — 16 articles. Articles II–XV are non-negotiable; Art. XII least of all.
 2. `specs/README.md` — the package index and which file answers which question.
 3. `specs/courserefresh/BUILD.md` §0 — the build order and the Core-First Warden's veto.

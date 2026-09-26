@@ -58,7 +58,7 @@ in its own tree (the witnessed-failure run is frozen that way). The current free
 | E9 | **live-engine cycle (round 3 build)** | **measured (sim)** — run `cr-20260926-1441-130`: 1 `PUBLISH` (lesson-03 v2→v3, quiz `q1` regenerated) + 1 `ESCALATE` (`insufficient_corroboration`, one voice), chain verified at end, 2 judge calls on recorded answers, `mode: sim` on every receipt | `app/out/evidence/cr-20260926-1441-130/` (14 files) | `python3 app/run_live.py --root app/out/e8 --seed-baseline && python3 app/run_live.py --root app/out/e8 --dry-run --once` | D-0 |
 | E10 | preflight with no credentials | **measured** — `mode: sim`; `apify`/`judge` named as missing, `n8n` named, four claims blocked; no secret value printed | `app/out/evidence/cr-20260926-1441-130/preflight-nokeys.txt` | `python3 app/run_live.py --preflight [--probe]` | D-0 |
 | E12 | handoff collector (redaction, secret scan, manifest, no-telemetry, self-verified chain) | **measured** — 15/15 checks, including a planted token that must be caught and a manifest that re-hashes | `app/tests/test_handoff.py` (stage 13/13) | `python3 app/tests/test_handoff.py` | D-0 |
-| E11 | live-path battery with injected transports | **measured** — 47/47 checks (config·apify·judge·n8n·telemetry·notify·console·end-to-end), no socket, no key | `app/tests/test_live_modules.py` (stage 6/12) | `python3 app/tests/test_live_modules.py` | D-0 |
+| E11 | live-path battery with injected transports | **measured** — 47/47 checks (config·apify·judge·n8n·telemetry·notify·console·end-to-end), no socket, no key | `app/tests/test_live_modules.py` (stage 6/13) | `python3 app/tests/test_live_modules.py` | D-0 |
 
 ## 4. The frozen hero-run record (paste-once, never edited)
 
