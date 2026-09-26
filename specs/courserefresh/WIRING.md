@@ -76,6 +76,14 @@ The exports are the production path and the Python oracle is the test path, and 
 Parity is checked on `action` **and** `reason_codes`: two different refusals are not the same
 decision, and an engine that treats them as equal would publish a change nobody can explain.
 
+**Precedence, in one line: `human > canvas > oracle`.** An author ruling (D-32) outranks both — it is
+stored with the fingerprint of the evidence it was made about and is applied only while that
+fingerprint still matches, and only when the machine's own verdict is the one the author looked at.
+A ruling that no longer describes the world is ignored, and the receipt says `author_ruling_status`.
+The canvas' answer is re-validated against the closed action/reason sets before it decides anything: a
+200 the rulebook could not have emitted is recorded as `canvas.invalid` and the oracle decides, because
+a malformed answer is a broken deployment, not a second opinion.
+
 ### 3.05 Apify pins in `skin/sources.json` (sources-v1.1)
 
 Every `fetch` block carries `build` + `build_id` + `build_verified` + `build_source`. `latest` is
@@ -137,7 +145,9 @@ Until this table has values, every cost surface prints `unmeasured` (Art. VI).
 The authoritative list, with where each value comes from and what it unlocks, is `.env.example` +
 `SETUP.md` §2. In one line: `APIFY_TOKEN` · `N8N_BASE_URL`/`N8N_API_KEY` (+ `N8N_WEBHOOK_URL` for the
 n8n judge path) · `CR_JUDGE_PROVIDER`/`CR_JUDGE_BASE_URL`/`CR_JUDGE_API_KEY`/`CR_JUDGE_MODEL`
-(any OpenAI-compatible key works, including a "jev"-style endpoint) · `CR_NOTIFY_CHANNEL` with
+(any OpenAI-compatible key works) · `CR_JUDGE_PROVIDER=jev` with its own `CR_JEV_BASE_URL`/`CR_JEV_API_KEY`/`CR_JEV_MODEL`
+(typed decisions; never a fallback for the chat provider (Art. XIV.4)) · `TAVILY_API_KEY` for the
+second discovery source · `CR_NOTIFY_CHANNEL` with
 `CR_TELEGRAM_BOT_TOKEN`+`CR_TELEGRAM_CHAT_ID` or `CR_NOTIFY_WEBHOOK_URL` · optional
 `CR_DEMO_TOKEN`/`CR_TELEMETRY_TOKEN`/`CR_CONSOLE_TOKEN` · `CR_COMMIT=1` + `CR_BOT_BRANCH` for the bot
 commit · `GITHUB_TOKEN` (branch-scoped) only if the commit is pushed from CI.

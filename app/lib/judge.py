@@ -8,7 +8,8 @@ Rules this module enforces, because a model call is where honesty usually dies:
   * an answer outside the closed set, a missing question, or an unparsable response fails **closed**
     (`unknown_state`) — the policy then escalates, it never publishes;
   * providers are pluggable: `mock` (deterministic, offline), `openai` (any OpenAI-compatible base
-    URL — that includes the "jev"-style key the operator plugs in), `anthropic`, `n8n` (webhook);
+    URL), `anthropic`, `n8n` (webhook), and `jev` (TypeSafe System One — a *typed decision* endpoint,
+    not a chat model: it answers the seven closed questions and renders nothing, see jev.py);
   * tokens are counted per call and summed per change/day against `thresholds.budgets`.
 
 Run: python3 app/lib/judge.py --selftest
@@ -24,6 +25,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SKIN = ROOT / "specs" / "courserefresh" / "skin"
 sys.path.insert(0, str(ROOT / "app" / "lib"))
+import jev as jev_lib  # noqa: E402  (the System One decision provider; see jev.py)
 from apify import urllib_transport  # noqa: E402  (the same no-dependency HTTP client)
 from config import Config  # noqa: E402
 
@@ -77,7 +79,8 @@ class MockProvider:
         if answers is None:
             raise ValueError("MockProvider needs .answers")
         return {"text": json.dumps(answers), "prompt_tokens": len(user) // 4,
-                "completion_tokens": len(json.dumps(answers)) // 4, "usd": None}
+                "completion_tokens": len(json.dumps(answers)) // 4, "usd": None,
+                "confidences": getattr(self, "confidences", None)}
 
 
 class HttpProvider:
@@ -148,6 +151,14 @@ def probe_provider(cfg: Config, transport) -> dict:
     provider = (cfg.get("CR_JUDGE_PROVIDER", "mock") or "mock").lower()
     if provider == "mock":
         return {"ok": True, "provider": "mock", "note": "recorded answers — no key needed"}
+    if provider == "jev":
+        # GET /models proves nothing about a typed-decision endpoint (it has no models route), so the
+        # probe is a real one-question call — the smallest thing a JEV host can answer.
+        # The CR_JEV_* trio only: a provider never inherits another provider's credentials (falling
+        # back to CR_JUDGE_BASE_URL would have posted typed-decision payloads to api.openai.com).
+        return jev_lib.probe(cfg.get("CR_JEV_BASE_URL") or jev_lib.DEFAULT_BASE,
+                             cfg.get("CR_JEV_API_KEY"),
+                             transport, model=cfg.get("CR_JEV_MODEL") or jev_lib.DEFAULT_MODEL)
     base = (cfg.get("CR_JUDGE_BASE_URL") or "").rstrip("/")
     key = cfg.get("CR_JUDGE_API_KEY") or ""
     if not key:
@@ -156,8 +167,12 @@ def probe_provider(cfg: Config, transport) -> dict:
         url = cfg.get("N8N_WEBHOOK_URL") or cfg.get("CR_JUDGE_BASE_URL")
         if not url:
             return {"ok": False, "provider": provider, "reason": "no_webhook_url"}
-        status, body = transport("POST", url, {"Content-Type": "application/json"},
-                                 json.dumps({"system": "reply ok", "user": "ok"}).encode(), 20)
+        token = cfg.get("CR_JUDGE_API_KEY") or cfg.get("CR_DEMO_TOKEN")
+        headers = {"Content-Type": "application/json", **({"X-CR-Token": token} if token else {})}
+        # a dict, not bytes: the transport serialises the body itself, and passing bytes made
+        # `--preflight --probe` raise TypeError instead of printing a verdict (review F8)
+        status, body = transport("POST", url, headers,
+                                 {"system": "reply ok", "user": "ok", "model": cfg.get("CR_JUDGE_MODEL", "")}, 20)
         return {"ok": status == 200, "provider": provider, "status": status}
     headers = {"Authorization": f"Bearer {key}"} if provider != "anthropic" else \
         {"x-api-key": key, "anthropic-version": "2023-06-01"}
@@ -184,8 +199,15 @@ def build_provider(cfg: Config, transport, mock_answers: dict | None = None):
     if provider == "anthropic":
         return AnthropicProvider(cfg.get("CR_JUDGE_BASE_URL", "https://api.anthropic.com/v1"),
                                  cfg.get("CR_JUDGE_API_KEY", ""), transport, cfg.int("CR_JUDGE_TIMEOUT_S", 60))
+    if provider == "jev":
+        # the additive decision provider. Its own trio, its own host: this is the one provider whose
+        # protocol is nothing like a chat completion, so it never shares a base URL or a key
+        return jev_lib.JevProvider(cfg.get("CR_JEV_BASE_URL") or jev_lib.DEFAULT_BASE,
+                                   cfg.get("CR_JEV_API_KEY"),
+                                   transport, model=cfg.get("CR_JEV_MODEL") or jev_lib.DEFAULT_MODEL)
     if provider == "n8n":
-        return WebhookProvider(cfg.get("N8N_WEBHOOK_URL", ""), cfg.get("CR_DEMO_TOKEN"), transport)
+        return WebhookProvider(cfg.get("N8N_WEBHOOK_URL", "") or cfg.get("CR_JUDGE_BASE_URL", ""),
+                               cfg.get("CR_JUDGE_API_KEY") or cfg.get("CR_DEMO_TOKEN"), transport)
     raise ValueError(f"unknown judge provider: {provider}")
 
 
@@ -320,7 +342,10 @@ def ask_judge(event: dict, provider, model: str, ledger: "TokenLedger | None" = 
                 "prompt_hash": prompt_hash(event), "raw": result.get("text", "")[:400]}
     return {"ok": True, "provider": provider.name, "model": model,
             "temperature": 0, "prompt_hash": prompt_hash(event), "tokens": tokens,
-            "usd": result.get("usd"), **validated}
+            "usd": result.get("usd"),
+            # JEV answers carry their own confidence; a chat model's do not. The key always exists
+            # (None when there is nothing to report), so a reader never has to guess.
+            "confidences": result.get("confidences"), **validated}
 
 
 # --- token ledger ------------------------------------------------------------------------------

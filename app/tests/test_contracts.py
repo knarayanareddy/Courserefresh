@@ -31,7 +31,7 @@ ac_ids = set(re.findall(r"\*\*(AC-\d+\.\d+)\*\*", spec))
 trace_ids = set(re.findall(r"\b(AC-\d+\.\d+)\b", trace))
 check("every AC in spec.md is traced", not (ac_ids - trace_ids), f"missing={sorted(ac_ids - trace_ids)}")
 check("no traced AC is orphaned", not (trace_ids - ac_ids), f"orphans={sorted(trace_ids - ac_ids)}")
-check("AC count is as documented", len(ac_ids) == 57, f"n={len(ac_ids)}")
+check("AC count is as documented", len(ac_ids) == 59, f"n={len(ac_ids)}")
 
 # 2. closed sets: data-model §4 tables vs change_taxonomy.json
 row_codes = {}
@@ -63,7 +63,11 @@ check("documented CLI flags exist in the skeleton", not missing_flags, f"documen
 policy = (SKIN / "policy.py").read_text()
 used = set(re.findall(r'"([a-z_]+)"\]', policy)) | set(re.findall(r'out\("(?:ESCALATE|DRAFT|NO_CHANGE|PUBLISH|REVERT|DISPATCH)", \["([a-z_]+)"', policy))
 declared_unused = {"source_stale", "fallback_used", "budget_hold", "cadence_degraded", "consent_revoked",
-                   "no_delta", "noop_already_applied", "write_failed"} \
+                   "no_delta", "noop_already_applied", "write_failed",
+                   # a human's marker, not the rulebook's: `rulings.plan` stamps it on a publish an
+                   # author approved (D-32), so no decider in policy.py or policy_node.js can emit it
+                   # — and that is exactly what makes "a person decided this" visible on the receipt
+                   "human_signoff"} \
     | set(taxonomy["publishable_materialities"]) | {"seeded_rehearsal"}   # emitted by the publish branch
 tax_codes = {c for group in taxonomy["reason_codes"].values() for c in group}
 never = sorted(tax_codes - used - declared_unused)
@@ -102,6 +106,12 @@ for path in sorted((ROOT / "specs").rglob("*.md")) + [ROOT / "README.md", ROOT /
     if "reviews/01" in str(path):
         continue    # the 4prd review quotes paths inside the *reference* repository
     for token in PATTERN.findall(path.read_text()):
+        if token.startswith("app/out/evidence/") or "/app/out/evidence/" in token:
+            # a *frozen run* under app/out is the dead pointer F4 was about: app/out is gitignored,
+            # so on a clone this resolves to nothing. Frozen evidence lives in specs/evidence/
+            # (shipped + hashed). This is the check that would have caught the old register.
+            missing_refs.append(f"{path.relative_to(ROOT)} → {token} (frozen evidence belongs in specs/evidence/)")
+            continue
         if "<" in token or "..." in token or token.endswith("report.txt") or token.startswith("app/out/"):
             continue    # runtime evidence or abbreviated path: produced by running, checked in EVIDENCE.md
         # loop-written lesson versions do not exist on a fresh clone: the authored bodies do, and the
@@ -149,6 +159,19 @@ except AssertionError as exc:
 sources = json.loads((ROOT / "specs" / "courserefresh" / "skin" / "sources.json").read_text())
 apify_fetches = [s["fetch"] for s in sources["sources"] if (s.get("fetch") or {}).get("kind") == "apify"]
 loose = [f.get("actor_id") for f in apify_fetches if not f.get("build") or f["build"] == "latest"]
+# 9c. the spend ceiling travels as the platform's parameter, and every source declares one (F13f):
+# the round-3 code pushed a `budget` object into the actor *input*, where Apify ignores it
+unbounded = [s["source_id"] for s in sources["sources"]
+             if (s.get("fetch") or {}).get("kind") == "apify"
+             and not isinstance(((s["fetch"].get("budget") or {}).get("max_total_charge_usd")), (int, float))]
+check("every Apify source declares a spend ceiling (`max_total_charge_usd`)", not unbounded,
+      f"missing={unbounded}")
+apify_src = (ROOT / "app" / "lib" / "apify.py").read_text()
+check("the ceiling is sent as `maxTotalChargeUsd` on the run, never inside the actor input",
+      "maxTotalChargeUsd" in apify_src and 'payload["budget"]' not in apify_src
+      and 'payload = {"input": fetch["input"]}' in apify_src,
+      "query parameter, not input key")
+
 check("every Apify actor call carries a pinned build (never `latest`)",
       bool(apify_fetches) and not loose, f"pinned={len(apify_fetches)} loose={loose}")
 

@@ -8,7 +8,7 @@ Nothing is invented: a field with no evidence prints null.
 import argparse
 import importlib.util
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -46,7 +46,7 @@ def main() -> int:
         "apify_units": sum(c.get("apify_units") or 0 for c in costs),
         "cadence_min_configured": twin.THRESHOLDS["scan"]["every_min"],
         "cadence_measured": None,   # requires ≥5 live runs; stays null until the loop is live
-        "generated_at": datetime.utcnow().strftime("%Y.%m.%dT%H:%M:%SZ"),
+        "generated_at": datetime.now(timezone.utc).strftime("%Y.%m.%dT%H:%M:%SZ"),
     }
     print(json.dumps(metrics, indent=2, sort_keys=True))
     return 0 if ok else 1

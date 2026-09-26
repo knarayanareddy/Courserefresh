@@ -6,6 +6,7 @@ and the tests; production uses the same allowlist carried in `WIRING.md` §2 (mi
 from __future__ import annotations
 
 import re
+import shutil
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -22,6 +23,7 @@ ALLOWED: tuple[tuple[str, str], ...] = (
     ("docs.apify.com", "/"),
     ("github.com", "/modelcontextprotocol/"),
     ("blog.modelcontextprotocol.io", "/"),
+    ("api.tavily.com", "/search"),   # discovery only: role "discovery", never counted (Art. III)
     ("example.invalid", "/"),        # fixture host: labelled fixtures only, never live
 )
 
@@ -59,6 +61,24 @@ def safe_course_path(root: Path, relative: str, prefix: str = COURSE_ROOT) -> Pa
     if any(part in (".git", ".github", "..") for part in Path(relative).parts):
         raise PermissionError(f"forbidden path segment: {relative}")
     return target
+
+
+def bootstrap_course(root: Path, baseline: Path) -> str | None:
+    """Give a bare `--root` a course tree to work on, because the documented commands assumed one.
+
+    `python3 app/run_live.py --root app/out/e8 --dry-run --once` and
+    `python3 app/run_walking_skeleton.py --root app/out/e7 --chaos write-fail` are the commands
+    EVIDENCE.md cites as proof, and both used to die with a FileNotFoundError on a clean checkout:
+    `--root` means "a complete tree", which no document said out loud (review F6). A root that
+    already holds a course tree (or *is* one) is left untouched.
+    """
+    root, baseline = Path(root).resolve(), Path(baseline).resolve()
+    if root == baseline or (root / "course").is_dir() or (root / "agent-ops").is_dir():
+        return None
+    if not (baseline / "agent-ops").is_dir():
+        return None
+    shutil.copytree(baseline, root / "course")
+    return f"bootstrapped {root / 'course'} from the authored baseline ({baseline})"
 
 
 def looks_like_secret(text: str) -> bool:

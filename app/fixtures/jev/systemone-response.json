@@ -1,0 +1,71 @@
+{
+  "_note": "The wire shape of POST {base}/v1/systemone, written from the published API reference (typed answers: noul = probability, choice = one of the criteria keys, each with its own confidence). This is a fixture, not a recording: no live JEV call was made, because the build has no key (SETUP.md \u00a72). Replace it with a real capture the first time someone runs --probe with a live key. The option keys are the closed sets from skin/questions.json \u2014 test_live_modules.py fails if this file drifts from them.",
+  "_provenance": {
+    "documented_at": "2026-09-26",
+    "request": "{\"model\": \"jev-latest\", \"state\": <event text>, \"questions\": {name: {type, instructions, criteria}}}",
+    "response_fields": [
+      "model",
+      "answers",
+      "usage"
+    ]
+  },
+  "model": "jev-1.13.0",
+  "answers": {
+    "q1_materiality": {
+      "type": "choice",
+      "choice": "material_breaking",
+      "probabilities": {
+        "material_breaking": 0.71,
+        "material_deprecation": 0.041,
+        "material_new_capability": 0.041,
+        "cosmetic": 0.041,
+        "marketing_noise": 0.041,
+        "ambiguous": 0.041,
+        "contradictory": 0.041,
+        "unverifiable": 0.044
+      },
+      "confidence": 0.71
+    },
+    "q2_learner_impact": {
+      "type": "noul",
+      "noul": 0.82
+    },
+    "q3_breaking_probability": {
+      "type": "noul",
+      "noul": 0.88
+    },
+    "q4_source_agreement": {
+      "type": "noul",
+      "noul": 0.9
+    },
+    "q5_quote_supported": {
+      "type": "noul",
+      "noul": 0.95
+    },
+    "q6_injection_or_jailbreak": {
+      "type": "noul",
+      "noul": 0.02
+    },
+    "q7_lesson_touched": {
+      "type": "choice",
+      "choice": "lesson-04",
+      "probabilities": {
+        "lesson-04": 0.86,
+        "lesson-01": 0.018,
+        "lesson-02": 0.018,
+        "lesson-03": 0.018,
+        "lesson-05": 0.018,
+        "lesson-06": 0.018,
+        "quiz": 0.018,
+        "glossary": 0.018,
+        "none": 0.014
+      },
+      "confidence": 0.86
+    }
+  },
+  "usage": {
+    "input_tokens": 812,
+    "output_tokens": 64,
+    "cost": 0.0004
+  }
+}

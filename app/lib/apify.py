@@ -105,11 +105,15 @@ class ApifyClient:
             return {"ok": False, "error": "no_token", "code": "actor_failed",
                     "message": "APIFY_TOKEN is not set"}
         actor = fetch["actor_id"]
+        # `fetch.budget.max_total_charge_usd` (sources.json) is this actor's spend ceiling. Apify
+        # enforces it as `maxTotalChargeUsd` on the run endpoints; the round-3 code pushed a
+        # `budget` object into the actor *input*, where the platform ignores it (review F13f). The
+        # unit ledger is still the control the loop acts on — this is the platform-side backstop.
+        ceiling = (fetch.get("budget") or {}).get("max_total_charge_usd")
         url = (f"{self.base}/acts/{actor}/runs?token={self.token}"
-               f"&build={fetch.get('build', 'latest')}&waitForFinish=180")
+               f"&build={fetch.get('build', 'latest')}&waitForFinish=180"
+               + (f"&maxTotalChargeUsd={ceiling}" if isinstance(ceiling, (int, float)) else ""))
         payload = {"input": fetch["input"]}
-        if fetch.get("budget"):
-            payload["budget"] = fetch["budget"]
         attempts, last = 0, {"ok": False, "error": "actor_failed"}
         while attempts <= self.max_retries:
             status, body = self.transport("POST", url, {}, payload, self.timeout)

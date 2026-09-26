@@ -28,7 +28,7 @@ each other. The course lives at `course/agent-ops/`; learners read it there and 
 | **Learn** | A cohort window is evaluated against the publish's revert gate; stuck signals dispatch micro-lessons; a satisfied gate reverts | every 15 min, gates at 48 h |
 | **Report** | The digest (refusals first) at 07:30 and on demand; the console shows the same receipts | daily |
 
-## 2. User stories & acceptance criteria (57 ACs)
+## 2. User stories & acceptance criteria (59 ACs)
 
 Priority: **P0** = the demo dies without it · **P1** = proves the "learns" clause · **P2** = stretch.
 
@@ -199,7 +199,7 @@ Priority: **P0** = the demo dies without it · **P1** = proves the "learns" clau
 ### US-19 (P0) — As the team, I want the wiring proven before a single key exists.
 - **AC-19.1** The live path is covered by the battery with an injected transport (no socket, no
   key): config, Apify, judge, n8n, telemetry, notify, console, plus one end-to-end dry cycle.
-  *Proof:* `python3 app/tests/test_live_modules.py` (47/47) inside `sh app/check.sh`.
+  *Proof:* `python3 app/tests/test_live_modules.py` (127/127) inside `sh app/check.sh`.
 - **AC-19.2** Live runs use *recorded* datasets/answers under `app/fixtures/` in `sim`, and the sim
   label appears on receipts, digest, console and the e2e summary. *Proof:* `test_live_modules.py`
   (`mode: **sim**` on digest + html; receipts `mode=sim`).
@@ -254,3 +254,14 @@ Priority: **P0** = the demo dies without it · **P1** = proves the "learns" clau
 2. Does the real cohort reach n≥5 for gate evaluation? → `LEARNER-PLAN.md` target; if not, gates are
    `unmeasured` and the video says so.
 3. Is a Notion mirror affordable inside the window? → P1 cut candidate #1 (`plan.md` §7).
+- **AC-16.4** A Teacher/Author ruling recorded on the canvas is the decision of record for that
+  event **while it still describes the world**: it is stored with the fingerprint of the evidence it
+  was made about, applied by the next cycle only if that fingerprint matches and the machine's own
+  verdict is unchanged, and ignored (with the reason printed on the page and `author_ruling_status`
+  on the receipt) otherwise. Only evidence-class refusals may be approved; an approval publishes at
+  `authority: PA3` with `decided_by: human:author` and reason code `human_signoff`. *Proof:*
+  `test_live_modules.py` §13 (form ruling → publish at PA3; rejection closes a delta; moved evidence
+  → stale, machine decides); `AMENDMENTS.md` D-32.
+- **AC-16.5** A canvas decision is re-validated against the closed action/reason sets before it
+  decides anything; a 200 the rulebook could not have emitted is recorded as `canvas.invalid` and the
+  oracle decides. *Proof:* `test_live_modules.py` (`canvas_decision_valid`).

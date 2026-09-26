@@ -49,9 +49,11 @@ cp .env.example .env        # .env is gitignored; the file itself is the checkli
 | `N8N_API_KEY` | n8n → Settings → API → Create (copy once) | same | canvas execution ids in receipts |
 | `N8N_WEBHOOK_URL` | only if the judge should run *through* n8n (`/webhook/cr/judge`) | judge calls go direct | "n8n powers the system" in the strongest form |
 | `CR_JUDGE_PROVIDER` | `openai` \| `anthropic` \| `n8n` \| `mock` | defaults to `mock` | live model calls |
-| `CR_JUDGE_BASE_URL` | e.g. `https://api.openai.com/v1`, or your provider's compatible base — a "jev"-style key goes here | defaults to OpenAI's base | the seven closed questions on real text |
+| `CR_JUDGE_BASE_URL` | e.g. `https://api.openai.com/v1`, or your provider's compatible base | defaults to OpenAI's base | the seven closed questions on real text |
 | `CR_JUDGE_API_KEY` | your provider dashboard | mode stays `sim` | live model calls |
 | `CR_JUDGE_MODEL` | model id, e.g. `gpt-4o-mini` | defaults to `gpt-4o-mini` | prompt/model pin recorded in `WIRING.md` §4 |
+| `CR_JEV_BASE_URL` + `CR_JEV_API_KEY` + `CR_JEV_MODEL` | `CR_JUDGE_PROVIDER=jev`; TypeSafe System One host + key (OpenRouter, requesty and the keyless local JEV servers — `githubnext/localjev`, `amithgc/local-jev` — speak the same protocol; `CR_JEV_BASE_URL=http://127.0.0.1:8765` with no key is enough to exercise the path before the real one exists. The adapter is also replayed from `app/fixtures/jev/systemone-response.json` in `test_live_modules.py`, with no socket and no key) | provider falls back to the mock with the reason on screen | typed decisions that carry their own confidence — the canvas's per-question numbers (Art. IX) |
+| `TAVILY_API_KEY` | tavily.com dashboard (free tier: 1,000 credits/mo) | the `tavily-discovery` source records itself unreachable; Apify still runs | a second, independent research voice beside Apify (the corroboration rule has two sources to count) |
 | `CR_NOTIFY_CHANNEL` | `file` \| `telegram` \| `webhook` | defaults to `file` (stages, never claims delivery) | real learner delivery (criterion 2) |
 | `CR_TELEGRAM_BOT_TOKEN` + `CR_TELEGRAM_CHAT_ID` | @BotFather; the chat you will demo in | telegram channel fails loudly | the learner card arriving on a phone |
 | `CR_NOTIFY_WEBHOOK_URL` | any endpoint you control (Slack/Discord/own service) | webhook channel fails loudly | an alternative delivery witness |

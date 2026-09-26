@@ -25,6 +25,7 @@ ain't-happened list, and a review that closes findings only with pasted output.
 | `reviews/02` | complete | Judges' pre-mortem: six seats, J-01…J-12, verdict *proceed to the live phase* |
 | `reviews/03` | complete | Builder's answer to review 01: A1–A12 ported/cut, H1–H14 closed with commands |
 | `reviews/05` | complete | The specialists' debate (n8n · Apify · judge · UX · teacher · learner · SRE): S-rows closed by tests, four disagreements recorded, agreement reached |
+| `reviews/07` | open conditions | The canvas/Tavily/JEV seat panel: C-01…C-08, TV-01…TV-04, JV-01…JV-05, per-seat votes, and the proposed `D-32` (a ruling binds and expires) |
 | `reviews/04` | complete | Post-build panel (product · engineer · founder · curriculum lead · learner · judge): K-01–K-08, four MUST-FIXes fixed with tests, three live-phase rows named open; closing audit with pasted output |
 
 ## The order to read (and the order an agent should build)
@@ -66,10 +67,10 @@ ain't-happened list, and a review that closes findings only with pasted output.
 sh app/check.sh
 ```
 
-That command is the only “it works” claim this package makes. Last run: **179 PASS, exit 0
-(`ALL GREEN`)**, output archived at `app/out/evidence/battery.txt`; the frozen hero run is
-`app/out/evidence/cr-20260926-1421-001/` (hero, 19 files) and
-`app/out/evidence/cr-20260926-1441-130/` (round-3 live-engine rehearsal, 14 files). Anything that has not been measured
+That command is the only “it works” claim this package makes. Last run: **295 PASS (13 measured stages + the 32-check claims audit), exit 0
+(`ALL GREEN`)**, output archived at `app/out/evidence/battery.log` (counts frozen in
+`battery-summary.json`); the frozen hero run ships in `specs/evidence/` (19 files, hashes re-checked
+by that same battery). `app/out/…` is where a local re-run lands. Anything that has not been measured
 is written `unmeasured` (Art. VI) — and anything labelled **measured** in `RECEIPTS.md` names the
 command and the artifact that produced it.
 

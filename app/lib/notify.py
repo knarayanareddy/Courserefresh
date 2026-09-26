@@ -37,6 +37,14 @@ def urllib_transport(method: str, url: str, headers: dict, body: dict | None, ti
         return 0, {"message": f"network: {exc.reason}"}
 
 
+def delivery_log_for(root: Path | None = None) -> Path:
+    """The delivery log for a tree. A `--root` run must not write its delivery record into the
+    checkout while the collector looks for it inside the run's own tree (review F13a)."""
+    if root is None:
+        return DELIVERY_LOG
+    return Path(root).resolve() / "app" / "out" / "delivery.jsonl"
+
+
 def card_text(row: dict) -> str:
     """Three lines + a link + an opt-out (design/MASTER.md §4). Plain language only."""
     rehearsal = "This is a labelled rehearsal, not a vendor release.\n" if row.get("rehearsal") else ""

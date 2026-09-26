@@ -5,6 +5,10 @@ The loop is not idempotent for revert/learner events (only change events dedupe)
 fresh evidence run starts from a known state. This script is the honest way to say "the loop wrote
 those versions" — it deletes only versions the loop wrote, never the authored v1/v3 bodies.
 
+It also clears everything else the loop reads back: micro-lessons (the per-concept cap), the
+delivery logs, cached snapshots, the live state and the ledger. A reset that leaves one of those
+behind changes the next run's decisions without saying so (review F10).
+
 Run: python3 app/tools/reset_course.py [--course DIR] [--out DIR]
 """
 import argparse
@@ -20,6 +24,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--course", default=str(ROOT / "course"))
     ap.add_argument("--out", default=str(ROOT / "app" / "out"))
+    ap.add_argument("--keep-telemetry", action="store_true",
+                    help="keep state/telemetry.jsonl and state/learner_consent.json (a live cohort)")
     args = ap.parse_args()
     course = Path(args.course)
     out = Path(args.out)
@@ -60,14 +66,32 @@ def main() -> int:
         if live.exists() and live.read_text() != pristine.read_text():
             live.write_text(pristine.read_text())
             restored += 1
-    for name in ("receipts.jsonl", "run_log.jsonl", "digest.md", "notifications.jsonl"):
+    cleared = []
+    for name in ("receipts.jsonl", "run_log.jsonl", "digest.md", "digest.html", "notifications.jsonl",
+                 "notifications_delivery.jsonl", "delivery.jsonl"):
         path = out / name
         if path.exists():
             path.unlink()
+            cleared.append(name)
+    for folder in ("micro-lessons", "live", "snapshots"):
+        path = out / folder
+        if path.exists():
+            shutil.rmtree(path)
+            cleared.append(folder + "/")
+    # the per-concept micro-lesson cap reads micro-lessons/ mtime: leaving one behind silently
+    # suppressed the next run's dispatch, so "reset then hero" no longer reproduced EVIDENCE §4
     state = out / "state"
     if state.exists():
-        shutil.rmtree(state)
-    print(f"reset: removed {len(removed)} loop-written versions, restored {restored} quiz file(s); state cleared")
+        if args.keep_telemetry:
+            for path in state.glob("*"):
+                if path.name not in ("telemetry.jsonl", "learner_consent.json"):
+                    path.unlink() if path.is_file() else shutil.rmtree(path)
+        else:
+            shutil.rmtree(state)
+            cleared.append("state/")
+    print(f"reset: removed {len(removed)} loop-written versions, restored {restored} quiz file(s); "
+          f"cleared {len(cleared)} output item(s)"
+          + (" (telemetry and consent kept)" if args.keep_telemetry else ""))
     return 0
 
 

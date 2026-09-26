@@ -50,6 +50,8 @@ import apify as apify_lib  # noqa: E402
 import judge as judge_lib  # noqa: E402
 import notify as notify_lib  # noqa: E402
 import telemetry as telemetry_lib  # noqa: E402
+import guard  # noqa: E402
+import tavily as tavily_lib  # noqa: E402
 from config import Config  # noqa: E402
 
 spec = importlib.util.spec_from_file_location("twin", APP / "run_walking_skeleton.py")
@@ -62,9 +64,18 @@ SNAPSHOTS = OUT / "snapshots"
 LIVE = OUT / "live"
 
 
-def rebase(root: Path) -> None:
-    """Point the engine at another tree (tests and rehearsals). Fixtures stay in the repo."""
+def rebase(root: Path, bootstrap: bool = True) -> list[str]:
+    """Point the engine at another tree (tests and rehearsals). Fixtures stay in the repo.
+
+    A bare root gets a copy of the authored `course/` first, so the commands in README/EVIDENCE
+    work as written instead of dying on a missing `curriculum.json` (review F6).
+    """
     global ROOT, APP, OUT, STATE, SNAPSHOTS, LIVE
+    notes = []
+    if bootstrap:
+        note = guard.bootstrap_course(root, REPO / "course")
+        if note:
+            notes.append(note)
     ROOT = root.resolve()
     APP = ROOT / "app"
     OUT = APP / "out"
@@ -73,8 +84,11 @@ def rebase(root: Path) -> None:
     LIVE = OUT / "live"
     if "telemetry_lib" in globals():
         telemetry_lib.rebase(ROOT)
+    return notes
 THRESHOLDS = apify_lib.load_thresholds()
 SOURCES = apify_lib.load_sources()
+# the canvas contract (skin/wiring.json) — the same file the export generator registers paths from
+WIRING = json.loads((REPO / "specs" / "courserefresh" / "skin" / "wiring.json").read_text())
 COHORT_NOTIFY = ("material_breaking", "material_deprecation")
 STOPWORDS = {"the", "a", "an", "and", "or", "of", "to", "in", "for", "on", "is", "are", "was", "with",
              "that", "this", "it", "as", "by", "from", "at", "be", "can", "will", "now", "new"}
@@ -135,8 +149,80 @@ def fetch_source(client: apify_lib.ApifyClient, source: dict, cfg: Config) -> di
     return {"ok": True, "run": run, "items": items, "used_fallback": False, "source_id": source["source_id"]}
 
 
+def fetch_tavily(source: dict, cfg: Config, dry_run: bool, credits: tavily_lib.CreditLedger) -> dict:
+    """The discovery fetch: one search, hits normalised as leads and screened like any other text.
+
+    Same contract as `fetch_source()` — {ok, items|error, ...} — so the notice loop does not care
+    which kind a source declares. Two rules the fetch kind exists to keep:
+
+      * a hit is never fetched directly: `guard.host_allowed` is applied to every URL, and a hit from
+        a host outside the allowlist stays what it is — a recorded lead with no content claim;
+      * the credits are declared and spent through a ledger, so a discovery source cannot quietly
+        outspend the Apify budget (both are caps in `thresholds.budgets`).
+    """
+    budget: dict = THRESHOLDS["budgets"]
+    client = tavily_lib.TavilyClient(cfg.get("TAVILY_API_KEY"), base_url=cfg.get("TAVILY_BASE_URL"),
+                                     transport=apify_lib.urllib_transport,
+                                     timeout=cfg.int("TAVILY_TIMEOUT_S", 60), dry_run=dry_run)
+    fetch = source["fetch"]
+    wanted = int(fetch.get("credits_per_search", 2))
+    allowed, note = credits.can_spend(wanted)
+    if not allowed:
+        return {"ok": False, "error": "tavily_budget_hold", "message": note, "credits": 0,
+                "source_id": source["source_id"], "used_fallback": False}
+    result = client.search(tavily_lib.query_for(source), depth=fetch.get("search_depth", "advanced"),
+                           max_results=int(fetch.get("max_results", 5)),
+                           topic=fetch.get("topic", "general"),
+                           include_raw_content=bool(fetch.get("include_raw_content", True)))
+    if not result["ok"]:
+        return {"ok": False, "error": result["error"], "message": result.get("message", ""),
+                "credits": 0, "source_id": source["source_id"], "used_fallback": False}
+    credits.record(tavily_lib.query_for(source), result["credits"], len(result["results"]))
+    items, kept_out = [], []
+    for hit in result["results"]:
+        allowed_host, why = guard.host_allowed(str(hit.get("url", "")))
+        if not allowed_host:
+            # a lead pointing off the allowlist is recorded and not quoted: the containment rule
+            # does not bend because a search engine suggested the URL
+            kept_out.append({"url": hit.get("url"), "reason": why})
+            continue
+        normalised = tavily_lib.normalise_hit(hit, source)
+        if normalised and normalised["content_hash"] not in {i.get("content_hash") for i in items}:
+            items.append(normalised)
+    return {"ok": bool(items), "run": {"run_id": f"tavily-{int(time.time())}", "usd": None},
+            "items": items, "credits": result["credits"], "answer": result.get("answer"),
+            "excluded_hosts": kept_out, "used_fallback": False, "source_id": source["source_id"],
+            "error": None if items else "no_allowlisted_hits"}
+
+
+def pending_path() -> Path:
+    """Where an unfinished cycle parks its snapshots (resolved per tree, so `--root` works)."""
+    return STATE / "pending_cycle.json"
+
+
+def commit_notice(notice_result: dict) -> None:
+    """Commit the dedupe set and the per-source cadence *after* the cycle that fetched them ran.
+
+    The old order wrote `seen_snapshots.json` before the verify phase, so a crash mid-cycle left
+    the four in-flight events marked as seen forever: the next run reported a clean, empty cycle
+    and the change was never processed (review F7).
+    """
+    seen = set(read_json(STATE / "seen_snapshots.json", [])) | set(notice_result.get("seen_keys", []))
+    write_json(STATE / "seen_snapshots.json", sorted(seen))
+    write_json(STATE / "scan_state.json", notice_result.get("scan_state", {}))
+    pending_path().unlink(missing_ok=True)
+
+
+def stash_pending(snapshots: list[dict], attempts: int) -> None:
+    write_json(pending_path(), {"snapshots": snapshots, "attempts": attempts, "created_at": now()})
+
+
 def notice(cfg: Config, tree: "twin.Tree", dry_run: bool, ledger: apify_lib.UnitLedger) -> dict:
-    """Fetch every due source, normalise, cache, dedupe. Returns snapshots + a tally."""
+    """Fetch every due source, normalise, cache, dedupe. Returns snapshots + a tally.
+
+    Writes the raw snapshot cache (content-addressed, idempotent) and nothing else: the dedupe set
+    and the cadence are returned for `commit_notice()` to persist once the cycle has succeeded.
+    """
     state = read_json(STATE / "scan_state.json", {})
     seen = set(read_json(STATE / "seen_snapshots.json", []))
     transport = apify_lib.RecordingTransport(apify_lib.urllib_transport)
@@ -144,9 +230,45 @@ def notice(cfg: Config, tree: "twin.Tree", dry_run: bool, ledger: apify_lib.Unit
                                    transport=transport, timeout=cfg.int("APIFY_TIMEOUT_S", 300),
                                    max_retries=cfg.int("APIFY_MAX_RETRIES", 1),
                                    dry_run=dry_run)
+    credits = tavily_lib.CreditLedger(STATE / "tavily_credits.jsonl",
+                                      THRESHOLDS["budgets"].get("tavily_credits_per_day",
+                                                                tavily_lib.DEFAULT_CREDITS_PER_DAY))
     due = due_sources(state, cfg.int("CR_LIVE_SCAN_MINUTES", 60))
     fresh, rejected, holds, sources_scanned = [], [], [], 0
+    leads, gaps, leads_dropped, hosts_refused = [], [], [], []
     for source in due:
+        kind = source.get("fetch", {}).get("kind")
+        if kind == "tavily":
+            # the discovery source has its own budget line and never touches the Apify ledger
+            result = fetch_tavily(source, cfg, dry_run or cfg.flag("CR_APIFY_DRY"), credits)
+            if not result["ok"]:
+                fresh.append({"source_id": source["source_id"], "unreachable": True,
+                              "reason": result["error"], "message": result.get("message", ""),
+                              "used_fallback": False, "url": source["url"],
+                              "publisher": source["publisher"], "role": source["role"],
+                              "independence_group": source["independence_group"],
+                              "counts_as_independent": False})
+                state[source["source_id"]] = {"last_scan_epoch": time.time(), "last_scan": now(),
+                                              "error": result["error"],
+                                              "excluded_hosts": result.get("excluded_hosts", [])}
+                continue
+            # Discovery leads do not become events. A lead is a page a search engine found; if the
+            # page is one of the tracked sources it adds nothing (the authoritative snapshot is the
+            # voice), and if it is not, the honest output is a *source gap* for a human to look at,
+            # not a decision the loop makes about a page nobody fetched from its publisher. Feeding
+            # them into the loop would manufacture refusals: three leads = three escalations about
+            # one voice, which is exactly the noise Art. III exists to prevent.
+            sources_scanned += 1
+            leads.extend(result["items"])
+            hosts_refused.extend(result.get("excluded_hosts", []))
+            state[source["source_id"]] = {
+                "last_scan_epoch": time.time(), "last_scan": now(),
+                "rows": len(result["items"]), "accepted": len(normalised["snapshots"]),
+                "credits": result.get("credits"),
+                "spent_today": credits.spent_today(),
+                "excluded_hosts": result.get("excluded_hosts", []),
+                "answer": (result.get("answer") or "")[:280]}
+            continue
         allowed, note = ledger.can_spend(SOURCES.get("units_per_run", 1))
         if not allowed:
             holds.append({"source_id": source["source_id"], "reason": note})
@@ -178,11 +300,24 @@ def notice(cfg: Config, tree: "twin.Tree", dry_run: bool, ledger: apify_lib.Unit
                                       "rows": len(result["items"]),
                                       "accepted": len(normalised["snapshots"]),
                                       "discarded": normalised["discarded"]}
-    write_json(STATE / "scan_state.json", state)
-    write_json(STATE / "seen_snapshots.json", sorted(seen))
+    tracked_urls = {s.get("url") for s in fresh if s.get("role") not in
+                    set(THRESHOLDS["evidence"].get("discovery_roles", ["none"]))}
+    for lead in leads:
+        if lead.get("url") in tracked_urls:
+            leads_dropped.append(lead["url"])          # the tracked snapshot is already the voice
+        else:
+            gaps.append({"url": lead["url"], "title": lead.get("title"),
+                         "search_score": lead.get("search_score"),
+                         "found_by": lead.get("source_id", "tavily-discovery")})
+    if gaps:
+        state["source_gaps"] = gaps[-5:]               # newest five; the digest names them
     return {"snapshots": fresh, "rejected": rejected, "budget_holds": holds,
+            "leads": leads, "source_gaps": gaps, "leads_dropped": sorted(set(leads_dropped)),
+            "hosts_refused": hosts_refused,
             "sources_scanned": sources_scanned, "due": [s["source_id"] for s in due],
-            "apify_calls": transport.calls, "spent_units": ledger.spent_today()}
+            "apify_calls": transport.calls, "spent_units": ledger.spent_today(),
+            "tavily_credits": credits.spent_today(),
+            "scan_state": state, "seen_keys": sorted(seen - set(read_json(STATE / "seen_snapshots.json", [])))}
 
 
 # --- verify --------------------------------------------------------------------------------------
@@ -295,7 +430,7 @@ def canvas_decide(cfg: Config, event_input: dict, transport=None) -> dict:
                                instance_version=cfg.get("N8N_INSTANCE_VERSION"))
     if not client.configured():
         return {"ok": False, "reason": "not_configured"}
-    result = client.call_webhook("cr/triage", {"input": event_input})
+    result = client.call_webhook(WIRING["webhooks"]["triage"], {"input": event_input})
     if not result.get("ok"):
         return {"ok": False, "reason": f"webhook_http_{result.get('status')}"}
     payload = result.get("response") or {}
@@ -304,6 +439,28 @@ def canvas_decide(cfg: Config, event_input: dict, transport=None) -> dict:
         return {"ok": False, "reason": "payload_invalid", "raw": str(payload)[:200]}
     return {"ok": True, "decision": decision,
             "execution_id": payload.get("execution_id"), "workflow": payload.get("workflow", "wf-cr-1-triage")}
+
+
+def canvas_decision_valid(canvas_decision: dict, stream: str) -> dict:
+    """Is the canvas' decision one the rulebook could have emitted? (`{"ok", "reason"}`)
+
+    AC-16.1 makes the canvas' decision the decision of record, which means a 200 response is an
+    *authority*, not a suggestion. So it is re-validated here against the same closed sets the oracle
+    uses before it is allowed to decide anything: a hand-edited n8n workflow, a half-deployed node or
+    a mock server must not be able to make the loop emit an action or a reason code that does not
+    exist. Invalid → the engine records `canvas.invalid` and falls back to the oracle (it does not
+    treat it as a disagreement: a malformed answer is not a second opinion).
+    """
+    policy = twin.policy                        # the same oracle module the twin decides with
+    actions = set(policy.TAXONOMY["change_actions"]) | set(policy.TAXONOMY["learner_actions"])
+    if stream == "revert":
+        actions = set(policy.TAXONOMY["change_actions"]) | {"REVERT"}
+    action, reasons = canvas_decision.get("action"), canvas_decision.get("reason_codes") or []
+    if action not in actions:
+        return {"ok": False, "reason": f"action_not_in_closed_set:{action}"}
+    if not reasons or any(r not in policy.REASON_CODES for r in reasons):
+        return {"ok": False, "reason": f"reason_codes_not_in_closed_set:{reasons}"}
+    return {"ok": True, "reason": ""}
 
 
 def canvas_agrees(canvas_decision: dict, oracle_decision: dict) -> bool:
@@ -380,7 +537,7 @@ def _answer_key(event: dict) -> str:
     return snapshot.get("fixture_key") or snapshot.get("source_id", "")
 
 
-def verify_and_run(cfg: Config, tree: "twin.Tree", snapshots: list[dict], mode: str,
+def verify_and_run(cfg: Config, tree: "twin.Tree", snapshots: list[dict], mode: str, context: dict | None = None,
                    inject_failure: bool = False, via_n8n: bool = False) -> dict:
     """The verify → decide → act → report phases, on top of the twin's writers."""
     judgement_ledger = judge_lib.TokenLedger(STATE / "token_ledger.jsonl",
@@ -416,7 +573,7 @@ def verify_and_run(cfg: Config, tree: "twin.Tree", snapshots: list[dict], mode: 
             judgement = {"answers": {"q1_materiality": "unverifiable", "q2_learner_impact": 0.0,
                                      "q3_breaking_probability": 0.0, "q4_source_agreement": 0.0,
                                      "q5_quote_supported": 0.0, "q6_injection_or_jailbreak": 1.0,
-                                     "q7_new_capability": 0.0},
+                                     "q7_lesson_touched": "none"},
                          "provider": judgement.get("provider"), "fail_closed": judgement.get("reason_codes", ["unknown_state"])}
         render = None
         answers = judgement.get("answers", {})
@@ -456,6 +613,16 @@ def verify_and_run(cfg: Config, tree: "twin.Tree", snapshots: list[dict], mode: 
                 twin_event["canvas"] = {"ok": False, "reason": canvas.get("reason"), "used": "oracle"}
             else:
                 decision = canvas["decision"]
+                valid = canvas_decision_valid(decision, event.get("kind", "change"))
+                if not valid["ok"]:
+                    # a 200 with a made-up action is a broken canvas, not a second rulebook
+                    canvas_records.append({"event_id": event["event_id"], "ok": False,
+                                           "reason": "canvas.invalid:" + valid["reason"],
+                                           "used": "oracle_fallback"})
+                    twin_event["canvas"] = {"ok": False, "reason": "canvas.invalid:" + valid["reason"],
+                                            "used": "oracle"}
+                    twin_events.append(twin_event)
+                    continue
                 same = canvas_agrees(decision, oracle)
                 canvas_records.append({"event_id": event["event_id"], "ok": True, "same_as_oracle": same,
                                        "execution_id": canvas.get("execution_id"),
@@ -469,12 +636,17 @@ def verify_and_run(cfg: Config, tree: "twin.Tree", snapshots: list[dict], mode: 
                     twin_event["input"]["materiality"] = "ambiguous"
                     twin_event["patch"] = None
                 else:
+                    # AC-16.1: the canvas decides. The oracle has already agreed on action *and*
+                    # reason codes, so the canvas value is handed to the writers as the decision of
+                    # record; `twin.run()` re-validates it against the closed sets before acting and
+                    # stamps `decided_by: canvas` on the receipt.
                     twin_event["canvas"] = {"ok": True, "same_as_oracle": True,
                                             "execution_id": canvas.get("execution_id")}
+                    twin_event["decision_override"] = decision
         twin_events.append(twin_event)
     if inject_failure and twin_events:
         twin_events[-1]["patch"] = {"file": "nonexistent/file.md", "find": "nope", "replace": "nope"}
-    log = twin.run(tree, twin_events, label=f"{mode} cycle")
+    log = twin.run(tree, twin_events, label=f"{mode} cycle", extra=context)
     write_json(LIVE / "last_cycle.json",
                {"run_id": log["run_id"], "mode": mode, "judge": judge_records,
                 "deferred_publishes": deferred, "canvas": canvas_records,
@@ -485,6 +657,23 @@ def verify_and_run(cfg: Config, tree: "twin.Tree", snapshots: list[dict], mode: 
 
 
 # --- deliver + commit ---------------------------------------------------------------------------
+
+def learner_caps(learner_ref: str, tree: "twin.Tree") -> dict:
+    """Per-learner notification counts from the loop's own history (Art. XIV.2).
+
+    The rulebook takes `caps.notifications_today/_week`; nothing filled them on the live path, so
+    the caps never bound anything. They are counted here from the notification history the twin
+    already writes.
+    """
+    history_path = tree.out / "notifications.jsonl"
+    if not history_path.exists():
+        return {"notifications_today": 0, "notifications_week": 0}
+    history = [json.loads(l) for l in history_path.read_text().splitlines() if l.strip()]
+    ages = [twin._notification_age(r["ts"]) for r in history if r.get("learner_ref") == learner_ref
+            and r.get("ts")]
+    return {"notifications_today": sum(1 for a in ages if a < 86400),
+            "notifications_week": sum(1 for a in ages if a < 7 * 86400)}
+
 
 def deliver_staged(cfg: Config, tree: "twin.Tree", before: int) -> dict:
     rows = twin.tree_rows(tree) if hasattr(twin, "tree_rows") else tree.rows()
@@ -502,7 +691,7 @@ def deliver_staged(cfg: Config, tree: "twin.Tree", before: int) -> dict:
     if not staged:
         return {"channel": cfg.channel(), "attempted": 0, "delivered": 0, "failed": 0, "staged": 0,
                 "records": []}
-    result = notify_lib.Notifier(cfg).deliver(staged)
+    result = notify_lib.Notifier(cfg, log_path=notify_lib.delivery_log_for(ROOT)).deliver(staged)
     failures = [r for r in result["records"] if r["status"] == "notification_failed"]
     if failures:
         tree.append_receipt({"ts": twin.now(), "run_id": twin.run_id(), "event_id": "op-notify",
@@ -537,7 +726,10 @@ def commit_changes(cfg: Config, tree: "twin.Tree", run_id: str) -> dict:
 def learn_phase(cfg: Config, tree: "twin.Tree") -> dict:
     """Telemetry → gate → revert / stuck dispatch, using the same policy functions as the twin."""
     lessons = json.loads((ROOT / "course" / "agent-ops" / "curriculum.json").read_text())["lessons"]
-    telemetry_rows = read_json(STATE / "learner_consent.json", {})
+    # consent is read from the register the telemetry intake writes (Art. V.1), and stuck signals
+    # are derived from stored telemetry — both used to be read from files nothing produced, with
+    # consent defaulting to True (review F3)
+    consent = telemetry_lib.load_consent(telemetry_lib.storage_for(ROOT))
     events, gates = [], []
     for lesson in lessons:
         gate = telemetry_lib.cohort_window(lesson["lesson_id"], path=telemetry_lib.storage_for(ROOT))
@@ -554,9 +746,14 @@ def learn_phase(cfg: Config, tree: "twin.Tree") -> dict:
             gate["hours_since_publish"] = hours
             if decision["action"] == "REVERT":
                 events.append(_revert_event(lesson["lesson_id"], gate, decision))
-    stuck = read_json(STATE / "stuck_signals.json", [])
+    stuck = telemetry_lib.derive_stuck_signals(telemetry_lib.storage_for(ROOT), THRESHOLDS)
+    if stuck:
+        write_json(STATE / "stuck_signals.json", stuck)
     for signal in stuck:
-        events.append(_learner_event(signal, telemetry_rows))
+        signal["caps"] = learner_caps(signal["learner_ref"], tree)
+        signal["concept_recently_dispatched"] = twin.concept_recently_dispatched(
+            tree, {"input": {"concept": signal["concept"]}})
+        events.append(_learner_event(signal, consent))
     if events:
         twin.run(tree, events, label="learn phase")
     write_json(LIVE / "cohort_gates.json", gates)
@@ -615,8 +812,12 @@ def _learner_event(signal: dict, consent: dict) -> dict:
             "input": {"event_id": "cr-learn-stuck", "stream": "learner", "materiality": "cosmetic",
                       "learner_impact": 0.5, "quote_supported": 1.0, "source_agreement": 1.0,
                       "sources_verified": 2, "injection_or_jailbreak": 0.0, "authority": "PA1",
-                      "freeze_active": False, "consent": bool(consent.get(signal["learner_ref"], True)),
+                      "freeze_active": False,
+                      # silence is not consent: an unknown learner is treated as not consented and
+                      # the refusal is visible on the receipt (review F3)
+                      "consent": bool((consent.get(signal["learner_ref"]) or {}).get("consent", False)),
                       "stuck": True, "concept": signal["concept"],
+                      "concept_recently_dispatched": signal.get("concept_recently_dispatched", False),
                       "grade_impacting": False, "caps": signal.get("caps", {})}}
 
 
@@ -642,22 +843,34 @@ def preflight(cfg: Config, probe: bool = False) -> dict:
                                "workflows": [w.get("name") for w in listing.get("workflows", [])]}
     LIVE.mkdir(parents=True, exist_ok=True)
     write_json(LIVE / "preflight.json", report)
+    (LIVE / "preflight.txt").write_text(render_preflight(report))
     return report
 
 
-def print_preflight(report: dict) -> None:
-    print(f"mode: {report['mode']}")
+def render_preflight(report: dict) -> str:
+    """The one screen D-1 is read from, as text — so it can be kept (E10) and not just printed.
+
+    The artifact matters: `EVIDENCE.md` names a preflight transcript as the proof that four claims
+    are blocked without keys, and a transcript a shell redirect has to invent is a transcript nobody
+    keeps. `preflight()` writes this next to `preflight.json`.
+    """
+    lines = [f"mode: {report['mode']}"]
     for platform, state in report["platforms"].items():
         mark = "wired" if state["wired"] else f"missing {state['keys_missing_required'] or '(nothing required)'}"
-        print(f"  {platform:8s} {mark}")
+        lines.append(f"  {platform:8s} {mark}")
     for claim, allowed in report["claims_allowed"].items():
-        print(f"  claim {'ALLOWED ' if allowed else 'blocked '} {claim}")
+        lines.append(f"  claim {'ALLOWED ' if allowed else 'blocked '} {claim}")
     if report["blocking_for_live"]:
-        print(f"live needs: {', '.join(report['blocking_for_live'])}")
+        lines.append(f"live needs: {', '.join(report['blocking_for_live'])}")
     for probe in ("judge_probe", "apify_probe", "n8n_probe"):
         if probe in report:
             extra = report[probe].get("models_sample") or report[probe].get("note") or report[probe].get("reason") or ""
-            print(f"  {probe}: {'ok' if report[probe]['ok'] else 'failed'} {extra}")
+            lines.append(f"  {probe}: {'ok' if report[probe]['ok'] else 'failed'} {extra}")
+    return "\n".join(lines) + "\n"
+
+
+def print_preflight(report: dict) -> None:
+    print(render_preflight(report), end="")
 
 
 # --- main ---------------------------------------------------------------------------------------
@@ -668,12 +881,38 @@ def one_cycle(cfg: Config, dry_run: bool, inject_failure: bool = False, via_n8n:
     ledger = apify_lib.UnitLedger(STATE / "apify_units.jsonl",
                                   THRESHOLDS["budgets"]["apify_units_per_day"],
                                   SOURCES.get("units_per_run", 1))
+    # an unfinished cycle is retried from its own snapshots (no re-spend), and abandoned honestly
+    stashed = read_json(pending_path(), {})
+    attempts = int(stashed.get("attempts", 0))
+    if stashed and attempts >= 3:
+        tree.append_receipt({"ts": twin.now(), "run_id": twin.run_id(), "event_id": "op-pending-abandoned",
+                             "mode": tree.mode, "stream": "change",
+                             "decision": {"action": "ESCALATE", "reason_codes": ["write_failed"],
+                                          "authority": "PA1", "decided_by": "oracle"},
+                             "artifact": None, "cost": None, "actor": "system",
+                             "label": f"a cycle failed {attempts}x; {len(stashed.get('snapshots', []))} snapshots abandoned and re-fetchable"})
+        pending_path().unlink(missing_ok=True)
+        stashed = {}
     notice_result = notice(cfg, tree, dry_run or mode == "sim", ledger)
     before = len(tree.rows())
-    work = [s for s in notice_result["snapshots"] if not s.get("unreachable")]
-    result = verify_and_run(cfg, tree, work, mode, inject_failure=inject_failure,
-                            via_n8n=via_n8n) if work else \
-        {"log": twin.run(tree, [], label=f"{mode} cycle (no new snapshots)"), "judge": [], "events": []}
+    work = (stashed.get("snapshots") or []) + [s for s in notice_result["snapshots"] if not s.get("unreachable")]
+    context = {"source_gaps": notice_result.get("source_gaps") or [],
+               "leads_dropped": notice_result.get("leads_dropped") or [],
+               "hosts_refused": notice_result.get("hosts_refused") or [],
+               "tavily_credits": notice_result.get("tavily_credits")}
+    if work:
+        try:
+            result = verify_and_run(cfg, tree, work, mode, inject_failure=inject_failure,
+                                    via_n8n=via_n8n, context=context)
+        except Exception:
+            # the cycle did not finish: keep the snapshots for the next run and do NOT mark them
+            # seen, so a crash retries instead of becoming silence
+            stash_pending(work, attempts + 1)
+            raise
+    else:
+        result = {"log": twin.run(tree, [], label=f"{mode} cycle (no new snapshots)", extra=context),
+                  "judge": [], "events": []}
+    commit_notice(notice_result)
     delivery = deliver_staged(cfg, tree, before)
     commit = commit_changes(cfg, tree, result["log"]["run_id"])
     summary = {"run_id": result["log"]["run_id"], "mode": mode,
@@ -811,7 +1050,8 @@ def main() -> int:
     args = ap.parse_args()
 
     if args.root:
-        rebase(Path(args.root))
+        for note in rebase(Path(args.root)):
+            print(note)
     cfg = Config()
     if args.selftest:
         return selftest()

@@ -14,8 +14,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "app" / "n8n"
+SKIN = ROOT / "specs" / "courserefresh" / "skin"
 NODE_SRC = (OUT / "policy_node.js").read_text()
 NODE_HASH = hashlib.sha256(NODE_SRC.encode()).hexdigest()
+# one source of truth for the canvas paths (skin/wiring.json); the engine reads the same file
+WIRING = json.loads((SKIN / "wiring.json").read_text())["webhooks"]
 
 
 def code(name, js, position):
@@ -136,7 +139,7 @@ def main() -> None:
          code("DEDUPE", "// drops anything whose content_hash is already in state/seen.json\n"
                         "const seen = JSON.parse(await this.helpers.getBinaryDataBuffer ? '{}' : '{}');\n"
                         "return $input.all().filter(i => !seen[i.json.content_hash]);", [1100, 0]),
-         http("HTTP_TRIAGE", "ATTACH_AT_IMPORT/webhook/triage", "POST",
+         http("HTTP_TRIAGE", "ATTACH_AT_IMPORT/webhook/" + WIRING["triage"], "POST",
               '={"run_id":"{{$json.actor_run_id}}","snapshots":{{JSON.stringify($json)}}}', [1320, 0]),
          code("RECEIPT", "// appends one row per run to receipts.jsonl (mode: live) and the run log\n"
                          "return [{json: {actor: 'system', mode: 'live', stage: 'scan', deltas: $input.all().length}}];", [1540, 0])],
@@ -152,7 +155,7 @@ def main() -> None:
 
     triage = workflow(
         "wf-cr-1-triage",
-        [webhook("From scan", "triage", [0, 0]),
+        [webhook("From scan", WIRING["triage"], [0, 0]),
          code("BUILD_PROMPT", "// assembles the observe prompt from the snapshot text; the judge never sees it\n"
                               "return $input.all();", [220, 0]),
          http("OBSERVE", "ATTACH_AT_IMPORT/v1/chat/completions", "POST",
@@ -165,7 +168,7 @@ def main() -> None:
               [880, 0], "The seven closed questions in skin/questions.json"),
          code("POLICY", NODE_SRC, [1100, 0]),
          ifnode("Publish or revert?", "={{ ['PUBLISH','REVERT'].includes($json.decision.action) }}", [1320, 0]),
-         http("NOTICE_DECISION", "ATTACH_AT_IMPORT/webhook/act", "POST",
+         http("NOTICE_DECISION", "ATTACH_AT_IMPORT/webhook/" + WIRING["act"], "POST",
               '={{JSON.stringify($json)}}', [1540, -80]),
          noop("Queue for a human", [1540, 120]),
          code("RECEIPT", "// one chained row per decision: quotes, judge answers, action, reasons, artifact hash\n"
@@ -185,7 +188,7 @@ def main() -> None:
 
     act = workflow(
         "wf-cr-2-act",
-        [webhook("From triage", "act", [0, 0]),
+        [webhook("From triage", WIRING["act"], [0, 0]),
          code("RENDER_BODY", "// writes course/<lesson>/v<n+1>.md from the previous version + the anchored edit\n"
                              "return $input.all();", [220, 0]),
          code("RENDER_DIFF", "// unified diff of previous vs new; refuses if > thresholds.diff.max_lines\n"
@@ -223,7 +226,7 @@ def main() -> None:
          code("GATE_EVAL (policy revert)", "const {decide} = require('./policy_node.js');\n"
                                            "return $input.all().map(i => ({json: {decision: decide(i.json.input)}}));", [660, 0]),
          ifnode("Gate satisfied?", "={{ $json.decision.action === 'REVERT' }}", [880, 0]),
-         http("REVERT_NOW", "ATTACH_AT_IMPORT/webhook/act", "POST", '={{JSON.stringify($json)}}', [1100, -80]),
+         http("REVERT_NOW", "ATTACH_AT_IMPORT/webhook/" + WIRING["act"], "POST", '={{JSON.stringify($json)}}', [1100, -80]),
          code("STUCK_CHECK", "// consecutive_wrong >= 2 or dwell >= 3x median, per concept\n"
                              "return $input.all();", [1100, 120]),
          code("DISPATCH", "// one concept, two minutes, one practice item, opt-out in the message\n"
@@ -303,8 +306,23 @@ def do_import() -> int:
     return 0 if result["ok"] else 2
 
 
+def check() -> int:
+    """--check: regenerate in memory and fail if any export on disk would change."""
+    before = {p.name: p.read_text() for p in sorted(OUT.glob("wf-cr-*.json"))}
+    main()
+    after = {p.name: p.read_text() for p in sorted(OUT.glob("wf-cr-*.json"))}
+    drift = sorted(name for name in set(before) | set(after) if before.get(name) != after.get(name))
+    if drift:
+        print(f"DRIFT: {', '.join(drift)} — commit the regenerated exports")
+        return 1
+    print(f"in sync: {len(after)} exports match app/n8n/policy_node.js sha256={NODE_HASH[:16]}…")
+    return 0
+
+
 if __name__ == "__main__":
     import sys
     if "--import" in sys.argv:
         raise SystemExit(do_import())
+    if "--check" in sys.argv:
+        raise SystemExit(check())
     main()

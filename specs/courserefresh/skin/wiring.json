@@ -1,0 +1,13 @@
+{
+  "version": "wiring-v0.1",
+  "note": "The canvas contract in one place: every webhook path the engine calls and every path the exports register. app/run_live.py reads the path it posts to from here, app/tools/make_n8n_exports.py writes the path it registers from here, and test_contracts.py fails the build if the export and this file disagree. Round 3 shipped these two out of step (engine posted cr/triage, export served triage), so the canvas path could never have worked; one file is the fix.",
+  "webhooks": {
+    "triage": "cr/triage",
+    "act": "cr/act",
+    "judge": "cr/judge"
+  },
+  "runner": {
+    "receipt": "http://runner:8081/receipt",
+    "degraded": "http://runner:8081/degraded"
+  }
+}

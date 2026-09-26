@@ -10,7 +10,7 @@
 | 0.3 | A revert executed on a satisfied gate, as a new version | night-2 receipt + `v5.md` |
 | 0.4 | A stuck learner signal dispatched a micro-lesson — or was refused for consent | dispatch receipt / `consent_missing` |
 | 0.5 | The digest renders refusals first and fits 4 KB | `app/out/digest.md` |
-| 0.6 | `sh app/check.sh` exits 0 | `app/out/evidence/battery.txt` |
+| 0.6 | `sh app/check.sh` exits 0 | `app/out/evidence/battery.log` |
 | 0.7 | Nothing above needed a human to press a button mid-run | receipts `actor: system` |
 
 Warden signs (name + D-label) in `reviews/04` §0. **Skip = veto.**

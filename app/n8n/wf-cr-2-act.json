@@ -4,7 +4,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "act",
+        "path": "cr/act",
         "responseMode": "lastNode"
       },
       "id": "from-triage",
@@ -240,7 +240,7 @@
     "templateCredsSetupCompleted": false,
     "courserefresh": {
       "generated_by": "app/tools/make_n8n_exports.py",
-      "policy_node_sha256": "1885efcb791872c4f5a2ace13af2fb87914868c5a5e7d441617785d6b59eaad4",
+      "policy_node_sha256": "ee181d275c1b2809008647f15a40f48e1bbb785a32d7e79f890425249fe93d83",
       "notes": "One commit per decision; the receipt names the commit and the commit names the receipt."
     }
   },
@@ -250,6 +250,6 @@
     }
   ],
   "pinData": {},
-  "versionId": "1885efcb",
+  "versionId": "ee181d27",
   "active": false
 }

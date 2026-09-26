@@ -104,7 +104,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "ATTACH_AT_IMPORT/webhook/act",
+        "url": "ATTACH_AT_IMPORT/webhook/cr/act",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{JSON.stringify($json)}}",
@@ -261,7 +261,7 @@
     "templateCredsSetupCompleted": false,
     "courserefresh": {
       "generated_by": "app/tools/make_n8n_exports.py",
-      "policy_node_sha256": "1885efcb791872c4f5a2ace13af2fb87914868c5a5e7d441617785d6b59eaad4",
+      "policy_node_sha256": "ee181d275c1b2809008647f15a40f48e1bbb785a32d7e79f890425249fe93d83",
       "notes": "n < 5 or a missing metric is `unmeasured` \u2014 the loop never reverts on a hunch (Art. XI)."
     }
   },
@@ -271,6 +271,6 @@
     }
   ],
   "pinData": {},
-  "versionId": "1885efcb",
+  "versionId": "ee181d27",
   "active": false
 }

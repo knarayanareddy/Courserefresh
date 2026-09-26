@@ -28,13 +28,14 @@ bad edits without being asked**. It refuses to act on one source, and it says so
 | 7 | [`specs/reviews/04-post-build-panel-and-audit.md`](specs/reviews/04-post-build-panel-and-audit.md) | The post-build panel (product · engineer · founder · curriculum lead · learner · judge) and the closing audit with pasted output |
 | 8 | [`specs/reviews/05-specialist-debate.md`](specs/reviews/05-specialist-debate.md) | The specialists' debate (n8n · Apify · judge rubric · UX · teacher · learner · security) — the argument, the fixes, and the four disagreements left on the record |
 | 9 | [`specs/reviews/06-build-round-3.md`](specs/reviews/06-build-round-3.md) | **The build, peer-supervised**: who built what, who watched, the 16 defects found in each other's work, and the check that fails if one returns |
-| 10 | [`specs/courserefresh/SETUP.md`](specs/courserefresh/SETUP.md) | **The only page you need to go live**: paste the keys, `--preflight --probe`, import the canvas, run the first cycle |
+| 10 | [`specs/reviews/07-author-canvas-panel.md`](specs/reviews/07-author-canvas-panel.md) | The canvas panel (teacher · author · learner · UX · claims · SRE · n8n · Tavily · JEV · cost): what the review surface proves, the one blocking condition — **a ruling must bind the next cycle** — and the complementary features it wants |
+| 11 | [`specs/courserefresh/SETUP.md`](specs/courserefresh/SETUP.md) | **The only page you need to go live**: paste the keys, `--preflight --probe`, import the canvas, run the first cycle |
 
-**Verify it yourself:** `sh app/check.sh` → `ALL GREEN` (**179 checks, 13 stages**) on a clean checkout
+**Verify it yourself:** `sh app/check.sh` → `ALL GREEN` (**295 checks: 263 PASS in 13 measured stages + the 32-check claims audit**) on a clean checkout
 with **no credentials** — the live path (Apify client, judge, n8n client, telemetry intake, console,
-notify channels, one end-to-end dry cycle) is exercised through injected transports. The frozen hero run
-`cr-20260926-1421-001` (19 files) and the round-3 engine rehearsal `cr-20260926-1441-130` (14 files) are
-recorded in `specs/courserefresh/EVIDENCE.md` §4/§4b.
+notify channels, one end-to-end dry cycle) is exercised through injected transports. The frozen hero run ships in
+`specs/evidence/` (19 files, every hash re-checked by the battery); `specs/courserefresh/EVIDENCE.md` §4
+is its transcript, and any `app/out/evidence/<run-id>/` path there is where a local re-run lands.
 
 **Run it now, with no keys at all:**
 
