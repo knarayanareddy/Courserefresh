@@ -111,6 +111,14 @@ A human override (accept/override/reject an escalated decision) writes a **new**
 `actor: human:<name>`; the original is never edited. `POST /resume` and overrides require the
 `DEMO_TOKEN` when set; a wrong token is `403` + exit 3 (TM14).
 
+### 6.1 Console output (built, review 05)
+
+| Artifact | Producer | Notes |
+|---|---|---|
+| `app/out/digest.md` | `run_walking_skeleton.py` (every run) | the text digest, refusals first, ≤4 KB |
+| `app/out/digest.html` | same run | the console page; tokens only, no scripts, escaped text (TM11) |
+| `--chaos write-fail` | operator | rehearses a witnessed failure: one write fails, the refusal must appear on a receipt, in the digest, and in the console |
+
 ## 7. Exit codes (shared by CLI and console actions)
 
 `0` ok · `1` verification failed · `2` build-breaking invariant violated · `3` usage/config/authorisation ·

@@ -31,7 +31,7 @@ ac_ids = set(re.findall(r"\*\*(AC-\d+\.\d+)\*\*", spec))
 trace_ids = set(re.findall(r"\b(AC-\d+\.\d+)\b", trace))
 check("every AC in spec.md is traced", not (ac_ids - trace_ids), f"missing={sorted(ac_ids - trace_ids)}")
 check("no traced AC is orphaned", not (trace_ids - ac_ids), f"orphans={sorted(trace_ids - ac_ids)}")
-check("AC count is as documented", len(ac_ids) == 36, f"n={len(ac_ids)}")
+check("AC count is as documented", len(ac_ids) == 42, f"n={len(ac_ids)}")
 
 # 2. closed sets: data-model §4 tables vs change_taxonomy.json
 row_codes = {}
@@ -104,6 +104,14 @@ for path in sorted((ROOT / "specs").rglob("*.md")) + [ROOT / "README.md", ROOT /
     for token in PATTERN.findall(path.read_text()):
         if "<" in token or "..." in token or token.endswith("report.txt") or token.startswith("app/out/"):
             continue    # runtime evidence or abbreviated path: produced by running, checked in EVIDENCE.md
+        # loop-written lesson versions do not exist on a fresh clone: the authored bodies do, and the
+        # written ones are proven by the frozen run (EVIDENCE.md §4, reviews/04 §3.6)
+        loop_written = re.match(r"course/agent-ops/(lesson-\d+)[^/]*/v(\d+)\.md$", token)
+        if loop_written:
+            baselines = dict(re.findall(r'"(lesson-\d+)[^"]*":\s*(\d+)',
+                                        (ROOT / "app" / "tools" / "reset_course.py").read_text()))
+            if int(loop_written.group(2)) > int(baselines.get(loop_written.group(1), 1)):
+                continue
         if not (ROOT / token).exists():
             missing_refs.append(f"{path.relative_to(ROOT)} → {token}")
 check("every path named in the docs exists", not missing_refs, "; ".join(sorted(set(missing_refs))[:5]))

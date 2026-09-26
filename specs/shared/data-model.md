@@ -187,6 +187,18 @@ Sections, in order: **1) what it refused, with reasons** · 2) what changed (ver
 3) learners (dispatches, notifications, gate states) · 4) discipline (budgets, authority, chain
 verified, `unmeasured` list). "Refusals first" is a test, not a preference.
 
+## 9.1 Fields added by review 05 (the expert panel)
+
+| Object | Field | Meaning | Why it exists |
+|---|---|---|---|
+| SourceSnapshot | `role` | `authoritative` · `corroborating` · `none` | a vendor changelog is not corroborated by the vendor's own docs (AP-01) |
+| Event (fixture) | `learner_facing` | ≤240 chars, plain language, no internal vocabulary | the learner card says this, not the engineering summary (ST-01) |
+| Event (fixture) | `quiz_patch` | `{lesson_id, item_id, prompt, options, answer}` | "regenerates the quiz" must be a real, versioned edit (T-02) |
+| DecisionInput | `concept_recently_dispatched` | bool | the per-concept micro-lesson cap is a policy branch, not a runner special case (T-03) |
+| Receipt | `cohort_source` | `fixture (simulated)` · `telemetry` | a revert on a simulated cohort must say so on the row (ST-03) |
+| Artifact record | `quiz_path`, `quiz_item` | the item the change regenerated | the receipt names every artifact it touched (AC-13.2) |
+| Notification | `rehearsal` | present and true for seeded rehearsals | a rehearsal never dresses as a vendor change (Art. XII.4) |
+
 ## 10. Validation rules (enforced by `test_contracts.py`)
 
 1. Every field listed here exists in the code that writes it; no writer invents a field.

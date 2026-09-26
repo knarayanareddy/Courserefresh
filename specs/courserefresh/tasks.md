@@ -5,7 +5,7 @@
 run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. State vocabulary:
 `[ ]` todo · `[x]` done-done · `[~]` cut/degraded (say what, in the task) · `[!]` blocked (say who).
 
-**TIME-NOW block.** `D-label: D-0 · mode: sim green · hero run: cr-20260926-1411-450 (offline twin) · live wiring: not yet · freeze: off`
+**TIME-NOW block.** `D-label: D-0 · mode: sim green · hero run: cr-20260926-1421-001 (offline twin) · live wiring: not yet · freeze: off`
 
 ---
 
@@ -32,8 +32,8 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 | T12 | Triage live: observe + judge calls, quote anchoring, POLICY node, receipt | receipts with judge answers and `input_hash` | `[~]` — logic + parity 57/57; model calls are fixture-fed (no keys) |
 | T13 | Act live: commit to `bot/courserefresh`, card to consented cohort, receipt | `git log` shows the `cr:` commit; card artifact exists | `[~]` — body/diff/notify staged and receipted; the push to the bot branch is unwired |
 | T14 | Telemetry endpoint + learn workflow: consent gate, cohort window | no-consent POST rejected; window row produced | `[~]` — consent gate and window computation exist (fixtures); no HTTP endpoint |
-| T15 | Digest delivery (07:30) + console read routes | digest delivered; console renders a receipt | `[~]` — digest render and `--report`; delivery and console are Phase 2 |
-| T16 | One witnessed failure handled: degraded receipt + digest line | receipt shows failure and mode | `[ ]` |
+| T15 | Digest delivery (07:30) + console read routes | digest delivered; console renders a receipt | `[~]` — the console page is **built** (`app/out/digest.html`, tokens only, refusals first, TM11-tested); scheduled delivery and interactive routes are Phase 2 (C-06) |
+| T16 | One witnessed failure handled: degraded receipt + digest line | receipt shows failure and mode | `[~]` — rehearsed offline and frozen (`--chaos write-fail`: one refusal, chain intact, digest + console say it); the live equivalent is pending |
 | T17 | **M1 GATE:** preflight green with `mode: live`; hero run armed | sign-off; preflight artifact | `[!]` — needs live credentials |
 | T21b | n8n exports embedding the rulebook, drift-checked | `test_contracts.py` compares the embedded code to the node file | `[x]` (pulled forward to answer review 02 seat C) |
 
@@ -44,7 +44,7 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 | T18 | Gate evaluation (n≥5, 48 h, `quiz_delta ≤ 0`) → revert queue, `unmeasured` when n<floor | gate row in the run log; `unmeasured` branch | `[~]` — implemented and proven offline (`cr-revert-*` gold rows, `09-revert.json`); live cohort absent |
 | T19 | Stuck detection + micro-lesson dispatch (consent + caps) | dispatch artifact + receipt; rate-limit rows | `[x]` |
 | T20 | Eval harness: three columns on the frozen gold set, report archived | `policy.py --eval` exits 0; report in `app/out/eval/` | `[x]` — columns (b)/(c) offline; (a) is `n/a` (D-06) |
-| T21 | All test files green | `sh app/check.sh` exit 0 | `[x]` — 92 PASS |
+| T21 | All test files green | `sh app/check.sh` exit 0 | `[x]` — 103 PASS |
 | T22 | `RECEIPTS.md` + `EVIDENCE.md` filled from real outputs (or `unmeasured`) | claims lint green; no orphan numbers | `[x]` |
 | T23 | **M2 GATE:** hostile→publish = 0 and unsupported→publish = 0 on the archived report | excerpt pasted in `reviews/04` §3 | `[x]` |
 
@@ -52,7 +52,7 @@ run **and** its output/link is in `EVIDENCE.md`. Nothing else counts as done. St
 
 | ID | Task | Done when | Status |
 |---|---|---|---|
-| T24 | Evidence freeze: run log, receipts, diffs, notifications, digest, eval report | `MANIFEST.sha256` in `EVIDENCE.md` §4 | `[x]` — 18 files frozen |
+| T24 | Evidence freeze: run log, receipts, diffs, notifications, digest, eval report | `MANIFEST.sha256` in `EVIDENCE.md` §4 | `[x]` — 19 files frozen |
 | T25 | Video shot per the shot list; refusals and labels on screen | checklist §4 signed | `[!]` — human time |
 | T26 | Live final dry run (3 min + Q&A) | checklist §5 signed | `[!]` — human time |
 | T27 | `AMENDMENTS.md` current; `reviews/04` with pasted outputs; findings closed or open | closure rule satisfied | `[~]` — closed except the live rows named in `reviews/04` §4 |

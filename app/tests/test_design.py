@@ -30,6 +30,34 @@ check("every fallback has an on-screen label in the shot list", all(l in shots f
 check("status is a word plus a colour (not colour alone)",
       "word plus a colour" in master or "colour alone" in master)
 
+# the contrast audit the UX seat asked for: every locked colour is measured, not eyeballed
+def _lum(h):
+    h = h.lstrip("#")
+    parts = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    lin = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in parts]
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+
+
+def contrast(a, b):
+    la, lb = _lum(a), _lum(b)
+    hi, lo = max(la, lb), min(la, lb)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+body = dict(re.findall(r"(--[a-z0-9-]+):\s*(#[0-9A-Fa-f]{6})", master))
+paper, paper2 = body["--paper"], body["--paper-2"]
+text_colours = {"--ink", "--ink-soft", "--ink-faint", "--rule", "--status-publish", "--status-queue",
+                "--status-revert", "--status-nochange", "--status-unknown"}
+failing = []
+for name in sorted(text_colours):
+    value = body[name]
+    worst = min(contrast(value, paper), contrast(value, paper2))
+    if worst < 4.5 and name != "--rule":        # --rule is a hairline, judged at 3:1
+        failing.append(f"{name} {value} {worst:.2f}:1")
+    elif name == "--rule" and worst < 3.0:
+        failing.append(f"{name} {value} {worst:.2f}:1")
+check("every locked colour passes AA on both papers (measured, not eyeballed)", not failing, "; ".join(failing))
+
 passed = sum(1 for _, ok, _ in CHECKS if ok)
 width = max(len(c[0]) for c in CHECKS)
 for name, ok, detail in CHECKS:

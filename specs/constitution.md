@@ -177,7 +177,10 @@ beyond what consent covers.
 `design/MASTER.md`; they are a lockfile — changing one is an amendment, not a taste decision.
 15.2 Status is a **word plus a colour**, never colour alone; a diff shows removed and added text
 with explicit `−`/`+` markers and cannot be conveyed by hue alone.
-15.3 The two faces of the product: the **author console** (an instrument: digest, versions, diffs,
+15.3 Every locked colour is measured against the two paper tones before it ships (≥ 4.5:1 for text,
+≥ 3:1 for hairlines); a colour that fails is changed, not excused. The console renders only locked
+tokens and escapes anything a hostile page could have written into a receipt.
+15.4 The two faces of the product: the **author console** (an instrument: digest, versions, diffs,
 receipts, eval table) and the **learner card** (three lines in plain language, one link, one
 opt-out). Neither is a marketing page.
 

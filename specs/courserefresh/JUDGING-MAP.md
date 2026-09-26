@@ -12,7 +12,7 @@ be shown (not described). The right column is the sentence to say — short, spe
 |---|---|---|
 | Notices without being asked | Apify run history + `run_log.jsonl` (`sources scanned`, `no_delta` rows) | "It scans on a schedule whether or not anyone is watching." |
 | Decides | The `POLICY` node on the canvas + receipts with reason codes | "The action is chosen by this node — one screen, deterministic, same rules in Python and JS." |
-| Acts | The commit on `bot/courserefresh`, the `v3→v4` diff, the learner card | "It wrote the lesson, the quiz, and the changelog itself." |
+| Acts | The commit on `bot/courserefresh`, the `v3→v4` diff, the regenerated quiz item, the learner card | "It wrote the lesson, the quiz item that tested the old name, and the changelog itself." |
 | Learns | Gate state + revert receipt; dispatch receipts | "It recorded what would make the change wrong — and when that happened, it undid itself." |
 | Tells you what happened | The 07:30 digest, refusals first | "The first thing the digest lists is what it refused to do." |
 | Knows when to escalate / stop | The refusal receipts (single source, contradiction, assessment, hostile) + the budget and freeze lines | "Four stop conditions fired this run. Here they are with their reasons." |
@@ -26,14 +26,14 @@ be shown (not described). The right column is the sentence to say — short, spe
 | Real actions | Git history, the card artifact, the micro-lesson artifact | "It committed at 03:12; this is the commit." |
 | Real logs | `receipts.jsonl` chain + `run_log.jsonl` | "Every decision has a row; the rows are hash-chained." |
 | Run while nobody watched | Overnight window timestamps (≥3 h) | "Nobody touched it from midnight to 07:30." |
-| A failure handled on its own | Degraded receipt (actor failure or stale source) + digest line | "The actor failed at 04:10; it held, said so, and did not publish blind." |
+| A failure handled on its own | Degraded receipt (actor failure, failed write, or stale source) + digest line + console row | "The write failed at 04:10; it refused, said why, and the chain still verifies. Here is the same refusal in the console." |
 | Honesty about what is not real yet | `mode` labels, `RECEIPTS.md` rows marked `unmeasured` | "Anything we could not measure says `unmeasured` on purpose." |
 
 ## 3. Apify & n8n — 20%
 
 | Sub-criterion | Evidence | Say this |
 |---|---|---|
-| Apify pulls real-world data | Actor list with ids/builds; dataset shapes; run history | "Four actors, pinned builds, run history is right here." |
+| Apify pulls real-world data | Actor list with ids/builds; dataset shapes; run history; **source roles** (`authoritative`/`corroborating`/`none`) so two pages from one vendor are one voice | "Four actors, pinned builds, run history is right here — and the system counts voices, not URLs: a mirror is recorded and never counted." |
 | n8n runs the workflows **and the decisions** | Canvas: the five workflows with the embedded `POLICY` node; execution log | "n8n isn't the plumbing — the decision node on this canvas is the product's rulebook." |
 | Depth (the more they power the system, the better) | `WIRING.md` inventory: which actor feeds which workflow node; cadence; retries | "Every input in this system is an Apify dataset row; nothing is invented." |
 | Why not a Python script? | Parity test | "Python is the oracle we test against; production runs the same rules in the node." |

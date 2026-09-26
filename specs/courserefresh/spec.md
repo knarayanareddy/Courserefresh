@@ -28,7 +28,7 @@ each other. The course lives at `course/agent-ops/`; learners read it there and 
 | **Learn** | A cohort window is evaluated against the publish's revert gate; stuck signals dispatch micro-lessons; a satisfied gate reverts | every 15 min, gates at 48 h |
 | **Report** | The digest (refusals first) at 07:30 and on demand; the console shows the same receipts | daily |
 
-## 2. User stories & acceptance criteria (36 ACs)
+## 2. User stories & acceptance criteria (42 ACs)
 
 Priority: **P0** = the demo dies without it · **P1** = proves the "learns" clause · **P2** = stretch.
 
@@ -134,6 +134,25 @@ Priority: **P0** = the demo dies without it · **P1** = proves the "learns" clau
 - **AC-12.3** The live final demos the same loop against the running system (or the labelled twin),
   and the Q&A answers come from `JUDGING-MAP.md`. *Proof:* checklist sign-off.
 
+### US-13 (P0) — As the teacher, I want the course to still make sense after the agent edits it.
+- **AC-13.1** Every lesson carries objectives and prerequisites; every quiz item maps to one of them;
+  the mapping is a file, not a convention. *Proof:* `python3 app/tests/test_curriculum.py`;
+  `course/agent-ops/curriculum.json`.
+- **AC-13.2** A change that claims to affect an item regenerates that item — versioned, traceable to
+  the event that did it, and restored by `reset_course.py`. *Proof:* `test_curriculum.py`
+  (regenerated item is well-formed and traceable).
+- **AC-13.3** A change names the downstream lessons to revisit and never rewrites them in the same
+  unattended pass. *Proof:* digest line `downstream to revisit`; `test_curriculum.py`.
+
+### US-14 (P1) — As the person reading the console, I want it to obey the same rules as the receipts.
+- **AC-14.1** The console page is generated from the design lockfile tokens, contains no scripts and
+  no remote resources, and lists refusals first, like the digest. *Proof:* `--selftest` (colours exist
+  in the lockfile) + `TM11`.
+- **AC-14.2** Every locked colour is measured for contrast and passes AA on both papers; hairlines
+  pass the 3:1 non-text floor. *Proof:* `python3 app/tests/test_design.py`.
+- **AC-14.3** Hostile text that reaches a receipt is escaped in the console, never rendered.
+  *Proof:* `TM11` (escapes a `<script>` probe).
+
 ## 3. Non-goals (things this spec refuses to be)
 
 1. **No grading, no learner records, no scores** — the machine never touches an assessment or a
@@ -146,6 +165,9 @@ Priority: **P0** = the demo dies without it · **P1** = proves the "learns" clau
 5. **No platform sprawl** — n8n + Apify are the engine; every additional tool must replace one of
    them, not sit beside them (Art. XIII).
 6. **No claim of real-time** — this loop's honest unit is the scan cycle (`harness.md` §5).
+7. **No LMS integration in v1** — the course is a folder in a repo; "sync to the platform" is a
+   documented export step, not a claim (`plan.md` §7). Saying "it updates your course" while writing
+   to a repository would be the kind of rounding this spec exists to prevent.
 
 ## 4. Success metrics (measured, not asserted — `RECEIPTS.md`)
 

@@ -6,17 +6,20 @@
     {
       "source_id": "n8n-releases",
       "publisher": "n8n",
-      "url": "https://github.com/n8n-io/n8n/releases"
+      "url": "https://github.com/n8n-io/n8n/releases",
+      "role": "authoritative"
     },
     {
       "source_id": "n8n-docs",
       "publisher": "n8n",
-      "url": "https://docs.n8n.io/"
+      "url": "https://docs.n8n.io/",
+      "role": "authoritative"
     },
     {
       "source_id": "community-npm",
       "publisher": "community",
-      "url": "https://www.npmjs.com/package/n8n-nodes-base"
+      "url": "https://www.npmjs.com/package/n8n-nodes-base",
+      "role": "corroborating"
     }
   ],
   "quotes": [
@@ -56,5 +59,17 @@
     "window_h": 48,
     "metric": "quiz_delta",
     "condition": "<= 0"
+  },
+  "learner_facing": "n8n 1.85 renamed the setting that limits an agent's tools. If you copied the old key, update it; nothing else about the lesson changes.",
+  "quiz_patch": {
+    "lesson_id": "lesson-04",
+    "item_id": "q2",
+    "prompt": "In n8n 1.85 the setting that limits an agent's tools is written:",
+    "options": [
+      "tool_permissions.tools (removed in 1.86)",
+      "permissions.mode.tools",
+      "agent.tools.allow"
+    ],
+    "answer": 1
   }
 }

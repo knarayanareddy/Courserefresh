@@ -23,6 +23,10 @@ source of truth; if code disagrees with the spec, the spec wins until the spec i
   declared undo condition, it is a bug.
 - **Don't touch the gold set to make a test pass** (Art. VII). `skin/gold.jsonl` is frozen at a
   version; relabel only with a new `gold_version` and a row in `AMENDMENTS.md`.
+- **A course change keeps the course coherent** (review 05, teacher seat): every lesson has objectives
+  and prerequisites in `course/agent-ops/curriculum.json`; a change regenerates the quiz item it
+  affects and *names* the downstream lessons to revisit — it never rewrites them unattended.
+  `python3 app/tests/test_curriculum.py` decides.
 - **A receipt must still describe the file.** If you change anything that writes artifacts, run `python3 app/tests/test_artifacts.py` — hashes are re-computed from disk, and a revert must keep the text it claims to restore (Art. IX.3).
 - **Hostile input is in scope** (Art. X): `cr-inject-01` must always escalate, with the hostile
   string visible on the receipt.
@@ -41,6 +45,9 @@ python3 app/run_walking_skeleton.py --report        # the digest
 python3 app/tools/metrics.py                        # one JSON of every number the run produced
 python3 app/tools/reset_course.py                   # back to the authored baseline (v3 / v1s)
 python3 app/tools/make_n8n_exports.py               # regenerate wf-cr-* around the current policy node
+python3 app/tests/test_curriculum.py                # objectives, quiz alignment, micro-lesson contract
+python3 app/tests/test_artifacts.py                 # artifacts vs receipts, caps, the failed-write path
+python3 app/run_walking_skeleton.py --root app/out/e7 --chaos write-fail   # rehearse a witnessed failure
 ```
 
 ## House rules

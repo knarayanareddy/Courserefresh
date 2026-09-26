@@ -7,7 +7,8 @@
       "source_id": "community-page",
       "independence_group": "community",
       "url": "https://example.invalid/hostile",
-      "publisher": "community"
+      "publisher": "community",
+      "role": "corroborating"
     }
   ],
   "quotes": [

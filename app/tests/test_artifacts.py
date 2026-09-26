@@ -113,6 +113,22 @@ check("per-concept micro-lesson cap holds (second dispatch in the window is rate
       last["decision"]["action"] == "NO_CHANGE" and last["decision"]["reason_codes"] == ["rate_limited"]
       and before == after, f"{last['decision']['action']} {last['decision']['reason_codes']} new={after - before}")
 
+# 7. a failed write is reported once, with a reason, on the digest and the console ----------------
+chaos = ROOT / "app" / "out" / "artifacts-test-chaos"
+if chaos.exists():
+    shutil.rmtree(chaos)
+shutil.copytree(ROOT / "course", chaos / "course")
+ctree = twin.Tree(chaos / "course", chaos / "app" / "out", mode="sim", chaos="write-fail")
+clog = twin.run(ctree, twin.load_events(include_seed=False), label="chaos")
+crows = ctree.rows()
+failed = [r for r in crows if r["decision"]["reason_codes"] == ["write_failed"]]
+digest_text = (ctree.out / "digest.md").read_text()
+html_text = (ctree.out / "digest.html").read_text()
+ok, _ = ctree.verify_chain()
+check("a failed write is reported exactly once, reason on the digest and console, chain intact",
+      len(failed) == 1 and len(crows) == 9 and "write_failed" in digest_text and "write_failed" in html_text and ok,
+      f"failed_rows={len(failed)} receipts={len(crows)} chain={ok}")
+
 passed = sum(1 for _, ok, _ in CHECKS if ok)
 width = max(len(c[0]) for c in CHECKS)
 for name, ok, detail in CHECKS:

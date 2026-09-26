@@ -1,6 +1,6 @@
 # specs/ — the Courserefresh specification package
 
-`v0.4 · Last amended D-0 · Amends: courserefresh/AMENDMENTS.md v1.2 · Owner: the build agent · Ratified at kickoff`
+`v0.5 · Last amended D-0 · Amends: courserefresh/AMENDMENTS.md v1.2 · Owner: the build agent · Ratified at kickoff`
 
 This package is written so that **an autonomous build agent can execute it without a human in the
 loop**, and so that a judge can verify every claim by running one command. It follows the structure
@@ -20,10 +20,11 @@ ain't-happened list, and a review that closes findings only with pasted output.
 | `security/threat-model.md` | draft | Surfaces → threats → containment; TM01–TM18 as named tests |
 | `design/MASTER.md` | draft | Paper-and-ink lockfile; author console + learner card |
 | `courserefresh/*.md` | draft | The product: spec, plan, tasks, build order, traceability, judging map, receipts, evidence, wiring, ops, checklists, shot list, amendments, origin, kickoff docs |
-| `courserefresh/skin/*` | executable | Policy oracle, thresholds, closed sets, gold set (the numbers the rulebook cites) |
+| `courserefresh/skin/*` | executable | Policy oracle, thresholds, closed sets, gold set `gold-v0.3` (n=59, incl. mirror and rehearsal traps) |
 | `reviews/01` | complete | Structural review of the 4prd reference corpus, with measured evidence |
 | `reviews/02` | complete | Judges' pre-mortem: six seats, J-01…J-12, verdict *proceed to the live phase* |
 | `reviews/03` | complete | Builder's answer to review 01: A1–A12 ported/cut, H1–H14 closed with commands |
+| `reviews/05` | complete | The specialists' debate (n8n · Apify · judge · UX · teacher · learner · SRE): S-rows closed by tests, four disagreements recorded, agreement reached |
 | `reviews/04` | complete | Post-build panel (product · engineer · founder · curriculum lead · learner · judge): K-01–K-08, four MUST-FIXes fixed with tests, three live-phase rows named open; closing audit with pasted output |
 
 ## The order to read (and the order an agent should build)
@@ -65,9 +66,9 @@ ain't-happened list, and a review that closes findings only with pasted output.
 sh app/check.sh
 ```
 
-That command is the only “it works” claim this package makes. Last run: **92 PASS, exit 0
+That command is the only “it works” claim this package makes. Last run: **103 PASS, exit 0
 (`ALL GREEN`)**, output archived at `app/out/evidence/battery.txt`; the frozen hero run is
-`app/out/evidence/cr-20260926-1411-450/`. Anything that has not been measured
+`app/out/evidence/cr-20260926-1421-001/`. Anything that has not been measured
 is written `unmeasured` (Art. VI) — and anything labelled **measured** in `RECEIPTS.md` names the
 command and the artifact that produced it.
 

@@ -25,9 +25,12 @@ bad edits without being asked**. It refuses to act on one source, and it says so
 | 5 | [`specs/courserefresh/spec.md`](specs/courserefresh/spec.md) | What Courserefresh is (user stories, acceptance criteria, non-goals) |
 | 6 | [`specs/courserefresh/plan.md`](specs/courserefresh/plan.md) | How it is built and run (Apify → n8n → repo → learners → digest) |
 | 7 | [`specs/reviews/04-post-build-panel-and-audit.md`](specs/reviews/04-post-build-panel-and-audit.md) | The post-build panel (product · engineer · founder · curriculum lead · learner · judge) and the closing audit with pasted output |
+| 8 | [`specs/reviews/05-specialist-debate.md`](specs/reviews/05-specialist-debate.md) | The specialists' debate (n8n · Apify · judge rubric · UX · teacher · learner · security) — the argument, the fixes, and the four disagreements left on the record |
 
-**Verify it yourself:** `sh app/check.sh` → `ALL GREEN` (92 checks) on a clean checkout; the frozen
-hero run and its `MANIFEST.sha256` are described in `specs/courserefresh/EVIDENCE.md` §4.
+**Verify it yourself:** `sh app/check.sh` → `ALL GREEN` (103 checks, 11 stages) on a clean checkout;
+the frozen hero run `cr-20260926-1421-001` and its `MANIFEST.sha256` (19 files) are described in
+`specs/courserefresh/EVIDENCE.md` §4, and opening `app/out/digest.html` shows the console the run
+produces — built from the design lockfile, refusals first, no scripts.
 
 ## The whole package, in one table
 

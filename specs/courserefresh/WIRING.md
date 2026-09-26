@@ -35,6 +35,22 @@ are **one** source, even though they are two URLs. The allowlist above is the *s
 another subject, `SOURCE-PLAN.md` replaces it and the list is mirrored to
 `app/out/state/allowlist.json` at preflight (hashed into the run header).
 
+## 2b. Source roles (independence done properly — review 05, AP-01/AP-02)
+
+Counting publishers is necessary and not sufficient: two pages under one vendor are one voice. Each
+source therefore carries a **role**, checked before the corroboration maths runs.
+
+| Role | Who | Counts as independent evidence? |
+|---|---|---|
+| `authoritative` | the vendor's own release notes / changelog for the thing that changed | yes, once per publisher |
+| `corroborating` | an independent publisher (community package, third-party docs, press) | yes |
+| `none` | a mirror, a re-post, a scraper of the same upstream, a page with no publication date | **no** — recorded, never counted |
+
+Rules: a source with `role: none` may still be *shown* (the receipt keeps its quote) but it cannot
+lift a single-publisher claim over the floor; `role` is assigned in `SOURCE-PLAN.md` per host and
+path prefix, and the assigned role appears on the receipt. This is the difference between "two
+URLs" and "two voices" — the subject's docs site and its GitHub releases are one voice.
+
 ## 3. Workflow inventory (nodes and where the decisions live)
 
 | Workflow | Trigger | Key nodes | Reads | Writes |
@@ -47,6 +63,17 @@ another subject, `SOURCE-PLAN.md` replaces it and the list is mirrored to
 
 The **`POLICY` node** embeds `app/n8n/policy_node.js` verbatim; `THRESHOLDS` supplies
 `skin/thresholds.json` values. Nothing else in the canvas makes a decision.
+
+### 3.1 n8n build requirements (what "powered by n8n, not decorated with it" means)
+
+| Requirement | Why (review 05, N8N-01…N8N-05) | Where it shows |
+|---|---|---|
+| Every workflow runs **execute-once**; the scan trigger passes a run key and the workflow refuses a duplicate key | a daily schedule that double-fires must not publish twice | `wf-cr-0-scan` sticky-note + the run key in the receipt |
+| The decision node is a **Code node whose body is the rulebook file** (`policy_node.js`), drift-checked byte-for-byte | "code decides" must be inspectable in the canvas | `test_contracts.py` compares the embedded body to the file |
+| Queue-mode instances: the error branch is `IF error → RETRY(dlq, once) → RECEIPT(degraded) + digest line` | a failure that is not reported is a silent failure | `wf-cr-*` error outputs wired to the shared node |
+| One **error workflow** attached to all five, so an unhandled throw still lands as a receipt row | the loop's honesty must survive its own bugs | instance setting, recorded at D-1 |
+| Instance pin: n8n version recorded in §4 before the hero run; expressions avoid version-added helpers | "works on my canvas" is not evidence | §4 row, filled at D-1 |
+| Apify calls: actor pins include the **build**, and the retry budget is an explicit number, not "a few tries" | the retry policy is part of the unit budget | §1 + receipt `cost.apify_units` |
 
 ## 4. Model pins (recorded, never "latest")
 
@@ -74,6 +101,16 @@ Until this table has values, every cost surface prints `unmeasured` (Art. VI).
 | n8n execution #1 (`wf-cr-1-triage`) | n8n executions | `<exec id / url>` | — |
 | First bot commit | Git host | `<commit sha>` | — |
 | Digest #1 | channel | `<message id>` | — |
+
+## 6.1 What the first runs must prove (review 05 added two rows)
+
+| # | Proof | Where the id/artifact goes |
+|---|---|---|
+| 1 | an Apify actor run with a real dataset | §1 run-id column |
+| 2 | an n8n execution of `wf-cr-1-triage` whose POLICY node decided | §3 execution link |
+| 3 | one delivered learner card (or the word "staged" on screen) | §5 |
+| 4 | **an API-contract drift check**: one declared field that the live API does not return (or returns as `null`), handled as a degraded receipt rather than a crash | §2b + receipt `source_stale` |
+| 5 | **a witnessed failure**: `--chaos write-fail` (offline) then a live equivalent, reported in digest and console | `EVIDENCE.md` E7 |
 
 ## 7. Credentials (env only; never in the repo, never in a receipt)
 

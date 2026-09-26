@@ -1,5 +1,5 @@
 # Courserefresh — amendments (the package's own change log)
-`v1.3 · Last amended D-0 · Rule (Art. XVI.4): every finding and every change to this package is a row here, and a row is `open` until its verification output is pasted into reviews/04`
+`v1.4 · Last amended D-0 · Rule (Art. XVI.4): every finding and every change to this package is a row here, and a row is `open` until its verification output is pasted into reviews/04`
 
 Vocabulary: **open** = decided, not yet proven · **verified** = command run, output pasted in
 `reviews/04` · **cut** = deliberately not done, with cause · **superseded** = replaced by a later row.
@@ -15,22 +15,22 @@ green, `reviews/04` pastes it; F-01–F-17 verified; new D-09–D-14 from the bu
 | ID | Finding | Change made to this package | Status | Verified by (pasted in reviews/04 §3) |
 |---|---|---|---|---|
 | F-01 | Reference corpus asserts numbers with no receipt (invented metrics) | Art. VI + `RECEIPTS.md` (N01–N24) + `test_claims.py` (TM18) | **verified** | `test_claims.py` — 3/3, battery.txt |
-| F-02 | Reference eval floors are declared then violated by its own gold sets (n=3 vs floor 40) | Art. VII + `test_gold_floor.py` (8 checks) + gold `n=57` + legal degrade line in `policy.py` | **verified** | eval report + `test_gold_floor.py` 8/8 |
+| F-02 | Reference eval floors are declared then violated by its own gold sets (n=3 vs floor 40) | Art. VII + `test_gold_floor.py` (8 checks) + gold `n=59` + legal degrade line in `policy.py` | **verified** | eval report + `test_gold_floor.py` 8/8 |
 | F-03 | Tasks claim Phase-0 artifacts that do not exist | `test_contracts.py` fails on a `[ ]` task naming an existing path, and on any doc path that does not resolve | **verified** | `test_contracts.py` 13/13 |
 | F-04 | No traceability between stories and tests | `spec.md` §2 (36 ACs) ↔ `TRACEABILITY.md` (36 rows, checked in both directions) | **verified** | `test_contracts.py` AC checks |
 | F-05 | Security material unnumbered; tests could not cite threats | `security/threat-model.md` TM01–TM18 = named checks in `test_threat_model.py` | **verified** | `test_threat_model.py` 18/18 |
 | F-06 | Design system asserted in prose, not locked | `design/MASTER.md` token lockfile + banned list + `test_design.py` (5 checks) | **verified** | `test_design.py` 5/5 |
 | F-07 | "Agent-operable" package assumed a human operator | root `AGENTS.md` + `app/check.sh` + `app/tools/*` + `tasks.md` TIME-NOW block + BUILD.md §4 | **verified (agent-operable)**; the human-only parts (video, sign-offs) are marked as such | battery + `checklists.md` §0 |
-| F-08 | Evidence/run-log protocols absent | `EVIDENCE.md` §1–5 + `app/tools/freeze_evidence.py` + a real freeze (18 files, `MANIFEST.sha256`) | **verified** | manifest in `EVIDENCE.md` §4 |
+| F-08 | Evidence/run-log protocols absent | `EVIDENCE.md` §1–5 + `app/tools/freeze_evidence.py` + a real freeze (19 files, `MANIFEST.sha256`) | **verified** | manifest in `EVIDENCE.md` §4 |
 | F-09 | Hygiene failures in the reference repo (committed build junk, dates everywhere) | `.gitignore` + `test_hygiene.py` (7 checks) + D-label convention enforced under `specs/` | **verified** | `test_hygiene.py` 7/7 |
 | F-10 | Review output was narrative, not binding, and never closed | this file + `reviews/02`, `reviews/03`, and `reviews/04` (pasted output) | **verified** | `reviews/04` §2–3 |
 | F-11 | Claim-lint / receipt register missing | `RECEIPTS.md` v0.3 (measured rows bold; `unmeasured` rows keep placeholders) + `test_claims.py` | **verified** | `test_claims.py` 3/3 |
 | F-12 | Sim vs live confusion is not designed against | `mode` on every receipt and digest header; `cohort_source` on reverts; `SEEDED` label; TM17 | **verified** | receipts + digest + TM17 |
-| F-13 | 4prd's harness loops could not be tested as written | `shared/harness.md` §11 test map + `app/check.sh` (nine stages, one exit code) | **verified** | `sh app/check.sh` → 92 PASS, exit 0 |
+| F-13 | 4prd's harness loops could not be tested as written | `shared/harness.md` §11 test map + `app/check.sh` (nine stages, one exit code) | **verified** | `sh app/check.sh` → 103 PASS, exit 0 |
 | F-14 | The reference's "≥2 sources" counted pages, not voices | independence is now decided **in code** from the source list's publishers (oracle + JS mirror + gold rows `cr-same-publisher-01`, `cr-three-publishers-01`) | **verified** | eval report, parity 57/57 |
 | F-15 | A rehearsal could borrow the credibility of the live path | seeded events are a declared branch (`seeded_rehearsal`), only run with `--seed-demo`, and `cr-seed-02` proves a rehearsal that claims upstream sources escalates (`seeded_source_misrepresented`) | **verified** | parity + gold row + receipts |
 | F-16 | Paperwork can claim closures it has not verified | F-01–F-12 reverted to `open` in v1.1 and closed here only with pasted output; the self-referential F-11 grep repaired | **verified (this file)** | `reviews/04` §3 |
-| F-17 | Gold-set changes must be visible | `gold-v0.1` → `gold-v0.2`: +3 rows (independence ×2, misrepresentation ×1), version bump, hash recorded (N11b) | **verified** | `skin/gold.jsonl` header + N11b |
+| F-17 | Gold-set changes must be visible | `gold-v0.1` → `gold-v0.3`: +3 rows (independence ×2, misrepresentation ×1), version bump, hash recorded (N11b) | **verified** | `skin/gold.jsonl` header + N11b |
 
 ## 2. Decisions made during drafting and the build
 
@@ -83,7 +83,33 @@ green, `reviews/04` pastes it; F-01–F-17 verified; new D-09–D-14 from the bu
 | F-24 / K-06 | No real learner has received a card (product lead) | named open; the video says "staged" unless one is delivered | **open** | closes with one delivered card (T13) |
 | F-25 / K-07 | No real Apify actor run id (judge) | named open; actor pins and normaliser exist | **open** | closes with the first run id (T10) |
 
-## 6. The one row that will matter most
+## 6. Findings from review 05 (the specialist debate)
+
+| ID | Finding (seat) | Change made | Status | Verified by |
+|---|---|---|---|---|
+| F-26 / AP-01 | Independence counted pages, not voices (Apify) | `role` on every source; oracle + node count only non-`none` voices; gold rows `cr-mirror-only-01`, `cr-mirror-plus-two-01`; `WIRING.md` §2b | **verified** | `reviews/05` §3.2–3.3, gold-v0.3 n=59 |
+| F-27 / T-01 | No objectives, prerequisites or item→objective map (teacher) | `course/agent-ops/curriculum.json`; `test_curriculum.py` (8 checks) | **verified** | `reviews/05` §3.1 |
+| F-28 / T-02 | "Regenerates the quiz" was unevidenced (teacher) | `quiz_patch` → versioned item with `regenerated_by`; `reset_course.py` restores authored text; lesson-04 quiz added | **verified** | digest line + `test_curriculum.py` |
+| F-29 / T-03 | Micro-lesson concept cap unenforced (teacher) | policy branch `rate_limited` + `probe-concept-cap` parity probe | **verified** | `test_artifacts.py` check 7, parity probes=2 |
+| F-30 / ST-01 | Cards used engineering wording (learner) | `learner_facing` copy per event (≤240 chars), used by the notifier; `test_curriculum.py` | **verified** | `reviews/05` §3.1 |
+| F-31 / UX-01 | Three locked colours fail AA (UX) | `--status-unknown` `#C5A202`→`#7A5C00`, `--ink-faint`→`#68604F`, `--rule`→`#8E8160`, `--status-queue`→`#96550A`; measured table in `MASTER.md` §1.1 | **verified** | `test_design.py` 6/6 |
+| F-32 / UX-02 | AA claimed while the console did not exist (UX) | console built from lockfile tokens (`app/out/digest.html`), AC-14.1–14.3, `--selftest` token check | **verified** | `reviews/05` §3.4 |
+| F-33 / SRE-01 | A failed write was reported twice (SRE) | failure returned to the loop, recorded once; `--chaos write-fail`; frozen rehearsal | **verified** | `reviews/05` §3.6, `test_artifacts.py` |
+| F-34 / N8N-01…05 | No canvas contract (execute-once, error workflow, queue branch, instance pin) (n8n) | `WIRING.md` §3.1 requirements table, each row naming where it shows | **open** | closes with a real execution id (T12) |
+| F-35 / AP-02 | No API-contract drift check; retry budget in prose (Apify) | `WIRING.md` §6.1 row 4 + §3.1 retry row; `source_stale` degraded receipt documented | **open** | closes with the first live actor run (T10) |
+| F-36 / ST-03 | A revert on a simulated cohort read like a live one (learner) | `cohort_source: fixture (simulated)` on the receipt | **verified** | `reviews/05` §3.6 |
+
+## 7. Decisions from the debate
+
+| ID | Decision | Why |
+|---|---|---|
+| D-17 | The console is **one static page built from the lockfile tokens**, refusals first; filters are Phase 2 | the digest is the product; a half-built app would be a lie with a nicer font |
+| D-18 | Source `role` is assigned per host *and path prefix* in `SOURCE-PLAN.md`, and printed on the receipt | independence has to be visible where it is decided |
+| D-19 | A change regenerates the quiz item it affects and **names** downstream lessons instead of rewriting them unattended | the teacher's condition, and the smallest change that keeps a course coherent |
+| D-20 | `unmeasured` beats a plausible figure, even when a judge is watching — and the video says the word out loud | Art. VI survives contact with the demo |
+| D-21 | A rehearsal may never borrow the credibility of the live path: seeded events carry `seeded_rehearsal` as a reason code, reverted cohorts carry `cohort_source`, and the console shows the mode in its header | the difference between a demo and a deception is one label |
+
+## 8. The one row that will matter most
 
 | ID | Statement | Status |
 |---|---|---|

@@ -13,14 +13,15 @@ not a taste decision.
 
 ```css
 :root{
-  --paper:#F3EFE7; --paper-2:#EAE4D8; --rule:#C9C0AE;
-  --ink:#1C1915;   --ink-soft:#4A443A; --ink-faint:#7A7264;
+  --paper:#F3EFE7; --paper-2:#EAE4D8; --rule:#8E8160;    /* hairlines: separators carry meaning, so they hold 3:1 (measured) */
+  --ink:#1C1915;   --ink-soft:#4A443A; --ink-faint:#68604F;
   --accent:#6B4E2E;            /* margins, links, small marks */
   --status-publish:#3F5A2A;    /* olive  — a change shipped */
-  --status-queue:#A15C07;      /* ochre  — drafted / awaiting human */
+  --status-queue:#96550A;      /* ochre  — drafted / awaiting human (5.09:1 / 4.61:1 measured) */
   --status-revert:#9B2C1F;     /* oxide  — undone, or refused */
   --status-nochange:#5C564C;   /* muted ink */
-  --status-unknown:#C5A202;    /* signal yellow — unknown/unmeasured */
+  --status-unknown:#7A5C00;    /* dark ochre — unknown/unmeasured (a yellow that looked
+                                 right measured 2.14:1 on paper and failed AA) */
   --mark:rgba(197,162,2,.28);  /* highlight for quotes from sources */
   --radius:2px; --measure:68ch; --pad:var(--s4);
   --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
@@ -33,6 +34,25 @@ not a taste decision.
 **Banned, on sight:** purple/indigo gradients, glassmorphism, glow, sparkle icons, robot mascots,
 "AI-powered" badges, drop shadows > 2px, inter (as a default), pill buttons, emoji as status,
 animated counters, dark mode as a default, charts without a source line.
+
+### 1.1 Contrast, measured (review 05, UX-01/UX-02)
+
+White paper lies to the eye. Each token was measured against both paper tones; two changed as a
+result, and `test_design.py` now fails if any of them drifts back.
+
+| Token | Value | On `--paper` | On `--paper-2` | Verdict |
+|---|---|---|---|---|
+| `--ink` | `#1C1915` | 15.27:1 | 13.79:1 | AA/AAA |
+| `--ink-soft` | `#4A443A` | 8.40:1 | 7.58:1 | AA/AAA |
+| `--ink-faint` | `#68604F` *(was `#7A7264`, 4.14:1 — failed)* | 5.43:1 | 4.92:1 | AA |
+| `--rule` | `#8E8160` *(was `#C9C0AE`, 1.43:1 — failed)* | 3.35:1 | 3.04:1 | non-text 3:1 |
+| `--status-publish` | `#3F5A2A` | 6.76:1 | 6.11:1 | AA |
+| `--status-queue` | `#96550A` *(was `#A15C07`, 4.10:1 on paper-2 — failed)* | 5.09:1 | 4.61:1 | AA |
+| `--status-revert` | `#9B2C1F` | 6.60:1 | 5.96:1 | AA |
+| `--status-nochange` | `#5C564C` | 6.33:1 | 5.72:1 | AA |
+| `--status-unknown` | `#7A5C00` *(was `#C5A202`, 2.14:1 — failed)* | 5.45:1 | 4.94:1 | AA |
+
+Amber is the designer's trap on paper: it reads as "warning" and measures as "unreadable".
 
 ## 2. Type scale
 
@@ -67,6 +87,20 @@ Rules: no greeting theatre, no "Hope you're well", no AI attribution, no trackin
 the click that counts as "seen". Plain-text version is the canonical one; HTML must not add layout
 that changes meaning. Accessibility: contrast ≥ 4.5:1 on paper, focus visible, links underlined,
 `prefers-reduced-motion` respected (no motion by default anyway).
+
+## 4.1 Console page (built, one page, no scripts)
+
+The console is a single static page (`app/out/digest.html`) rendered from the lockfile tokens; the
+digest is the same content in text. It exists because "show the logs" (criterion 2) is easier to
+believe when a human can open them.
+
+- **Order:** refusals first, then changes, then learners, then discipline — the digest's order.
+- **Rows:** status *word* (SENT / QUEUED / REFUSED / PUBLISHED / REVERTED / NO CHANGE) + colour + the
+  `event_id` in mono + reason codes in `--ink-soft` + one line of detail.
+- **Affordances:** no hover-only information, no motion, no toasts; focus ring on any future control;
+  touch targets ≥ 44 px; reading order equals DOM order (screen readers get the same refusals first).
+- **Nothing dynamic is trusted:** every interpolated string is HTML-escaped (TM11), and no token that
+  is not in §1 may appear (`--selftest` fails on an unknown hex).
 
 ## 5. The policy node on canvas (a design requirement)
 

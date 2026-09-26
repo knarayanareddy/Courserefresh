@@ -42,6 +42,12 @@ direction (an AC with no row, a row with no AC). **Nothing is "verified" until t
 | AC-11.3 | `test_claims.py` | register rows | — |
 | AC-12.1 | checklist §4 | video file + shot-list ticks | whole video |
 | AC-12.2 | checklist §4 | labelled fallbacks on screen | as used |
+| AC-13.1 | `test_curriculum.py` (objectives, prereqs, alignment) | `course/agent-ops/curriculum.json` | — |
+| AC-13.2 | `test_curriculum.py` (regenerated item) + `reset_course.py` restore | `course/agent-ops/quizzes/lesson-04.json` | 0:52 quiz beat |
+| AC-13.3 | digest line `downstream to revisit`; `test_curriculum.py` | `app/out/digest.md` §2 | 0:52 |
+| AC-14.1 | `--selftest` lockfile-token check; `TM11` | `app/out/digest.html` | 1:10 console |
+| AC-14.2 | `test_design.py` contrast audit | `specs/design/MASTER.md` §1 | 1:10 |
+| AC-14.3 | `TM11` escape probe | `app/out/digest.html` (escaped hostile label) | 1:10 |
 | AC-12.3 | checklist §5 | live-final rehearsal notes | 16:15 |
 
 **Closing rule.** Before the video is submitted, every row above must be either `verified`

@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "specs" / "courserefresh" / "skin" / "gold.jsonl"
-GOLD_VERSION = "gold-v0.2"
+GOLD_VERSION = "gold-v0.3"
 
 # Base inputs — a clean, corroborated, permitted change. Each row overrides what it is about.
 BASE = {
@@ -101,6 +101,22 @@ ROWS: list[dict] = [
                           {"source_id": "mcp-spec", "publisher": "modelcontextprotocol", "url": "https://github.com/modelcontextprotocol/spec"}]},
      "expected": {"action": "PUBLISH", "reason_codes": ["material_new_capability"]},
      "notes": "Three independent publishers clear the floor even when agreement is only adequate"},
+    {"row_id": "cr-mirror-only-01", "base": "change",
+     "over": {"sources": [{"source_id": "repost-blog", "publisher": "community-mirror", "role": "none",
+                           "url": "https://example.invalid/repost"},
+                          {"source_id": "community-npm", "publisher": "community", "role": "corroborating",
+                           "url": "https://www.npmjs.com/package/apify-client"}]},
+     "expected": {"action": "ESCALATE", "reason_codes": ["insufficient_corroboration"]},
+     "notes": "One real voice plus one mirror: the mirror is recorded but never counted"},
+    {"row_id": "cr-mirror-plus-two-01", "base": "change",
+     "over": {"sources": [{"source_id": "repost-blog", "publisher": "community-mirror", "role": "none",
+                           "url": "https://example.invalid/repost"},
+                          {"source_id": "n8n-releases", "publisher": "n8n", "role": "authoritative",
+                           "url": "https://github.com/n8n-io/n8n/releases"},
+                          {"source_id": "community-npm", "publisher": "community", "role": "corroborating",
+                           "url": "https://www.npmjs.com/package/apify-client"}]},
+     "expected": {"action": "PUBLISH", "reason_codes": ["material_new_capability"]},
+     "notes": "Two real voices still clear the floor when a mirror is present"},
     {"row_id": "cr-conflict-01", "base": "change", "over": {"materiality": "contradictory", "source_agreement": 0.2},
      "expected": {"action": "ESCALATE", "reason_codes": ["source_conflict"]},
      "notes": "Sources contradict; both quotes kept"},

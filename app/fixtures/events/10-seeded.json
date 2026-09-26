@@ -8,7 +8,8 @@
       "source_id": "seed-rehearsal",
       "independence_group": "seed",
       "url": "https://example.invalid/seed",
-      "publisher": "seed"
+      "publisher": "seed",
+      "role": "seeded"
     }
   ],
   "quotes": [
@@ -49,5 +50,6 @@
     "window_h": 48,
     "metric": "quiz_delta",
     "condition": "<= 0"
-  }
+  },
+  "learner_facing": "This is a labelled rehearsal of a course update, not a vendor release. It exists so the loop can be demonstrated end to end. Nothing to do."
 }

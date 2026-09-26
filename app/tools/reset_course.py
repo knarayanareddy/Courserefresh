@@ -53,6 +53,13 @@ def main() -> int:
                 line = f"| {cells[0]} | {title} | {version} |"
             lines.append(line)
         readme.write_text("\n".join(lines) + "\n")
+    # quizzes the loop regenerated go back to their authored text (the baseline is kept beside them)
+    restored = 0
+    for pristine in sorted((course / "agent-ops" / ".baseline" / "quizzes").glob("*.json")):
+        live = course / "agent-ops" / "quizzes" / pristine.name
+        if live.exists() and live.read_text() != pristine.read_text():
+            live.write_text(pristine.read_text())
+            restored += 1
     for name in ("receipts.jsonl", "run_log.jsonl", "digest.md", "notifications.jsonl"):
         path = out / name
         if path.exists():
@@ -60,7 +67,7 @@ def main() -> int:
     state = out / "state"
     if state.exists():
         shutil.rmtree(state)
-    print(f"reset: removed {len(removed)} loop-written versions; state cleared")
+    print(f"reset: removed {len(removed)} loop-written versions, restored {restored} quiz file(s); state cleared")
     return 0
 
 

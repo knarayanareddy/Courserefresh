@@ -69,14 +69,17 @@ def _decision(action: str, reasons: list[str], authority: str, notes: str = "") 
 
 
 def independent_publishers(sources) -> int | None:
-    """Count distinct publishers from the source list (constitution Art. III.1).
+    """Count distinct *voices* in the source list (constitution Art. III.1).
 
-    Two pages from one vendor are one voice. Returns None when the list is absent (older rows).
+    Two pages from one vendor are one voice. A source whose declared role is "none" (a mirror, a
+    re-post, a scraper of the same upstream) is recorded on the receipt and never counted
+    (review 05, AP-01). Returns None when the list is absent (older rows keep the legacy count).
     """
     if not isinstance(sources, list) or not sources:
         return None
-    publishers = {str(s.get("publisher") or s.get("source_id") or "?").lower() for s in sources if isinstance(s, dict)}
-    return len(publishers)
+    voices = {str(s.get("publisher") or s.get("source_id") or "?").lower()
+              for s in sources if isinstance(s, dict) and s.get("role") != "none"}
+    return len(voices)
 
 
 def _malformed(inp: dict) -> str | None:
@@ -132,8 +135,11 @@ def decide_change(inp: dict) -> dict:
                          "SEEDED REHEARSAL — not a vendor release")
     publishers = independent_publishers(inp.get("sources"))
     if publishers is not None and publishers < EVIDENCE["min_sources"]:
-        return _decision("ESCALATE", ["insufficient_corroboration"], authority,
-                         f"{publishers} independent publisher(s) in {sources} source(s)")
+        mirrors = sum(1 for s in inp.get("sources") or [] if isinstance(s, dict) and s.get("role") == "none")
+        note = f"{publishers} independent voice(s) in {sources} source(s)"
+        if mirrors:
+            note += f" ({mirrors} mirror/re-post source(s) not counted)"
+        return _decision("ESCALATE", ["insufficient_corroboration"], authority, note)
     if sources < EVIDENCE["min_sources"] or agreement < EVIDENCE["source_agreement_min"]:
         return _decision("ESCALATE", ["insufficient_corroboration"], authority,
                          f"sources={sources} agreement={agreement}")

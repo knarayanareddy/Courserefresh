@@ -20,7 +20,9 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
+import re
 import shutil
 import sys
 import time
@@ -55,10 +57,11 @@ def run_id() -> str:
 class Tree:
     """One working tree: the course artifact plus the state/evidence directory."""
 
-    def __init__(self, root: Path, out: Path, mode: str = "sim"):
+    def __init__(self, root: Path, out: Path, mode: str = "sim", chaos: str | None = None):
         self.root = root
         self.out = out
         self.mode = mode
+        self.chaos = chaos
         self.state = out / "state"
         self.state.mkdir(parents=True, exist_ok=True)
         self.receipts_path = out / "receipts.jsonl"
@@ -117,6 +120,32 @@ def write_front_matter(fm: dict, body: str) -> str:
     return "---\n" + "\n".join(f"{k}: {json.dumps(v)}" for k, v in fm.items()) + "\n---\n" + body
 
 
+def design_tokens() -> dict:
+    """Every colour comes from specs/design/MASTER.md; the console may not invent one (Art. XV)."""
+    text = (ROOT / "specs" / "design" / "MASTER.md").read_text()
+    return dict(re.findall(r"(--[a-z0-9-]+):\s*(#[0-9A-Fa-f]{6})", text))
+
+
+def load_curriculum() -> dict:
+    return json.loads((ROOT / "course" / "agent-ops" / "curriculum.json").read_text())
+
+
+def downstream_lessons(lesson_id: str) -> list[str]:
+    """Lessons whose prereq chain includes the changed one: named for revisit, never rewritten tonight."""
+    curriculum = load_curriculum()["lessons"]
+    out: list[str] = []
+    grown = True
+    while grown:
+        grown = False
+        for lesson in curriculum:
+            if lesson["lesson_id"] in out or lesson["lesson_id"] == lesson_id:
+                continue
+            if any(p in out or p == lesson_id for p in lesson["prereqs"]):
+                out.append(lesson["lesson_id"])
+                grown = True
+    return out
+
+
 def versions(lesson_dir: Path) -> list[int]:
     return sorted(int(p.stem[1:]) for p in lesson_dir.glob("v*.md") if p.stem[1:].isdigit())
 
@@ -131,12 +160,8 @@ def apply_patch(tree: Tree, event: dict, decision: dict, run: str) -> dict | Non
     lesson_dir = src.parent
     text = src.read_text()
     if patch["find"] not in text:
-        tree.append_receipt({"ts": now(), "run_id": run, "event_id": event["event_id"], "mode": tree.mode,
-                             "decision": {"action": "ESCALATE", "reason_codes": ["write_failed"],
-                                          "authority": event["input"]["authority"]},
-                             "artifact": None, "cost": None, "actor": "system",
-                             "note": "patch anchor not found"})
-        return None
+        # one failure, one receipt: the loop records the escalation, this function only reports it
+        return {"_failed": "patch anchor not found"}
     fm, body = read_front_matter(text)
     n = max(versions(lesson_dir))
     fm["version"] = f"v{n+1}"
@@ -158,9 +183,31 @@ def apply_patch(tree: Tree, event: dict, decision: dict, run: str) -> dict | Non
         fh.write(f"\n## {fm['lesson_id']} {fm['version']} — {now()}\n{event['summary']}\n"
                  f"- diff: {lesson_dir.name}/diffs/v{n+1}.diff\n")
     update_readme(tree, fm["lesson_id"], fm["version"])
-    return {"lesson_id": fm["lesson_id"], "previous_version": f"v{n}", "new_version": fm["version"],
+    record = {"lesson_id": fm["lesson_id"], "previous_version": f"v{n}", "new_version": fm["version"],
             "body_path": str(new_path.relative_to(tree.root)), "diff_path": str((diffs / f'v{n+1}.diff').relative_to(tree.root)),
             "payload_hash": sha(new_text), "diff_hash": sha(diff), "revert_gate": fm["revert_gate"]}
+    if event.get("quiz_patch"):
+        record.update(apply_quiz_patch(tree, event))
+    return record
+
+
+def apply_quiz_patch(tree: Tree, event: dict) -> dict:
+    """A lesson change regenerates the affected item; the JSON is versioned like the lesson (AC-4.1)."""
+    spec = event["quiz_patch"]
+    path = ROOT / "course" / "agent-ops" / "quizzes" / f"{spec['lesson_id']}.json"
+    data = json.loads(path.read_text())
+    for item in data["items"]:
+        if item["id"] == spec["item_id"]:
+            item["prompt"] = spec["prompt"]
+            item["options"] = spec["options"]
+            item["answer"] = spec["answer"]
+            item["regenerated_by"] = event["event_id"]
+            break
+    target = tree.root / "agent-ops" / "quizzes" / f"{spec['lesson_id']}.json"
+    target.write_text(json.dumps(data, indent=2) + "\n")
+    with (tree.root / "agent-ops" / "CHANGELOG.md").open("a") as fh:
+        fh.write(f"- quiz: quizzes/{spec['lesson_id']}.json item {spec['item_id']}\n")
+    return {"quiz_path": str(target.relative_to(tree.root)), "quiz_item": spec["item_id"]}
 
 
 def revert_version(tree: Tree, event: dict, run: str) -> dict | None:
@@ -246,10 +293,12 @@ def notify_cohort(tree: Tree, event: dict, record: dict) -> dict:
             skipped.append({"learner_ref": learner["learner_ref"], "reason": "notify_per_learner_week"})
             continue
         refs.append(learner["learner_ref"])
+        what_changed = event.get("learner_facing") or event["summary"]
         row = {"ts": now(), "learner_ref": learner["learner_ref"], "lesson_id": record["lesson_id"],
                "from": record["previous_version"], "to": record["new_version"],
-               "what_changed": event["summary"], "opt_out": "one-click",
-               "diff_path": record["diff_path"]}
+               "what_changed": what_changed, "opt_out": "one-click",
+               "diff_path": record["diff_path"],
+               **({"rehearsal": True} if event.get("seed") else {})}
         with (tree.out / "notifications.jsonl").open("a") as fh:
             fh.write(json.dumps(row, sort_keys=True) + "\n")
     return {"notified": refs, "skipped": skipped}
@@ -310,12 +359,20 @@ def run(tree: Tree, events: list[dict], label: str = "") -> dict:
         key = event["event_id"]
         if event["kind"] == "change" and key in seen:
             continue
+        if tree.chaos == "write-fail" and event.get("patch"):
+            event = json.loads(json.dumps(event))
+            event["patch"]["find"] = "text that is not in the lesson (chaos rehearsal)"
+            tree.chaos = None      # one failed write per run, then normal service
         inp = event_input(event, tree, publishes_used)
         out = policy.decide(inp)
         record = None
         if out["action"] == "PUBLISH" and event["kind"] == "change":
             record = apply_patch(tree, event, out, run)
-            if record:
+            if record and record.get("_failed"):
+                out = {"action": "ESCALATE", "reason_codes": ["write_failed"],
+                       "authority": out["authority"], "notes": record["_failed"]}
+                record = None
+            elif record:
                 notify_result = notify_cohort(tree, event, record)
                 record["notified"] = notify_result["notified"]
                 if notify_result["skipped"]:
@@ -323,7 +380,7 @@ def run(tree: Tree, events: list[dict], label: str = "") -> dict:
                 publishes_used += 1
             else:
                 out = {"action": "ESCALATE", "reason_codes": ["write_failed"], "authority": out["authority"],
-                       "notes": "patch failed"}
+                       "notes": "no patch in the event"}
         elif out["action"] == "REVERT":
             record = revert_version(tree, event, run)
             if record is None:
@@ -364,6 +421,7 @@ def run(tree: Tree, events: list[dict], label: str = "") -> dict:
     with tree.run_log_path.open("a") as fh:
         fh.write(json.dumps(log, sort_keys=True) + "\n")
     tree.digest_path.write_text(render_digest(tree, log))
+    (tree.out / "digest.html").write_text(render_html(tree, log))
     return log
 
 
@@ -381,11 +439,17 @@ def render_digest(tree: Tree, log: dict) -> str:
               or ["- none this run"])
     lines += ["", "## 2. What changed"]
     changed = [r for r in rows if r["decision"]["action"] in ("PUBLISH", "REVERT")]
+    downstream: set[str] = set()
     for r in changed:
         a = r["artifact"] or {}
-        lines.append(f"- {r['decision']['action']} `{a.get('lesson_id')}` {a.get('previous_version')} → {a.get('new_version')} · {a.get('diff_path', '')}")
+        quiz = f" · quiz {a['quiz_item']} regenerated" if a.get("quiz_path") else ""
+        lines.append(f"- {r['decision']['action']} `{a.get('lesson_id')}` {a.get('previous_version')} → {a.get('new_version')} · {a.get('diff_path', '')}{quiz}")
+        if r["decision"]["action"] == "PUBLISH":
+            downstream.update(downstream_lessons(a.get("lesson_id", "")))
     if not changed:
         lines.append("- nothing")
+    if downstream:
+        lines.append(f"- downstream to revisit (not rewritten tonight): {', '.join(sorted(downstream))}")
     lines += ["", "## 3. Learners"]
     dispatches = [r for r in rows if r["decision"]["action"] == "DISPATCH"]
     consent_blocked = [r for r in rows if "consent_missing" in r["decision"]["reason_codes"]]
@@ -418,6 +482,55 @@ def render_digest(tree: Tree, log: dict) -> str:
     if len(text.encode()) > THRESHOLDS["budgets"]["digest_bytes"]:
         text = text[: THRESHOLDS["budgets"]["digest_bytes"] - 40] + "\n[trimmed — refusals kept]\n"
     return text
+
+
+def render_html(tree: Tree, log: dict) -> str:
+    """The console page. Same content as the digest, same lockfile colours, no scripts."""
+    t = design_tokens()
+    rows = tree.rows()
+    colour = {"PUBLISH": t["--status-publish"], "REVERT": t["--status-revert"],
+              "ESCALATE": t["--status-revert"], "NO_CHANGE": t["--status-nochange"],
+              "DISPATCH": t["--status-queue"]}
+    word = {"PUBLISH": "PUBLISHED", "REVERT": "REVERTED", "ESCALATE": "REFUSED",
+            "NO_CHANGE": "NO CHANGE", "DISPATCH": "SENT"}
+    e = html.escape
+    body = []
+    for r in rows:
+        action = r["decision"]["action"]
+        why = e(", ".join(r["decision"]["reason_codes"]) or "—")
+        artifact = r["artifact"] or {}
+        detail = (f"{artifact.get('lesson_id', '')} {artifact.get('previous_version', '')} → "
+                  f"{artifact.get('new_version', '')}") if artifact.get("new_version") else r.get("label", "")
+        body.append(
+            f'<li class="row"><span class="status" style="color:{colour[action]}">'
+            f'<b>{word[action]}</b></span> <code>{e(str(r["event_id"]))}</code> '
+            f'<span class="why">{why}</span>'
+            f'<div class="detail">{e(str(detail))}</div></li>')
+    mode_note = ("the console is reading a **sim** run: fixtures, no model calls, no mail"
+                 if tree.mode != "live" else "live run")
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Courserefresh console — {log['run_id']}</title>
+<style>
+  :root {{ {" ".join(f"{k}:{v};" for k, v in t.items())} }}
+  body {{ background:var(--paper); color:var(--ink); font:15px/1.6 system-ui, sans-serif;
+          max-width:var(--measure, 68ch); margin:0 auto; padding:24px; }}
+  h1 {{ font-size:20px; }} code {{ font-family:ui-monospace, monospace; font-size:13px; }}
+  .why {{ color:var(--ink-soft); }}
+  .detail {{ color:var(--ink-soft); font-size:13px; }}
+  .status {{ font-size:12px; text-transform:uppercase; letter-spacing:.04em; }}
+  ul {{ list-style:none; padding:0; }} .row {{ border-top:1px solid var(--rule); padding:10px 0; }}
+  .mode {{ color:var(--ink-soft); }}
+</style></head><body>
+<h1>Courserefresh console</h1>
+<p class="mode">run <code>{log['run_id']}</code> · mode <b>{tree.mode}</b> · chain
+{'ok' if log['chain_verified_at_end'] else 'BROKEN'} ({log['chain_rows']} rows) · {mode_note}</p>
+<h2>Decisions, refusals first</h2>
+<ul>{"".join(sorted(body, key=lambda b: "REFUSED" not in b))}</ul>
+<p class="detail">Every line is a receipt; the digest is the same content in text
+(<code>app/out/digest.md</code>). Colours come from <code>specs/design/MASTER.md</code>.</p>
+</body></html>"""
 
 
 # --- selftest ------------------------------------------------------------------------------------
@@ -474,6 +587,10 @@ def selftest() -> int:
           bool(seeded) and "seeded_rehearsal" in seeded[0]["decision"]["reason_codes"])
     check("receipt coverage is 100% of decisions",
           len(rows) == sum(log["decisions"].values()) + (1 if False else 0), f"{len(rows)} receipts vs {log['decisions']}")
+    html_tokens = set(re.findall(r"#[0-9A-Fa-f]{6}", tree.digest_path.with_suffix(".html").read_text()))
+    lockfile_tokens = set(design_tokens().values())
+    check("console colours exist in the design lockfile",
+          html_tokens <= lockfile_tokens, f"unknown={sorted(html_tokens - lockfile_tokens)}")
     check("digest fits the 4 KB contract",
           len(tree.digest_path.read_bytes()) <= THRESHOLDS["budgets"]["digest_bytes"],
           f"{len(tree.digest_path.read_bytes())} bytes")
@@ -524,6 +641,8 @@ def main() -> int:
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--replay", metavar="RUN_ID")
     ap.add_argument("--seed-demo", action="store_true", help="include the labelled seeded rehearsal event")
+    ap.add_argument("--chaos", choices=["write-fail"], default=None,
+                    help="rehearse a witnessed failure: one write fails and must be reported")
     ap.add_argument("--root", metavar="DIR", help="operate on another tree root")
     ap.add_argument("--mode", default="sim")
     ap.add_argument("--token", default=None, help="required for --resume when CR_DEMO_TOKEN is set")
@@ -531,8 +650,9 @@ def main() -> int:
 
     if args.selftest:
         return selftest()
-    root = Path(args.root) if args.root else ROOT
-    tree = Tree(root / "course" if (root / "course").exists() else root, root / "app" / "out", mode=args.mode)
+    root = (Path(args.root) if args.root else ROOT).resolve()
+    tree = Tree(root / "course" if (root / "course").exists() else root, root / "app" / "out",
+                mode=args.mode, chaos=args.chaos)
     if args.pause:
         tree.freeze_path.write_text("paused")
         tree.append_receipt({"ts": now(), "run_id": run_id(), "event_id": "op-pause", "mode": tree.mode,

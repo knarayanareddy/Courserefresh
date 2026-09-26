@@ -12,7 +12,8 @@ own labels (`mode: live`, `ESCALATE`, `REVERT`) are shown, not paraphrased.
 | 0:45–1:05 | **The action** | `wf-cr-2-act` execution → commit `cr: PUBLISH lesson-04 v3→v4` → the diff (`−`/`+` visible) → updated quiz item → card | "The real change had two independent sources: the release notes and the docs. It rewrote the lesson, regenerated the quiz item, and committed it." |
 | 1:05–1:20 | **The learner who didn't have to ask** | Micro-lesson artifact (one concept, 2 minutes) + dispatch receipt; consent card with hashed handle and opt-out | "Three learners were stuck on this concept before they asked. They got one concept, two minutes, one practice item — and a way to stop hearing from us." |
 | 1:20–1:35 | **The undo clause** | Revert receipt: `revert_gate n_min=5 window_h=48 quiz_delta ≤ 0` → `REVERT` → the restored lesson as a **new** version (v5) with its own diff | "It promised at publish time what would make the change wrong. The gate fired. It reverted itself — as a new version, so nothing is hidden." |
-| 1:35–1:50 | **Where the rules live** (20% criterion) | n8n canvas: five workflows; the `POLICY` node at readable zoom | "The decision isn't a prompt. It's this node — one screen, deterministic, the same rules in n8n and in the parity tests." |
+| 1:35–1:42 | **The quiz moved with the lesson** | The regenerated item (`regenerated_by` visible) + the changed lesson's diff side by side | "The quiz item that tested the old name changed with the lesson. The other two didn't." |
+| 1:42–1:50 | **The rules, and the log a human can open** | n8n canvas: five workflows; the `POLICY` node at readable zoom → the console page, refusals first | "The decision isn't a prompt. It's this node — and this page is the same receipts, in the order I care about: what it refused, first." |
 | 1:50–2:00 | **Close** | Digest footer: budgets, authority state, chain ✓; cut to the lesson's "what changed" banner for learners | "It ran for seven hours unattended, stopped itself four times, and told me everything it did. That's the course that stays true." |
 
 ## B-roll / cutaways (each ≤2 s, all from frozen artifacts)
@@ -32,6 +33,11 @@ own labels (`mode: live`, `ESCALATE`, `REVERT`) are shown, not paraphrased.
 | No real source moved overnight | The labelled rehearsal event and its revert | `SEEDED SOURCE — not a vendor release` |
 | No consented learner was stuck | The fixture dispatch with its consent check shown | `SIM COHORT — fixture telemetry` |
 | Nothing was published at all | The walking skeleton's publish from the offline twin | `OFFLINE TWIN — same policy (parity-tested)` |
+| Cards were staged, never delivered | The `notifications.jsonl` rows with `staged` on screen | `STAGED — not delivered` |
+
+**Two words that must be said out loud if they are true:** `staged` (no learner received a card) and
+`sim` (the run had no live Apify or n8n execution). The console header prints both by construction;
+the voice may not contradict it.
 
 **Rule:** the fallback beats are rehearsed *before* the live ones are attempted, so that the honest
 version is always the easy version to shoot.

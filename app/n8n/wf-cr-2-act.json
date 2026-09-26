@@ -199,7 +199,7 @@
     "templateCredsSetupCompleted": false,
     "courserefresh": {
       "generated_by": "app/tools/make_n8n_exports.py",
-      "policy_node_sha256": "07021432fd293c76cf3192fab0e80c86fb570c6ef4a9feba72c0ba394ff7d6a8",
+      "policy_node_sha256": "1885efcb791872c4f5a2ace13af2fb87914868c5a5e7d441617785d6b59eaad4",
       "notes": "One commit per decision; the receipt names the commit and the commit names the receipt."
     }
   },
@@ -209,6 +209,6 @@
     }
   ],
   "pinData": {},
-  "versionId": "07021432",
+  "versionId": "1885efcb",
   "active": false
 }

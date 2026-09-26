@@ -39,9 +39,15 @@ function out(action, reasons, authority, notes = "") {
 
 function independentPublishers(sources) {
   if (!Array.isArray(sources) || sources.length === 0) return null;
-  const set = new Set(sources.filter((s) => s && typeof s === "object")
+  // a mirror or re-post is recorded, never counted as a voice (review 05, AP-01)
+  const set = new Set(sources.filter((s) => s && typeof s === "object" && s.role !== "none")
     .map((s) => String(s.publisher || s.source_id || "?").toLowerCase()));
   return set.size;
+}
+
+function mirrorCount(sources) {
+  if (!Array.isArray(sources)) return 0;
+  return sources.filter((s) => s && typeof s === "object" && s.role === "none").length;
 }
 
 function malformed(inp) {
@@ -73,8 +79,10 @@ function decideChange(inp) {
   }
   const publishers = independentPublishers(inp.sources);
   if (publishers !== null && publishers < THRESHOLDS.evidence.min_sources) {
-    return out("ESCALATE", ["insufficient_corroboration"], a,
-      publishers + " independent publisher(s) in " + Number(inp.sources_verified) + " source(s)");
+    const mirrors = mirrorCount(inp.sources);
+    let note = publishers + " independent voice(s) in " + Number(inp.sources_verified) + " source(s)";
+    if (mirrors) note += " (" + mirrors + " mirror/re-post source(s) not counted)";
+    return out("ESCALATE", ["insufficient_corroboration"], a, note);
   }
   if (Number(inp.sources_verified) < THRESHOLDS.evidence.min_sources ||
       num(inp.source_agreement) < THRESHOLDS.evidence.source_agreement_min) return out("ESCALATE", ["insufficient_corroboration"], a);

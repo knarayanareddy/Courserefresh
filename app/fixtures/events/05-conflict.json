@@ -6,12 +6,14 @@
     {
       "source_id": "n8n-releases",
       "publisher": "n8n",
-      "url": "https://github.com/n8n-io/n8n/releases"
+      "url": "https://github.com/n8n-io/n8n/releases",
+      "role": "authoritative"
     },
     {
       "source_id": "apify-docs",
       "publisher": "apify",
-      "url": "https://docs.apify.com/"
+      "url": "https://docs.apify.com/",
+      "role": "corroborating"
     }
   ],
   "quotes": [

@@ -6,12 +6,14 @@
     {
       "source_id": "apify-changelog",
       "publisher": "apify",
-      "url": "https://apify.com/changelog"
+      "url": "https://apify.com/changelog",
+      "role": "authoritative"
     },
     {
       "source_id": "community-npm",
       "publisher": "community",
-      "url": "https://www.npmjs.com/package/apify-client"
+      "url": "https://www.npmjs.com/package/apify-client",
+      "role": "corroborating"
     }
   ],
   "quotes": [
@@ -52,5 +54,6 @@
     "window_h": 48,
     "metric": "quiz_delta",
     "condition": "<= 0"
-  }
+  },
+  "learner_facing": "Apify now checks actor inputs against the actor schema before a run starts. Your practice task gets one extra field; the lesson text is unchanged."
 }

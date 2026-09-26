@@ -11,7 +11,7 @@ proves it. Nothing here is aspirational prose: a row without a command is a hole
 |---|---|---|---|
 | A1 | Data model with enums + coercion | **ported** | `shared/data-model.md` §4.1–4.4; `test_contracts.py` parses the enum tables and compares them to `skin/change_taxonomy.json` |
 | A2 | Interface contracts (HTTP/CLI/n8n) + error taxonomy + idempotency | **ported (CLI/n8n), partial (HTTP)** | `shared/interfaces.md`; the CLI flags are checked against the skeleton by `test_contracts.py`; the console's POST routes are specified but not implemented (Phase 2, T21) |
-| A3 | `shared/eval.md` + floor enforced by a test with a legal degrade | **ported** | `skin/gold.jsonl` (`gold-v0.2`, n=57) · `test_gold_floor.py` (8 checks) · `policy.py --eval` exits 0 |
+| A3 | `shared/eval.md` + floor enforced by a test with a legal degrade | **ported** | `skin/gold.jsonl` (`gold-v0.3`, n=59) · `test_gold_floor.py` (8 checks) · `policy.py --eval` exits 0 |
 | A4 | `OPERATIONS.md` — runbook, kill switch, budgets, retention, sunset | **ported (spec) / sim (code)** | `OPERATIONS.md`; `--pause`/`--resume` tested in `--selftest` (13/13) and by TM14; retention and sunset are paper until the live run |
 | A5 | `TRACEABILITY.md` + `JUDGING-MAP.md`, AC → fixture → command | **ported** | 36 ACs with ids in `spec.md` §4; `test_contracts.py` fails in both directions |
 | A6 | `RECEIPTS.md` + `test_claims.py` | **ported** | register v1.1 (measured where a command ran, `<placeholders>` where not); lint green over 56 numeric claims |
@@ -26,7 +26,7 @@ proves it. Nothing here is aspirational prose: a row without a command is a hole
 
 | Hole | Closed by | Residual risk |
 |---|---|---|
-| H1 eval floor violated by own artifacts | `gold-v0.2` n=57; `test_gold_floor.py` fails below 40 and the eval exits non-zero | none at spec level; the *live* comparator column (a) stays `n/a` without a key |
+| H1 eval floor violated by own artifacts | `gold-v0.3` n=59; `test_gold_floor.py` fails below 40 and the eval exits non-zero | none at spec level; the *live* comparator column (a) stays `n/a` without a key |
 | H2 unmeasured numbers asserted as facts | register v1.1 + `test_claims.py` (56 claims resolved, 0 bare) | the pitch must keep saying `unmeasured` where the value is not yet measured (J-06) |
 | H3 tasks contradict Phase 0 | T06 corrected to `[~]`; Phase 1 marked `[~]` with the cut named; `test_contracts.py` now fails when a `[ ]` task names an existing path | the live tasks (T16–T22) are still `[ ]` by design until Phase 2 |
 | H4 no traceability | 34 ids, both directions checked | AC-2.4's fixture (`cr-paywall-01`) exists in gold and in the loop's file? — **gold only**; the loop's fixture set carries the same traps in `01`–`10` numbering (see §3) |

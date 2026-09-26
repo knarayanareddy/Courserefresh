@@ -1,0 +1,158 @@
+{
+  "version": "curriculum-v1.0",
+  "note": "Objectives, prerequisites and quiz alignment for the subject course. A lesson without objectives, a quiz item without an objective, or a cycle in the prerequisites is a curriculum defect (test_curriculum.py).",
+  "lessons": [
+    {
+      "lesson_id": "lesson-01-autonomy-ladder",
+      "lesson_number": 1,
+      "title": "The autonomy ladder",
+      "objectives": [
+        {
+          "id": "obj-01-a",
+          "text": "Distinguish chatbot, copilot and autonomous behaviour on one example"
+        },
+        {
+          "id": "obj-01-b",
+          "text": "Explain why earned authority is reversible after a failed action"
+        }
+      ],
+      "prereqs": [],
+      "quiz_items": {
+        "q1": "obj-01-a",
+        "q2": "obj-01-b",
+        "q3": "obj-01-b"
+      }
+    },
+    {
+      "lesson_id": "lesson-02-n8n-decision-layer",
+      "lesson_number": 2,
+      "title": "n8n as the decision layer",
+      "objectives": [
+        {
+          "id": "obj-02-a",
+          "text": "Place the deterministic decision inside a Code node, not in a prompt"
+        },
+        {
+          "id": "obj-02-b",
+          "text": "Read a workflow receipt: input, decision, reasons"
+        }
+      ],
+      "prereqs": [
+        "lesson-01-autonomy-ladder"
+      ],
+      "quiz_items": {
+        "q1": "obj-02-a",
+        "q2": "obj-02-a",
+        "q3": "obj-02-b"
+      }
+    },
+    {
+      "lesson_id": "lesson-03-apify-inputs",
+      "lesson_number": 3,
+      "title": "Apify as the input layer",
+      "objectives": [
+        {
+          "id": "obj-03-a",
+          "text": "Describe what an actor run returns and what a snapshot keeps"
+        },
+        {
+          "id": "obj-03-b",
+          "text": "Recognise when a source is not evidence (one voice, stale, or unreachable)"
+        }
+      ],
+      "prereqs": [
+        "lesson-02-n8n-decision-layer"
+      ],
+      "quiz_items": {
+        "q1": "obj-03-a",
+        "q2": "obj-03-b",
+        "q3": "obj-03-b"
+      }
+    },
+    {
+      "lesson_id": "lesson-04-tool-permissions",
+      "lesson_number": 4,
+      "title": "Tool permissions and the human exit",
+      "objectives": [
+        {
+          "id": "obj-04-a",
+          "text": "Write a least-privilege tool permission for one agent"
+        },
+        {
+          "id": "obj-04-b",
+          "text": "Name the condition under which the agent must stop and ask a human"
+        }
+      ],
+      "prereqs": [
+        "lesson-03-apify-inputs"
+      ],
+      "quiz_items": {
+        "q1": "obj-04-a",
+        "q2": "obj-04-a",
+        "q3": "obj-04-b"
+      }
+    },
+    {
+      "lesson_id": "lesson-05-receipts-and-reverts",
+      "lesson_number": 5,
+      "title": "Receipts, diffs and the undo",
+      "objectives": [
+        {
+          "id": "obj-05-a",
+          "text": "Explain how a chained receipt makes an action arguable after the fact"
+        },
+        {
+          "id": "obj-05-b",
+          "text": "State the pre-registered condition that forces an undo"
+        }
+      ],
+      "prereqs": [
+        "lesson-04-tool-permissions"
+      ],
+      "quiz_items": {
+        "q1": "obj-05-a",
+        "q2": "obj-05-a",
+        "q3": "obj-05-b"
+      }
+    },
+    {
+      "lesson_id": "lesson-06-evals-that-survive",
+      "lesson_number": 6,
+      "title": "Evals that survive a judge",
+      "objectives": [
+        {
+          "id": "obj-06-a",
+          "text": "Separate a build-breaking metric from a nice-to-have metric"
+        },
+        {
+          "id": "obj-06-b",
+          "text": "Design a trap fixture for the failure you fear most"
+        },
+        {
+          "id": "obj-06-c",
+          "text": "Treat a hostile page as an input the system must refuse, not parse"
+        }
+      ],
+      "prereqs": [
+        "lesson-05-receipts-and-reverts"
+      ],
+      "quiz_items": {
+        "q1": "obj-06-a",
+        "q2": "obj-06-b",
+        "q3": "obj-06-b",
+        "q4": "obj-06-c"
+      }
+    }
+  ],
+  "downstream_rule": "A change to a lesson marks every lesson whose prereq chain includes it as 'downstream to revisit' in the digest; the agent never rewrites downstream lessons in the same night (a human or the next scan decides).",
+  "micro_lesson_contract": {
+    "parts": [
+      "what it is",
+      "worked example",
+      "practice"
+    ],
+    "max_words": 220,
+    "must_name_concept": true,
+    "graded": false
+  }
+}

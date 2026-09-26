@@ -5,6 +5,9 @@ Six seats review the **built** package — the thing that exists in this reposit
 Then the audit pastes the commands. The finding rows (K-01…K-08) are answered in §5 with a file and a
 command; anything still open is named in §4 with an owner and the condition that closes it.
 
+> **Superseded for current numbers by `reviews/05` (this file is a dated record and is not edited).**
+> Where the two disagree, the later sitting is right — it re-ran everything and pasted the output.
+
 ## 0. Verification path, run in front of the panel
 
 ```
