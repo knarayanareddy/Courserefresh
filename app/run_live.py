@@ -34,6 +34,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
@@ -930,14 +931,183 @@ def one_cycle(cfg: Config, dry_run: bool, inject_failure: bool = False, via_n8n:
     return summary
 
 
+def learn_due(state: dict, minutes: int, epoch: float) -> bool:
+    """True when a learn phase is due. A first run learns immediately (the gate itself is
+    `unmeasured`-safe: no telemetry → no revert events, only the gates reporter)."""
+    last = state.get("learn_epoch")
+    return last is None or (epoch - float(last)) >= minutes * 60
+
+
+def digest_due(state: dict, epoch: float, at_hhmm: str) -> bool:
+    """True when the 07:30 digest hasn't been sent yet today (local machine time, the one the
+    author reads). Never raises on a malformed `CR_DIGEST_AT`; a bad value means 'no digest
+    today' is a lie, so it falls back to the documented 07:30."""
+    try:
+        hh, mm = (int(p) for p in at_hhmm.split(":"))
+        due_today = (hh * 3600 + mm * 60)
+    except Exception:
+        hh, mm, due_today = 7, 30, 7 * 3600 + 30 * 60
+    import time as _time
+    lt = _time.localtime(epoch)
+    seconds_today = lt.tm_hour * 3600 + lt.tm_min * 60 + lt.tm_sec
+    last = state.get("digest_date")
+    return (seconds_today >= due_today) and (last != f"{lt.tm_year}-{lt.tm_mon:02d}-{lt.tm_mday:02d}") \
+        and not (seconds_today < hh * 3600)  # past-midnight wrap: not 07:30 yet
+
+
+def render_digest24(tree: "twin.Tree", log: dict) -> str:
+    """The watch's daily digest: the twin's renderer over the last 24h of receipts.
+
+    The renderer expects a tree, so it runs over a temp tree holding only the windowed rows —
+    the section order, the 4KB cap and the refusals-first rule are the tested ones (AC-6.1) and
+    this path must not grow a second renderer to drift from.
+    """
+    cutoff = time.time() - 24 * 3600
+    rows = [r for r in tree.rows() if _ts_epoch(r.get("ts")) >= cutoff]
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix="cr-digest-") as tmp:
+        tmp_tree = twin.Tree(ROOT / "course", Path(tmp), mode=tree.mode)
+        for row in rows:
+            tmp_tree.append_receipt(row)
+        return twin.render_digest(tmp_tree, {**log, "receipts": len(rows)})
+
+
+def _ts_epoch(stamped: str | None) -> float:
+    from datetime import datetime, timezone
+    if not stamped:
+        return 0.0
+    try:
+        return datetime.strptime(stamped, "%Y.%m.%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
+    except ValueError:
+        try:
+            return datetime.strptime(stamped, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
+        except ValueError:
+            return 0.0
+
+
+def send_digest(cfg: Config, tree: "twin.Tree", mode: str) -> dict:
+    """Render + deliver the daily digest on the notify channel. A failed send is recorded,
+    never mistaken for a sent one (same contract as learner cards, notify.py)."""
+    rows = tree.rows()
+    # run_log.jsonl is JSONL (one run object per line); read_json would hand back the first
+    # line as a dict and `log[-1]` would KeyError. Line-wise is the only correct read here.
+    log_lines = [json.loads(l) for l in (OUT / "run_log.jsonl").read_text().splitlines() if l.strip()] \
+        if (OUT / "run_log.jsonl").exists() else []
+    last_log = log_lines[-1] if log_lines else None
+    fallback = {"run_id": "watch", "decisions": {}, "publishes_used": 0, "receipts": len(rows),
+                "chain_verified_at_end": tree.verify_chain()[0], "chain_rows": tree.verify_chain()[1],
+                "freeze_at_end": tree.frozen(),
+                # the renderer prints these lines unconditionally; empty is honest for a watch digest
+                "author_rulings": [], "withheld_deltas": 0}
+    body = render_digest24(tree, last_log if last_log else fallback)
+    LIVE.mkdir(parents=True, exist_ok=True)
+    (LIVE / "digest-24h.md").write_text(body)
+    channel = cfg.channel()
+    outcome = {"channel": channel, "bytes": len(body.encode()), "delivered": False}
+    if len(rows) == 0:
+        outcome["note"] = "no receipts in the window; nothing to send"
+        return outcome
+    if channel == "file":
+        outcome["note"] = "channel=file: digest staged at app/out/live/digest-24h.md, not sent"
+        return outcome
+    text = (body if len(body) <= 4000 else body[:3960] + "\n[trimmed — refusals kept]")
+    result = notify_lib.Notifier(cfg).deliver([{"ts": now(), "learner_ref": None,
+                                                "lesson_id": None, "consent": True,
+                                                "what_changed": "daily digest",
+                                                "from": "", "to": "",
+                                                "card_text": text}])
+    ok = result["delivered"] == 1
+    rows_all = tree.rows()
+    tree.append_receipt({"ts": twin.now(), "run_id": twin.run_id(), "event_id": "op-digest",
+                         "mode": tree.mode, "stream": "change",
+                         "decision": {"action": "ESCALATE" if not ok else "DISPATCH",
+                                      "reason_codes": [] if ok else ["notification_failed"],
+                                      "authority": "PA1", "decided_by": "oracle"},
+                         "artifact": {"digest_path": "app/out/live/digest-24h.md",
+                                      "notified": [] if not ok else None,
+                                      "notification_skips": [] if ok else None},
+                         "cost": None, "actor": "system",
+                         "label": f"daily digest {'delivered' if ok else 'FAILED to deliver'} on {channel}"})
+    outcome.update({"delivered": ok, "delivery": {k: v for k, v in result.items() if k != "records"}})
+    return outcome
+
+
 def watch(cfg: Config, dry_run: bool) -> int:
+    """The unattended engine: scan on cadence, learn every 15 minutes, digest at 07:30.
+
+    Docs promise this shape (OPERATIONS.md 'Start the loop', SETUP.md §4) but the old loop only
+    slept between scan cycles — the learn phase and the daily digest worked only when a human
+    ran their flags by hand, which is the opposite of unattended. One loop, three cadences:
+
+      * scan cycle every `CR_LIVE_SCAN_MINUTES` (the engine's existing heartbeat);
+      * learn phase every `CR_LEARN_MINUTES` (default 15, the n8n wf-cr-3 cadence);
+      * digest once per local day when the clock passes `CR_DIGEST_AT` (default 07:30, the
+        n8n wf-cr-4 cadence).
+
+    Two invariants a second engine would break:
+
+      * the engine lock (`state/ENGINE_LOCK`): a second `--watch` on the same tree refuses to
+        start instead of double-deciding the same snapshots (the dedupe set would otherwise be
+        the only defence, and it is applied per-cycle, not per-engine);
+      * the freeze (kill switch): engaged means the whole engine stops — notice spends Apify
+        units, so 'frozen' must gate the fetch too, not just the writers. The lock is removed on
+        the way out (Ctrl-C included) so a paused engine never wedges the next start.
+    """
     cadence = max(1, cfg.int("CR_LIVE_SCAN_MINUTES", 60))
-    print(f"watching every {cadence} min · mode {'sim' if dry_run else cfg.mode()} · ctrl-c to stop",
-          flush=True)
-    while True:
-        summary = one_cycle(cfg, dry_run)
-        print(json.dumps(summary, sort_keys=True), flush=True)
-        time.sleep(cadence * 60)
+    learn_every = max(1, cfg.int("CR_LEARN_MINUTES", 15))
+    digest_at = cfg.get("CR_DIGEST_AT", "07:30")
+    lock_path = STATE / "ENGINE_LOCK"
+    STATE.mkdir(parents=True, exist_ok=True)
+    if lock_path.exists():
+        held = read_json(lock_path, {})
+        print(f"refusing to start: engine lock held by pid {held.get('pid')} since {held.get('ts')}\n"
+              f"(delete {lock_path} only if that process is dead)", flush=True)
+        return 3
+    write_json(lock_path, {"pid": os.getpid(), "ts": now()})
+    print(f"watching · scan≤{cadence} min · learn every {learn_every} min · digest at {digest_at} · "
+          f"mode {'sim' if dry_run else cfg.mode()} · ctrl-c to stop", flush=True)
+    state_path = STATE / "watch_state.json"
+    state = read_json(state_path, {})
+    scan_next = 0.0            # scan immediately: a fresh watch is an explicit start
+    try:
+        while True:
+            epoch = time.time()
+            tree = tree_for("sim" if dry_run else cfg.mode())
+            if tree.frozen():
+                print(f"{now()} kill switch ENGAGED ({tree.freeze_path.name} present) — engine paused; "
+                      "no fetch, no decisions, no digest. Resume via --resume or the console.", flush=True)
+                time.sleep(cadence * 60)
+                continue
+            if epoch >= scan_next:
+                summary = one_cycle(cfg, dry_run)
+                print(json.dumps(summary, sort_keys=True), flush=True)
+                state["last_scan"] = now()
+                scan_next = time.time() + cadence * 60
+                state = read_json(state_path, {}) if state_path.exists() else state
+            if learn_due(state, learn_every, epoch):
+                learn = learn_phase(cfg, tree)
+                state["learn_epoch"] = epoch
+                state["last_learn"] = now()
+                print(f"{now()} learn: {json.dumps({'gates': len(learn['gates']), 'events': learn['events']})}",
+                      flush=True)
+                write_json(state_path, state)
+            if digest_due(state, epoch, digest_at):
+                sent = send_digest(cfg, tree, "sim" if dry_run else cfg.mode())
+                import time as _time
+                lt = _time.localtime(epoch)
+                state["digest_date"] = f"{lt.tm_year}-{lt.tm_mon:02d}-{lt.tm_mday:02d}"
+                state["last_digest"] = now()
+                print(f"{now()} digest: {json.dumps(sent)}", flush=True)
+                write_json(state_path, state)
+            state["last_tick"] = now()
+            write_json(state_path, state)
+            time.sleep(30)      # a tick, not the cadence: the three clocks stay independent
+    except KeyboardInterrupt:
+        print("\nwatch interrupted — engine lock released", flush=True)
+    finally:
+        lock_path.unlink(missing_ok=True)
+    return 0
+
 
 
 def selftest() -> int:

@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
 import urllib.request
 from pathlib import Path
 
@@ -1169,6 +1170,63 @@ positions = [rendered.index(f"id='{r}'") for r in on_page]
 check("C-05: the page renders the queued rows in the JSON queue's order",
       len(on_page) == len(queue) and positions == sorted(positions),
       f"queue={len(queue)} rows, on page in order={positions == sorted(positions)}")
+
+# --- 14. the watch is the whole engine, not just the scan cadence (review C1) ---------------------
+
+# OPERATIONS.md promises `--watch` "notices, decides, acts, learns, reports ... digests at 07:30".
+# The old loop slept between scan cycles; learn and digest needed a human to run their flags by
+# hand — the opposite of unattended. The regression drives the real loop for a few ticks (sleep
+# monkeypatched, sim tree, dry notice) and asserts all three cadences fire in the one process.
+watch_root = SANDBOX / "watch-root"
+if watch_root.exists():
+    shutil.rmtree(watch_root)
+live.rebase(watch_root)
+_real_sleep = time.sleep
+TICKS = {"n": 0}
+
+
+def _fast_sleep(_s):
+    TICKS["n"] += 1
+    if TICKS["n"] >= 5:
+        raise KeyboardInterrupt
+    _real_sleep(0.05)
+
+
+live.time.sleep = _fast_sleep
+import json as _json
+watch_cfg = Config({"CR_MODE": "sim", "CR_JUDGE_PROVIDER": "mock", "CR_NOTIFY_CHANNEL": "file",
+                    "CR_LIVE_SCAN_MINUTES": "1", "CR_LEARN_MINUTES": "1", "CR_DIGEST_AT": "00:00"})
+try:
+    watch_exit = live.watch(watch_cfg, dry_run=True)
+finally:
+    live.time.sleep = _real_sleep
+watch_state = json.loads((live.STATE / "watch_state.json").read_text())
+check("the watch runs scan, learn and digest in one process (docs finally match the code)",
+      watch_exit == 0 and {"last_scan", "last_learn", "digest_date"} <= set(watch_state)
+      and (live.LIVE / "digest-24h.md").exists() and (live.LIVE / "last_summary.json").exists()
+      and (live.LIVE / "cohort_gates.json").exists(),
+      f"state={sorted(watch_state)}")
+check("the digest window is the twin's renderer over 24h of receipts, capped at 4KB",
+      len((live.LIVE / "digest-24h.md").read_bytes()) <= 4096
+      and (live.LIVE / "digest-24h.md").read_text().startswith("# Courserefresh digest"),
+      f"{len((live.LIVE / 'digest-24h.md').read_bytes())} bytes")
+check("the engine lock is released when the watch stops (Ctrl-C included)",
+      not (live.STATE / "ENGINE_LOCK").exists(), "lock present after exit")
+live.write_json(live.STATE / "ENGINE_LOCK", {"pid": 999999, "ts": "held"})
+check("a second engine refuses to start instead of double-deciding the same snapshots",
+      live.watch(Config({"CR_MODE": "sim"}), dry_run=True) == 3, "expected exit 3")
+(live.STATE / "ENGINE_LOCK").unlink()
+check("the learn cadence is a declared knob matching the n8n wf-cr-3 schedule",
+      live.Config({"CR_LEARN_MINUTES": "15"}).int("CR_LEARN_MINUTES", 15) == 15
+      and live.learn_due({}, 15, 1000.0) is True
+      and live.learn_due({"learn_epoch": 990.0}, 15, 1000.0) is False,
+      "15-min default, epoch-based, first run learns immediately")
+fresh_state = {}
+check("the digest fires when the clock passes CR_DIGEST_AT and only once per local day",
+      live.digest_due(fresh_state, 1_700_000_000.0, "00:00") is True          # any time past 00:00
+      and live.digest_due({"digest_date": time.strftime("%Y-%m-%d")}, 1_700_000_000.0, "00:00") is False,
+      "due once per day, keyed on the local date")
+live.rebase(SANDBOX)
 
 passed = sum(1 for _, ok, _ in CHECKS if ok)
 width = max(len(c[0]) for c in CHECKS)

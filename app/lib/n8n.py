@@ -81,6 +81,13 @@ class N8nClient:
             return listing
         existing = next((w for w in listing["workflows"] if w.get("name") == workflow.get("name")), None)
         payload = {k: v for k, v in workflow.items() if k in ("name", "nodes", "connections", "settings", "staticData")}
+        # n8n Cloud's schema rejects `errorWorkflow: null` ("Expected string, received null") — the
+        # exports carry the null as a placeholder, and import_exports PATCHes the real wf-cr-9 id on
+        # after that workflow exists, so the null must never travel in the create/update payload
+        settings = dict(payload.get("settings") or {})
+        if settings.get("errorWorkflow", "missing") is None:
+            settings.pop("errorWorkflow", None)
+            payload["settings"] = settings
         if existing:
             status, body = self.transport("PUT", f"{self.base}/api/v1/workflows/{existing['id']}",
                                           self._headers(), payload, self.timeout)
@@ -93,7 +100,11 @@ class N8nClient:
         if status not in (200, 201):
             return {"ok": False, "error": "n8n_error", "code": "write_failed",
                     "message": (body or {}).get("message", f"HTTP {status}")}
-        return {"ok": True, "id": (body or {}).get("data", {}).get("id"), "created": True,
+        # n8n Cloud returns the created workflow at the top level (its OSS/self-host shape wraps in
+        # `data`); accept both so the ids file is never empty on the one instance that matters
+        created = body if isinstance(body, dict) and body.get("id") else \
+            (body or {}).get("data", {}) if isinstance(body, dict) else {}
+        return {"ok": True, "id": (created or {}).get("id"), "created": True,
                 "instance_version": self.instance_version}
 
     def activate(self, workflow_id: str, active: bool = True) -> dict:
@@ -141,6 +152,21 @@ class N8nClient:
                 "response": body if isinstance(body, (dict, list)) else None}
 
     # --- import ------------------------------------------------------------------------------
+    def autofill_webhook_hosts(self, workflow: dict) -> dict:
+        """Cross-workflow HTTP nodes: point `ATTACH_AT_IMPORT/webhook/<path>` at this instance.
+
+        The host is not a secret and not a decision — it is wherever this import is landing, which
+        is `self.base`. Leaving it a placeholder made the canvas state a working import while the
+        first live POST silently went to a host named `ATTACH_AT_IMPORT` (review C3). Credentials,
+        chat ids and repo names stay placeholders: those are choices a human makes in the UI
+        (SETUP §3) and the verify gate names them until then.
+        """
+        for node in workflow.get("nodes", []):
+            url = (node.get("parameters") or {}).get("url")
+            if isinstance(url, str) and url.startswith("ATTACH_AT_IMPORT/webhook/"):
+                node["parameters"]["url"] = f"{self.base}/webhook/" + url.split("ATTACH_AT_IMPORT/webhook/", 1)[1]
+        return workflow
+
     def import_exports(self, export_dir: Path | None = None, ids_path: Path | None = None) -> dict:
         """Push every generated workflow to the instance, remember the ids, attach the error workflow."""
         export_dir = export_dir or EXPORT_DIR
@@ -150,7 +176,7 @@ class N8nClient:
         files = sorted(export_dir.glob("wf-cr-*.json"))
         error_file = export_dir / "wf-cr-9-errors.json"
         for path in [p for p in files if p != error_file] + ([error_file] if error_file.exists() else []):
-            workflow = json.loads(path.read_text())
+            workflow = self.autofill_webhook_hosts(json.loads(path.read_text()))
             result = self.upsert_workflow(workflow)
             results.append({"file": path.name, "name": workflow.get("name"), **result})
             if result.get("ok") and result.get("id"):
@@ -160,8 +186,16 @@ class N8nClient:
             for name, workflow_id in ids.items():
                 if name == "CR-9 · errors → receipt":
                     continue
-                self.transport("PATCH", f"{self.base}/api/v1/workflows/{workflow_id}",
-                               self._headers(), {"settings": {"errorWorkflow": error_id}}, self.timeout)
+                # n8n Cloud: PATCH /workflows/{id} is 405 for settings; the attach is a PUT (full
+                # update) with the current nodes/connections plus the merged settings — never a
+                # bare {errorWorkflow} payload, which would replace the whole settings object and
+                # silently drop executionOrder on every re-import
+                current = self.get_workflow(workflow_id)
+                stored = current.get("workflow") or {}
+                settings = {**(stored.get("settings") or {}), "errorWorkflow": error_id}
+                payload = {k: stored.get(k) for k in ("name", "nodes", "connections", "staticData")}
+                self.transport("PUT", f"{self.base}/api/v1/workflows/{workflow_id}",
+                               self._headers(), {**payload, "settings": settings}, self.timeout)
         ids_path.write_text(json.dumps({"instance_version": self.instance_version, "ids": ids,
                                         "results": results}, indent=2, sort_keys=True) + "\n")
         ok = all(r.get("ok") for r in results) and bool(results)
