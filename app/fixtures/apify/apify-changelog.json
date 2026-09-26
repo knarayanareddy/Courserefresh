@@ -1,0 +1,19 @@
+{
+  "source_id": "apify-changelog",
+  "run_id": "rec-apify-changelog-01",
+  "usd": 0.052,
+  "recorded_note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch",
+  "items": [
+    {
+      "fixture_key": "apify-schema",
+      "url": "https://apify.com/changelog",
+      "title": "Input validation before the run",
+      "published_at": "2026-09-25T08:40:00Z",
+      "markdown": "Actor runs now validate inputs against the actor schema before the run starts; runs that fail validation do not consume compute. No input changes are required for correctly typed actors.",
+      "content_hash": "sha256:0374601a3ed6d33e0bd9660c2833b443a22d9d6f405d1995443e24951ea4faff",
+      "actor_run_id": "rec-apify-changelog-01",
+      "http_status": 200,
+      "note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch"
+    }
+  ]
+}

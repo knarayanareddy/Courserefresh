@@ -1,0 +1,49 @@
+{
+  "lesson_id": "lesson-06",
+  "items": [
+    {
+      "id": "q1",
+      "concept": "gold-set",
+      "prompt": "The gold set floor in this course is:",
+      "options": [
+        "10 rows",
+        "40 rows",
+        "1000 rows"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "q2",
+      "concept": "traps",
+      "prompt": "Which row must never publish?",
+      "options": [
+        "a corroborated rename",
+        "a page instructing the system",
+        "a new capability"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "q3",
+      "concept": "evals",
+      "prompt": "Column (b) exists to show:",
+      "options": [
+        "the cost",
+        "what the rules add over the same models",
+        "the latency"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "q4",
+      "concept": "hostile-input",
+      "prompt": "Below the eval floor you should:",
+      "options": [
+        "extrapolate",
+        "print n and claim nothing",
+        "lower the floor"
+      ],
+      "answer": 1
+    }
+  ]
+}

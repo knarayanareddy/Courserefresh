@@ -1,0 +1,271 @@
+{
+  "name": "wf-cr-0-scan",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 60
+            }
+          ]
+        }
+      },
+      "id": "every-60-minutes",
+      "name": "Every 60 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// execute-once: the scan trigger passes a run key; a duplicate key stops this execution.\nconst key = $json.run_key || $json.run_id || null;\nconst store = $getWorkflowStaticData('global');\nif (key && store.lastRunKey === key) { return []; }\nif (key) store.lastRunKey = key;\nreturn $input.all();"
+      },
+      "id": "once",
+      "name": "ONCE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// loads specs/courserefresh/skin/thresholds.json (mirrored at preflight)\nreturn [{json: require('./thresholds.json')}];"
+      },
+      "id": "thresholds",
+      "name": "THRESHOLDS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// one item per source in kickoff/SOURCE-PLAN.md \u00a71, with its independence group\nreturn $json.sources;"
+      },
+      "id": "sources",
+      "name": "SOURCES",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/{{$json.actor_id}}/runs?token=ATTACH_AT_IMPORT",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"run_mode\":\"single\",\"input\":{{JSON.stringify($json.input)}}}",
+        "options": {}
+      },
+      "id": "apify_run_actor",
+      "name": "APIFY_RUN_ACTOR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "notes": "Pinned actor id + build from WIRING.md \u00a71; credentials never inline"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $json.items || [];\nconst crypto = require('crypto');\nreturn rows.filter(r => r.url && r.markdown).map(r => ({json: {\n  url: r.url, title: r.title || '', markdown: r.markdown,\n  content_hash: 'sha256:' + crypto.createHash('sha256').update(r.markdown).digest('hex'),\n  published_at: r.published_at || null, actor_run_id: $json.run_id }}));"
+      },
+      "id": "normalize",
+      "name": "NORMALIZE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// drops anything whose content_hash is already in state/seen.json\nconst seen = JSON.parse(await this.helpers.getBinaryDataBuffer ? '{}' : '{}');\nreturn $input.all().filter(i => !seen[i.json.content_hash]);"
+      },
+      "id": "dedupe",
+      "name": "DEDUPE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "ATTACH_AT_IMPORT/webhook/triage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"run_id\":\"{{$json.actor_run_id}}\",\"snapshots\":{{JSON.stringify($json)}}}",
+        "options": {}
+      },
+      "id": "http_triage",
+      "name": "HTTP_TRIAGE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        0
+      ],
+      "notes": ""
+    },
+    {
+      "parameters": {
+        "jsCode": "// appends one row per run to receipts.jsonl (mode: live) and the run log\nreturn [{json: {actor: 'system', mode: 'live', stage: 'scan', deltas: $input.all().length}}];"
+      },
+      "id": "receipt",
+      "name": "RECEIPT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "WIRING.md \u00a73.1 contract:\n1. execute-once (this file has the guard)\n2. the POLICY node embeds app/n8n/policy_node.js byte-for-byte (drift-checked by test_contracts)\n3. errors land as receipts: error branch \u2192 RETRY(dlq, once) \u2192 RECEIPT(degraded)\n4. wf-cr-9-errors is attached to every workflow at import time (make_n8n_exports.py --import)\n5. instance version is recorded in WIRING.md \u00a74 at D-1; expressions stay version-safe",
+        "height": 220,
+        "width": 420,
+        "color": 4
+      },
+      "id": "contract-note",
+      "name": "CONTRACT",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -420
+      ]
+    }
+  ],
+  "connections": {
+    "Every 60 minutes": {
+      "main": [
+        [
+          {
+            "node": "ONCE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "THRESHOLDS": {
+      "main": [
+        [
+          {
+            "node": "SOURCES",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SOURCES": {
+      "main": [
+        [
+          {
+            "node": "APIFY_RUN_ACTOR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "APIFY_RUN_ACTOR": {
+      "main": [
+        [
+          {
+            "node": "NORMALIZE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NORMALIZE": {
+      "main": [
+        [
+          {
+            "node": "DEDUPE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEDUPE": {
+      "main": [
+        [
+          {
+            "node": "HTTP_TRIAGE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP_TRIAGE": {
+      "main": [
+        [
+          {
+            "node": "RECEIPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ONCE": {
+      "main": [
+        [
+          {
+            "node": "THRESHOLDS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": null
+  },
+  "staticData": null,
+  "meta": {
+    "instanceId": "ATTACH_AT_IMPORT",
+    "templateCredsSetupCompleted": false,
+    "courserefresh": {
+      "generated_by": "app/tools/make_n8n_exports.py",
+      "policy_node_sha256": "1885efcb791872c4f5a2ace13af2fb87914868c5a5e7d441617785d6b59eaad4",
+      "notes": "Apify actor runs are the system's only eyes; a zero-delta run still writes a receipt."
+    }
+  },
+  "tags": [
+    {
+      "name": "courserefresh"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1885efcb",
+  "active": false
+}

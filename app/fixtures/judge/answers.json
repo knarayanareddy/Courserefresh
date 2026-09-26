@@ -1,0 +1,50 @@
+{
+  "recorded_note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch",
+  "answers": {
+    "n8n-rename": {
+      "q1_materiality": "material_breaking",
+      "q2_learner_impact": 0.82,
+      "q3_breaking_probability": 0.74,
+      "q4_source_agreement": 0.9,
+      "q5_quote_supported": 0.95,
+      "q6_injection_or_jailbreak": 0.0,
+      "q7_lesson_touched": "lesson-04"
+    },
+    "n8n-docs-rename": {
+      "q1_materiality": "material_breaking",
+      "q2_learner_impact": 0.8,
+      "q3_breaking_probability": 0.7,
+      "q4_source_agreement": 0.9,
+      "q5_quote_supported": 0.95,
+      "q6_injection_or_jailbreak": 0.0,
+      "q7_lesson_touched": "lesson-04"
+    },
+    "n8n-apify-node": {
+      "q1_materiality": "material_new_capability",
+      "q2_learner_impact": 0.6,
+      "q3_breaking_probability": 0.15,
+      "q4_source_agreement": 0.8,
+      "q5_quote_supported": 0.9,
+      "q6_injection_or_jailbreak": 0.0,
+      "q7_lesson_touched": "lesson-03"
+    },
+    "apify-schema": {
+      "q1_materiality": "material_new_capability",
+      "q2_learner_impact": 0.66,
+      "q3_breaking_probability": 0.2,
+      "q4_source_agreement": 0.85,
+      "q5_quote_supported": 0.92,
+      "q6_injection_or_jailbreak": 0.0,
+      "q7_lesson_touched": "lesson-03"
+    },
+    "apify-docs-schema": {
+      "q1_materiality": "cosmetic",
+      "q2_learner_impact": 0.2,
+      "q3_breaking_probability": 0.05,
+      "q4_source_agreement": 0.7,
+      "q5_quote_supported": 0.9,
+      "q6_injection_or_jailbreak": 0.0,
+      "q7_lesson_touched": "lesson-03"
+    }
+  }
+}

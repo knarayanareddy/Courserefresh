@@ -1,0 +1,38 @@
+{
+  "lesson_id": "lesson-03",
+  "items": [
+    {
+      "id": "q1",
+      "concept": "actors",
+      "prompt": "Actor outputs should be normalised into:",
+      "options": [
+        "screenshots",
+        "snapshots with hashes",
+        "embeddings"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "q2",
+      "concept": "cadence-honesty",
+      "prompt": "The honest latency unit for a scheduled crawler is:",
+      "options": [
+        "milliseconds",
+        "the scan cycle",
+        "not applicable"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "q3",
+      "concept": "apify",
+      "prompt": "When two independent sources contradict, you:",
+      "options": [
+        "average them",
+        "escalate with both quotes",
+        "publish the newer"
+      ],
+      "answer": 1
+    }
+  ]
+}

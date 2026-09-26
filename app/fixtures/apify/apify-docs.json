@@ -1,0 +1,19 @@
+{
+  "source_id": "apify-docs",
+  "run_id": "rec-apify-docs-01",
+  "usd": 0.049,
+  "recorded_note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch",
+  "items": [
+    {
+      "fixture_key": "apify-docs-schema",
+      "url": "https://docs.apify.com/",
+      "title": "Actor input schema",
+      "published_at": "2026-08-30T12:00:00Z",
+      "markdown": "Actor input is described by the actor's input schema; the Console form is generated from it. Runs started through the API are validated the same way.",
+      "content_hash": "sha256:5c9a4b7e495f3f28f8c5a8680ead5e4be8d5c7e104218dbbeb2c1af26e5ec5cf",
+      "actor_run_id": "rec-apify-docs-01",
+      "http_status": 200,
+      "note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch"
+    }
+  ]
+}

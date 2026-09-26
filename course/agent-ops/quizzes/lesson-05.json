@@ -1,0 +1,38 @@
+{
+  "lesson_id": "lesson-05",
+  "items": [
+    {
+      "id": "q1",
+      "concept": "receipts",
+      "prompt": "A decision without a receipt is:",
+      "options": [
+        "fine if it worked",
+        "a bug",
+        "a log level"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "q2",
+      "concept": "revert-gate",
+      "prompt": "A revert gate is written:",
+      "options": [
+        "after the revert",
+        "at publish time",
+        "by the model"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "q3",
+      "concept": "falsification",
+      "prompt": "Reverting on a hunch is:",
+      "options": [
+        "allowed",
+        "escalatable at most",
+        "required"
+      ],
+      "answer": 1
+    }
+  ]
+}

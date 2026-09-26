@@ -1,0 +1,69 @@
+{
+  "_meta": {
+    "version": "prices-v1",
+    "last_amended": "D-3",
+    "rule": "Art. VI — a vendor price is `vendor-published` and must carry URL + capture date. A null value means `unmeasured`; no price in this file may be invented, remembered, or approximated.",
+    "consumed_by": ["app/run_walking_skeleton.py (cost_state on every receipt)", "shared/eval.md column costs", "JUDGING-MAP cost talk track"],
+    "note": "Cost tracking is M4 (P2). Until T43 runs, every receipt prints cost_state = `unmeasured (sim run)`. The €0.35/change figure is a budget default (configuration), not a measurement."
+  },
+  "budget_defaults": {
+    "class": "configuration",
+    "eur_per_change": 0.35,
+    "max_publishes_per_night": 6,
+    "notifications_per_learner_per_week": 3,
+    "model_calls_per_change": 30,
+    "input_tokens_per_change": 60000,
+    "output_tokens_per_change": 12000,
+    "source": "specs/courserefresh/skin/thresholds.json"
+  },
+  "prices": [
+    {
+      "id": "P01",
+      "unit": "actor_compute_per_1k_pages",
+      "provider": "apify",
+      "class": "vendor-published",
+      "value_eur": null,
+      "state": "unmeasured (capture before T43)",
+      "source_url": null,
+      "captured_at": null,
+      "used_in": "cost per scan",
+      "why_null": "no capture performed in the build window; a remembered number is an invented number"
+    },
+    {
+      "id": "P02",
+      "unit": "judge_model_input_tokens_per_1m",
+      "provider": "judge-model provider",
+      "class": "vendor-published",
+      "value_eur": null,
+      "state": "unmeasured (capture before T43)",
+      "source_url": null,
+      "captured_at": null,
+      "used_in": "cost per change",
+      "why_null": "the judge model is chosen at T16; pricing is captured with the model name and date at the same time"
+    },
+    {
+      "id": "P03",
+      "unit": "observe_model_input_tokens_per_1m",
+      "provider": "observe-model provider",
+      "class": "vendor-published",
+      "value_eur": null,
+      "state": "unmeasured (capture before T43)",
+      "source_url": null,
+      "captured_at": null,
+      "used_in": "extraction cost per source",
+      "why_null": "same rule as P02; OBSERVE_MODEL must differ from JUDGE_MODEL (Art. XIII.2)"
+    },
+    {
+      "id": "P04",
+      "unit": "measured_cost_per_change",
+      "provider": "our own receipts",
+      "class": "receipt",
+      "value_eur": null,
+      "state": "unmeasured (no measured run yet)",
+      "source_url": "app/out/receipts.jsonl",
+      "captured_at": null,
+      "used_in": "digest budgets line, EVIDENCE.md §1 cost_eur",
+      "why_null": "receipts carry cost_eur = null and cost_state = `unmeasured (sim run)` until a real provider call is made"
+    }
+  ]
+}

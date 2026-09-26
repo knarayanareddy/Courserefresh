@@ -1,0 +1,29 @@
+--- v3.md
++++ v4.md
+@@ -1,13 +1,13 @@
+ ---
+ lesson_id: "lesson-04-tool-permissions"
+ title: "Tool permissions and the human exit"
+-version: "v3"
++version: "v4"
+ concepts: ["tool-permissions", "human-exit", "stop-conditions"]
+ assessment: "quizzes/lesson-04.json"
+-sources: ["https://docs.n8n.io/", "https://github.com/n8n-io/n8n/releases"]
++sources: ["https://github.com/n8n-io/n8n/releases", "https://docs.n8n.io/", "https://www.npmjs.com/package/n8n-nodes-base"]
+ revert_gate: {"n_min": 5, "window_h": 48, "metric": "quiz_delta", "condition": "<= 0"}
+-generated: false
+-reviewed_by: "author"
++generated: true
++reviewed_by: ""
+ ---
+ 
+ # Tool permissions and the human exit
+@@ -16,7 +16,7 @@
+ reading one settings block, and name the exit that brings a human in.
+ 
+ ## Declared scope, not vibes
+-The tools, and their parameters, are declared in `tool_permissions.tools` in the workflow settings.
++The tools, and their parameters, are declared in `permissions.mode.tools` in the workflow settings (renamed from `tool_permissions` in n8n 1.85).
+ A model may *ask* for a tool; the runtime refuses anything outside the declared scope. The block is
+ the contract: if it is not in the settings, it does not exist.
+ 

@@ -1,0 +1,40 @@
+{
+  "event_id": "cr-single-source-01",
+  "kind": "change",
+  "summary": "One release note mentions a behaviour change; no second source yet",
+  "sources": [
+    {
+      "source_id": "n8n-releases",
+      "independence_group": "n8n-vendor",
+      "url": "https://github.com/n8n-io/n8n/releases",
+      "publisher": "n8n",
+      "role": "authoritative"
+    }
+  ],
+  "quotes": [
+    "Deprecation: the legacy queue mode will be removed in a future release."
+  ],
+  "input": {
+    "event_id": "cr-single-source-01",
+    "stream": "change",
+    "materiality": "material_deprecation",
+    "learner_impact": 0.7,
+    "source_agreement": 0.9,
+    "quote_supported": 0.95,
+    "sources_verified": 1,
+    "injection_or_jailbreak": 0.02,
+    "authority": "PA2",
+    "freeze_active": false,
+    "assessment_touched": false,
+    "revert_gate_present": true,
+    "diff_lines": 40,
+    "previous_version_available": true,
+    "lesson_touched": "lesson-04",
+    "budgets": {
+      "publishes_used": 1,
+      "publishes_cap": 6,
+      "tokens_used": 20000,
+      "tokens_cap": 60000
+    }
+  }
+}

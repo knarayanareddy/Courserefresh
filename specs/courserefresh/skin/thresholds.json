@@ -1,0 +1,51 @@
+{
+  "version": "thresholds-v0.1",
+  "note": "Every threshold this system uses. Frozen at kickoff (kickoff/PREREGISTRATION.md §3); changing one is an AMENDMENTS.md row. Hashed into every run header.",
+  "authority": {
+    "default": "PA0",
+    "pa2_consecutive_accepted": 3,
+    "pa2_rollbacks_allowed": 0,
+    "demote_to": "PA0",
+    "cohort_notify_materialities": ["material_breaking", "material_deprecation"]
+  },
+  "evidence": {
+    "min_sources": 2,
+    "source_agreement_min": 0.5,
+    "quote_supported_min": 0.8,
+    "stale_hours": 12
+  },
+  "relevance": {
+    "learner_impact_min": 0.4
+  },
+  "safety": {
+    "injection_min": 0.5
+  },
+  "budgets": {
+    "publishes_per_day": 6,
+    "tokens_per_change": 60000,
+    "tokens_per_day": 500000,
+    "apify_units_per_day": 25,
+    "notify_per_learner_day": 1,
+    "notify_per_learner_week": 3,
+    "micro_lesson_per_concept_days": 7,
+    "digest_bytes": 4096
+  },
+  "learner": {
+    "stuck_consecutive_wrong": 2,
+    "stuck_dwell_multiple": 3.0,
+    "cohort_min": 3
+  },
+  "revert": {
+    "n_min": 5,
+    "window_h": 48,
+    "metric": "quiz_delta",
+    "condition": "<= 0"
+  },
+  "diff": {
+    "max_lines": 400
+  },
+  "scan": {
+    "every_min": 60,
+    "jitter_max_s": 300
+  }
+}

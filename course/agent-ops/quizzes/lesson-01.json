@@ -1,0 +1,38 @@
+{
+  "lesson_id": "lesson-01",
+  "items": [
+    {
+      "id": "q1",
+      "concept": "autonomy",
+      "prompt": "A system scans, decides and publishes without a human, then reports. It is:",
+      "options": [
+        "chatbot",
+        "copilot",
+        "autonomous"
+      ],
+      "answer": 2
+    },
+    {
+      "id": "q2",
+      "concept": "authority-ladder",
+      "prompt": "A rollback on one decision should...",
+      "options": [
+        "change nothing",
+        "demote authority for that lesson",
+        "disable the system"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "q3",
+      "concept": "escalation",
+      "prompt": "Single-source evidence for a breaking change should lead to:",
+      "options": [
+        "publish anyway",
+        "escalate to a human",
+        "retry the fetch forever"
+      ],
+      "answer": 1
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "lesson_id": "lesson-02",
+  "items": [
+    {
+      "id": "q1",
+      "concept": "determinism",
+      "prompt": "Same input to the policy node must give:",
+      "options": [
+        "a fresh judgement",
+        "the same action and reasons",
+        "a summary"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "q2",
+      "concept": "policy-node",
+      "prompt": "Malformed input should produce:",
+      "options": [
+        "a retry",
+        "an escalate/unknown_state",
+        "a publish"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "q3",
+      "concept": "n8n",
+      "prompt": "The policy node may:",
+      "options": [
+        "call an LLM",
+        "read its input only",
+        "write to the repo"
+      ],
+      "answer": 1
+    }
+  ]
+}

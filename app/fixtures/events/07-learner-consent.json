@@ -1,0 +1,29 @@
+{
+  "event_id": "cr-learner-consent-01",
+  "kind": "learner",
+  "summary": "A learner is stuck but never consented",
+  "learner_ref": "learner:07t2n4x1",
+  "consent": false,
+  "stuck": true,
+  "concept": "tool-permissions",
+  "input": {
+    "event_id": "cr-learner-consent-01",
+    "stream": "learner",
+    "materiality": "cosmetic",
+    "learner_impact": 0.5,
+    "source_agreement": 0.9,
+    "quote_supported": 0.9,
+    "sources_verified": 2,
+    "injection_or_jailbreak": 0.0,
+    "authority": "PA1",
+    "freeze_active": false,
+    "consent": false,
+    "grade_impacting": false,
+    "stuck": true,
+    "concept": "tool-permissions",
+    "caps": {
+      "notifications_today": 0,
+      "notifications_week": 0
+    }
+  }
+}

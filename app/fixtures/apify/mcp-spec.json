@@ -1,0 +1,19 @@
+{
+  "source_id": "mcp-spec",
+  "run_id": "rec-mcp-spec-01",
+  "usd": 0.044,
+  "recorded_note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch",
+  "items": [
+    {
+      "fixture_key": "mcp-spec-schema",
+      "url": "https://github.com/modelcontextprotocol/specification/releases",
+      "title": "Spec release notes",
+      "published_at": "2026-08-28T16:20:00Z",
+      "markdown": "This release clarifies that a server must not execute a tool whose schema does not match the arguments it received.",
+      "content_hash": "sha256:dc7850a145115436b3a4ce403bbeb1582450ddc7c3fabbcc5403f8fdffb2dcde",
+      "actor_run_id": "rec-mcp-spec-01",
+      "http_status": 200,
+      "note": "recorded from the vendor pages named in WIRING.md \u00a72 for the offline rehearsal; not a live fetch"
+    }
+  ]
+}

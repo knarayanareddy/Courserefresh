@@ -1,0 +1,122 @@
+{
+  "version": "taxonomy-v0.1",
+  "note": "Closed sets. The policy may only emit what is listed here (constitution Art. VIII.2). Parsed by test_contracts.py and mirrored by app/n8n/policy_node.js.",
+  "materiality": [
+    "material_breaking",
+    "material_deprecation",
+    "material_new_capability",
+    "cosmetic",
+    "marketing_noise",
+    "ambiguous",
+    "contradictory",
+    "unverifiable"
+  ],
+  "change_actions": [
+    "NO_CHANGE",
+    "DRAFT",
+    "PUBLISH",
+    "REVERT",
+    "ESCALATE"
+  ],
+  "learner_actions": [
+    "NO_CHANGE",
+    "DISPATCH",
+    "ESCALATE"
+  ],
+  "authority": [
+    "PA0",
+    "PA1",
+    "PA2",
+    "PA3"
+  ],
+  "modes": [
+    "live",
+    "degraded-sources",
+    "observe-only",
+    "sim",
+    "paused",
+    "offline-twin"
+  ],
+  "actor": [
+    "system",
+    "human:<name>"
+  ],
+  "publishable_materialities": [
+    "material_breaking",
+    "material_deprecation",
+    "material_new_capability"
+  ],
+  "cohort_notify_materialities": [
+    "material_breaking",
+    "material_deprecation"
+  ],
+  "reason_codes": {
+    "safety": [
+      "injection_or_jailbreak",
+      "assessment_change_requires_human",
+      "grade_impacting_requires_human",
+      "freeze_active",
+      "seeded_source_misrepresented"
+    ],
+    "evidence": [
+      "insufficient_corroboration",
+      "source_conflict",
+      "unverifiable",
+      "ambiguous_change",
+      "quote_unsupported"
+    ],
+    "relevance": [
+      "immaterial_change",
+      "low_learner_impact"
+    ],
+    "authority": [
+      "authority_insufficient"
+    ],
+    "integrity": [
+      "integrity_floor_missing_gate",
+      "diff_too_wide",
+      "previous_version_missing"
+    ],
+    "budget": [
+      "over_budget",
+      "rate_limited"
+    ],
+    "learner": [
+      "consent_missing",
+      "stuck_signals_met",
+      "no_signal",
+      "cohort_below_minimum"
+    ],
+    "lifecycle": [
+      "measurement_incomplete",
+      "gate_window_open",
+      "revert_gate_satisfied",
+      "revert_gate_absent",
+      "no_improvement_measured",
+      "seeded_rehearsal",
+      "no_delta",
+      "unknown_state",
+      "write_failed",
+      "noop_already_applied",
+      "source_stale",
+      "fallback_used",
+      "budget_hold",
+      "cadence_degraded",
+      "consent_revoked"
+    ],
+    "publish": [
+      "material_breaking",
+      "material_deprecation",
+      "material_new_capability"
+    ]
+  },
+  "rule_order": [
+    "safety",
+    "evidence",
+    "relevance",
+    "authority",
+    "integrity",
+    "budget",
+    "default"
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "name": "CR-9 \u00b7 errors \u2192 receipt",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "ERROR TRIGGER",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// an unhandled failure still lands on the ledger (WIRING \u00a73.1, requirement 4)\nconst err = $json.error || {};\nreturn [{ json: { event_id: 'op-error', kind: 'change', mode: 'live',\n  decision: { action: 'ESCALATE', reason_codes: ['write_failed'], authority: 'PA0' },\n  artifact: null, actor: 'system', label: (err.message || 'workflow error').slice(0, 160),\n  workflow: $json.workflow && $json.workflow.name, execution: $json.execution && $json.execution.id } }];"
+      },
+      "id": "build_receipt",
+      "name": "BUILD_RECEIPT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://runner:8081/receipt",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "append_receipt",
+      "name": "APPEND_RECEIPT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "notes": "the local runner appends it to the chain"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://runner:8081/degraded",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ reason: 'workflow_error', receipt_id: $json.receipt_id }) }}",
+        "options": {}
+      },
+      "id": "digest_line",
+      "name": "DIGEST_LINE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "notes": "the digest must say it out loud"
+    },
+    {
+      "parameters": {
+        "content": "WIRING.md \u00a73.1 contract:\n1. execute-once (this file has the guard)\n2. the POLICY node embeds app/n8n/policy_node.js byte-for-byte (drift-checked by test_contracts)\n3. errors land as receipts: error branch \u2192 RETRY(dlq, once) \u2192 RECEIPT(degraded)\n4. wf-cr-9-errors is attached to every workflow at import time (make_n8n_exports.py --import)\n5. instance version is recorded in WIRING.md \u00a74 at D-1; expressions stay version-safe",
+        "height": 220,
+        "width": 420,
+        "color": 4
+      },
+      "id": "contract-note",
+      "name": "CONTRACT",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -420
+      ]
+    }
+  ],
+  "connections": {
+    "ERROR TRIGGER": {
+      "main": [
+        [
+          {
+            "node": "BUILD_RECEIPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BUILD_RECEIPT": {
+      "main": [
+        [
+          {
+            "node": "APPEND_RECEIPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "APPEND_RECEIPT": {
+      "main": [
+        [
+          {
+            "node": "DIGEST_LINE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": null
+  },
+  "staticData": null,
+  "meta": {
+    "instanceId": "ATTACH_AT_IMPORT",
+    "templateCredsSetupCompleted": false,
+    "courserefresh": {
+      "generated_by": "app/tools/make_n8n_exports.py",
+      "policy_node_sha256": "1885efcb791872c4f5a2ace13af2fb87914868c5a5e7d441617785d6b59eaad4",
+      "notes": "Attached to every CR workflow's error output at import time; a crash must be a receipt, not silence."
+    }
+  },
+  "tags": [
+    {
+      "name": "courserefresh"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1885efcb",
+  "active": false
+}

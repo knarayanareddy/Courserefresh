@@ -1,0 +1,40 @@
+{
+  "lesson_id": "lesson-04",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "concept": "tool-permissions",
+      "prompt": "An agent needs to read a course page and nothing else. The smallest correct permission is:",
+      "options": [
+        "all tools, read-write",
+        "read on that page's host only",
+        "no tools and a retry loop"
+      ],
+      "answer": 1
+    },
+    {
+      "id": "q2",
+      "concept": "tool-permissions",
+      "prompt": "In n8n 1.85 the setting that limits an agent's tools is written:",
+      "options": [
+        "tool_permissions.tools (removed in 1.86)",
+        "permissions.mode.tools",
+        "agent.tools.allow"
+      ],
+      "answer": 1,
+      "regenerated_by": "cr-n8n-rename-01"
+    },
+    {
+      "id": "q3",
+      "concept": "human-exit",
+      "prompt": "The agent is about to change something that affects a learner's grade. It must:",
+      "options": [
+        "publish and report afterwards",
+        "stop and ask a human",
+        "revert its last change instead"
+      ],
+      "answer": 1
+    }
+  ]
+}

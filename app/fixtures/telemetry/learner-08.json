@@ -1,0 +1,12 @@
+{
+  "learner_ref": "learner:4c7e5a20",
+  "consent": true,
+  "lesson_id": "lesson-04-tool-permissions",
+  "signals": {
+    "attempts": 2,
+    "consecutive_wrong": 1,
+    "dwell_s": 210,
+    "median_dwell_s": 150
+  },
+  "concepts_missed": []
+}

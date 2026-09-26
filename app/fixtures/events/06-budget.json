@@ -1,0 +1,45 @@
+{
+  "event_id": "cr-budget-01",
+  "kind": "change",
+  "summary": "A corroborated breaking change arrives after the publish cap is spent",
+  "sources": [
+    {
+      "source_id": "n8n-releases",
+      "publisher": "n8n",
+      "url": "https://github.com/n8n-io/n8n/releases",
+      "role": "authoritative"
+    },
+    {
+      "source_id": "apify-changelog",
+      "publisher": "apify",
+      "url": "https://apify.com/changelog",
+      "role": "authoritative"
+    }
+  ],
+  "quotes": [
+    "Removed: the legacy queue mode no longer exists."
+  ],
+  "input": {
+    "event_id": "cr-budget-01",
+    "stream": "change",
+    "materiality": "material_breaking",
+    "learner_impact": 0.7,
+    "source_agreement": 0.9,
+    "quote_supported": 0.95,
+    "sources_verified": 2,
+    "injection_or_jailbreak": 0.02,
+    "authority": "PA2",
+    "freeze_active": false,
+    "assessment_touched": false,
+    "revert_gate_present": true,
+    "diff_lines": 40,
+    "previous_version_available": true,
+    "lesson_touched": "lesson-04",
+    "budgets": {
+      "publishes_used": 6,
+      "publishes_cap": 6,
+      "tokens_used": 1000,
+      "tokens_cap": 60000
+    }
+  }
+}

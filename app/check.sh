@@ -1,0 +1,50 @@
+#!/bin/sh
+# Courserefresh — the whole battery. Any failure is a stop-the-line (Art. XII.3).
+# Usage: sh app/check.sh
+set -e
+cd "$(dirname "$0")/.."
+mkdir -p app/out/evidence app/out/eval/gold-v0.3
+
+echo "== 1/13 gold eval ========================================="
+python3 specs/courserefresh/skin/policy.py --eval specs/courserefresh/skin/gold.jsonl | tee app/out/eval/gold-v0.3/report.txt
+echo
+echo "== 2/13 gate parity (node mirror vs python oracle) ========"
+node app/tests/test_gate_parity.py
+echo
+echo "== 3/13 walking skeleton (offline twin) ==================="
+python3 app/run_walking_skeleton.py --selftest
+echo
+echo "== 4/13 artifact integrity + learner contract ============="
+python3 app/tests/test_artifacts.py
+echo
+echo "== 5/13 curriculum (objectives, quizzes, micro-lessons) ===="
+python3 app/tests/test_curriculum.py
+echo
+echo "== 6/13 live path (apify · judge · n8n · telemetry · console) ="
+python3 app/lib/judge.py --selftest
+python3 app/tests/test_live_modules.py
+echo
+echo "== 7/13 policy unit checks ================================"
+python3 app/tests/test_policy.py
+echo
+echo "== 8/13 threat model ======================================"
+python3 app/tests/test_threat_model.py
+echo
+echo "== 9/13 gold floor ========================================"
+python3 app/tests/test_gold_floor.py
+echo
+echo "== 10/13 contracts ========================================="
+python3 app/tests/test_contracts.py
+echo
+echo "== 11/13 claims ============================================"
+python3 app/tests/test_claims.py
+echo
+echo "== 12/13 hygiene + design ================================="
+python3 app/tests/test_hygiene.py
+python3 app/tests/test_design.py
+echo
+echo "== 13/13 handoff collector (redaction + manifest) ========="
+python3 app/tests/test_handoff.py
+echo
+echo "ALL GREEN"
+printf "battery green\n" > app/out/evidence/LAST-GREEN.txt

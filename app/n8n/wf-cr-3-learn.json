@@ -1,0 +1,276 @@
+{
+  "name": "wf-cr-3-learn",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "every-15-minutes",
+      "name": "Every 15 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// execute-once: the scan trigger passes a run key; a duplicate key stops this execution.\nconst key = $json.run_key || $json.run_id || null;\nconst store = $getWorkflowStaticData('global');\nif (key && store.lastRunKey === key) { return []; }\nif (key) store.lastRunKey = key;\nreturn $input.all();"
+      },
+      "id": "once",
+      "name": "ONCE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// consented rows only; hashed handles; rejects are counted\nreturn $input.all();"
+      },
+      "id": "read_telemetry",
+      "name": "READ_TELEMETRY",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// per published version: n, quiz_delta, hours_since_publish (or unmeasured)\nreturn $input.all();"
+      },
+      "id": "cohort_window",
+      "name": "COHORT_WINDOW",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const {decide} = require('./policy_node.js');\nreturn $input.all().map(i => ({json: {decision: decide(i.json.input)}}));"
+      },
+      "id": "gate_eval-(policy-revert)",
+      "name": "GATE_EVAL (policy revert)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.decision.action === 'REVERT' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ]
+        }
+      },
+      "id": "gate-satisfied?",
+      "name": "Gate satisfied?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "ATTACH_AT_IMPORT/webhook/act",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{JSON.stringify($json)}}",
+        "options": {}
+      },
+      "id": "revert_now",
+      "name": "REVERT_NOW",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        -80
+      ],
+      "notes": ""
+    },
+    {
+      "parameters": {
+        "jsCode": "// consecutive_wrong >= 2 or dwell >= 3x median, per concept\nreturn $input.all();"
+      },
+      "id": "stuck_check",
+      "name": "STUCK_CHECK",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// one concept, two minutes, one practice item, opt-out in the message\nreturn $input.all();"
+      },
+      "id": "dispatch",
+      "name": "DISPATCH",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "content": "WIRING.md \u00a73.1 contract:\n1. execute-once (this file has the guard)\n2. the POLICY node embeds app/n8n/policy_node.js byte-for-byte (drift-checked by test_contracts)\n3. errors land as receipts: error branch \u2192 RETRY(dlq, once) \u2192 RECEIPT(degraded)\n4. wf-cr-9-errors is attached to every workflow at import time (make_n8n_exports.py --import)\n5. instance version is recorded in WIRING.md \u00a74 at D-1; expressions stay version-safe",
+        "height": 220,
+        "width": 420,
+        "color": 4
+      },
+      "id": "contract-note",
+      "name": "CONTRACT",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -420
+      ]
+    }
+  ],
+  "connections": {
+    "Every 15 minutes": {
+      "main": [
+        [
+          {
+            "node": "ONCE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "READ_TELEMETRY": {
+      "main": [
+        [
+          {
+            "node": "COHORT_WINDOW",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "COHORT_WINDOW": {
+      "main": [
+        [
+          {
+            "node": "GATE_EVAL (policy revert)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GATE_EVAL (policy revert)": {
+      "main": [
+        [
+          {
+            "node": "Gate satisfied?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate satisfied?": {
+      "main": [
+        [
+          {
+            "node": "REVERT_NOW",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "STUCK_CHECK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "STUCK_CHECK": {
+      "main": [
+        [
+          {
+            "node": "DISPATCH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ONCE": {
+      "main": [
+        [
+          {
+            "node": "READ_TELEMETRY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": null
+  },
+  "staticData": null,
+  "meta": {
+    "instanceId": "ATTACH_AT_IMPORT",
+    "templateCredsSetupCompleted": false,
+    "courserefresh": {
+      "generated_by": "app/tools/make_n8n_exports.py",
+      "policy_node_sha256": "1885efcb791872c4f5a2ace13af2fb87914868c5a5e7d441617785d6b59eaad4",
+      "notes": "n < 5 or a missing metric is `unmeasured` \u2014 the loop never reverts on a hunch (Art. XI)."
+    }
+  },
+  "tags": [
+    {
+      "name": "courserefresh"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1885efcb",
+  "active": false
+}

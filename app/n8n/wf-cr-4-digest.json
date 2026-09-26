@@ -1,0 +1,214 @@
+{
+  "name": "wf-cr-4-digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1440
+            }
+          ]
+        }
+      },
+      "id": "07:30-daily",
+      "name": "07:30 daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// execute-once: the scan trigger passes a run key; a duplicate key stops this execution.\nconst key = $json.run_key || $json.run_id || null;\nconst store = $getWorkflowStaticData('global');\nif (key && store.lastRunKey === key) { return []; }\nif (key) store.lastRunKey = key;\nreturn $input.all();"
+      },
+      "id": "once",
+      "name": "ONCE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// the last 24h, chained; verify_chain() before rendering\nreturn $input.all();"
+      },
+      "id": "read_receipts",
+      "name": "READ_RECEIPTS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// refusals first, then what changed, learners, discipline\nreturn $input.all();"
+      },
+      "id": "order_sections",
+      "name": "ORDER_SECTIONS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// trims oldest-first, never refusals; prints `unmeasured` where true\nreturn $input.all();"
+      },
+      "id": "render_4kb",
+      "name": "RENDER_4KB",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "ATTACH_AT_IMPORT",
+        "text": "={{$json.digest}}",
+        "additionalFields": {}
+      },
+      "id": "send-digest",
+      "name": "SEND (Telegram)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// exit 1 with a DIGEST FAILED banner if any row hash is off\nreturn $input.all();"
+      },
+      "id": "verify_chain",
+      "name": "VERIFY_CHAIN",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "WIRING.md \u00a73.1 contract:\n1. execute-once (this file has the guard)\n2. the POLICY node embeds app/n8n/policy_node.js byte-for-byte (drift-checked by test_contracts)\n3. errors land as receipts: error branch \u2192 RETRY(dlq, once) \u2192 RECEIPT(degraded)\n4. wf-cr-9-errors is attached to every workflow at import time (make_n8n_exports.py --import)\n5. instance version is recorded in WIRING.md \u00a74 at D-1; expressions stay version-safe",
+        "height": 220,
+        "width": 420,
+        "color": 4
+      },
+      "id": "contract-note",
+      "name": "CONTRACT",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -420
+      ]
+    }
+  ],
+  "connections": {
+    "07:30 daily": {
+      "main": [
+        [
+          {
+            "node": "ONCE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "READ_RECEIPTS": {
+      "main": [
+        [
+          {
+            "node": "ORDER_SECTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ORDER_SECTIONS": {
+      "main": [
+        [
+          {
+            "node": "RENDER_4KB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RENDER_4KB": {
+      "main": [
+        [
+          {
+            "node": "SEND (Telegram)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEND (Telegram)": {
+      "main": [
+        [
+          {
+            "node": "VERIFY_CHAIN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ONCE": {
+      "main": [
+        [
+          {
+            "node": "READ_RECEIPTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": null
+  },
+  "staticData": null,
+  "meta": {
+    "instanceId": "ATTACH_AT_IMPORT",
+    "templateCredsSetupCompleted": false,
+    "courserefresh": {
+      "generated_by": "app/tools/make_n8n_exports.py",
+      "policy_node_sha256": "1885efcb791872c4f5a2ace13af2fb87914868c5a5e7d441617785d6b59eaad4",
+      "notes": "A broken chain is louder than a missing message: DIGEST FAILED, exit 1."
+    }
+  },
+  "tags": [
+    {
+      "name": "courserefresh"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1885efcb",
+  "active": false
+}
