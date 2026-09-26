@@ -341,8 +341,14 @@ Status of every panel condition is in `specs/reviews/07` — the rows below are 
 - **Replay merge replaces a fixture event with the same `event_id`** (an append-only guard silently
   drops replays), and `apply_patch` requires `event["parent"]`.
 - **Course tree**: HEAD carries the hero run's written versions (`lesson-03/v2`, `lesson-04/v4,v5`); that
-  is the delivered state. `reset_course.py` deliberately diffs against it — so the restore after any
-  local loop run is `python3 app/tools/reset_course.py >/dev/null; git checkout -- course/`.
+  is the delivered state. `reset_course.py` deliberately diffs against it, and a fresh hero run writes
+  *new* version files that are untracked — so the full restore after any local loop run is:
+
+  ```bash
+  python3 app/tools/reset_course.py >/dev/null; git checkout -- course/; git clean -f course/
+  ```
+
+  (`git clean -f` there removes only the loop's new `v*.md` / `diffs/v*.diff`; `.baseline/` is tracked.)
 
 ## 8. Where everything lives
 
