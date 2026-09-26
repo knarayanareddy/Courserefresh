@@ -775,6 +775,44 @@ check("no discovery snippet ever becomes a receipt's quote (a search hit is not 
 
 live.rebase(SANDBOX)
 
+# Regression (review C5): the tavily branch of notice() used to read the apify loop's
+# `normalised` when writing scan-state `accepted`. Tavily scanned before any successful apify
+# run → UnboundLocalError and the whole cycle dies at notice; tavily after → the stale count of
+# whichever apify source came before it. Both faces are order-dependent, so the regression runs
+# the discovery source FIRST over a fresh tree — offline, dry, no keys.
+c5_root = SANDBOX / "c5-order-root"
+if c5_root.exists():
+    shutil.rmtree(c5_root)
+live.rebase(c5_root)
+original_order = [s for s in json.loads(
+    (ROOT / "specs" / "courserefresh" / "skin" / "sources.json").read_text())["sources"]]
+live.SOURCES["sources"] = (
+    [s for s in original_order if s.get("fetch", {}).get("kind") == "tavily"] +
+    [s for s in original_order if s.get("fetch", {}).get("kind") != "tavily"])
+try:
+    c5_notice = live.notice(Config({"CR_MODE": "sim"}), live.tree_for("sim"), True, apify_lib.UnitLedger(
+        live.STATE / "apify_units.jsonl", 25, 1))
+    c5_accepted = c5_notice["scan_state"].get("tavily-discovery", {}).get("accepted")
+    check("tavily scanned first still records its own accepted-leads count (no UnboundLocalError)",
+          c5_accepted == len(json.loads(
+              (ROOT / "app" / "fixtures" / "tavily" / "search.json").read_text())["results"]) - 1,
+          f"accepted={c5_accepted}")
+except UnboundLocalError as exc:
+    check("tavily scanned first still records its own accepted-leads count (no UnboundLocalError)",
+          False, f"regressed: UnboundLocalError: {exc}")
+live.SOURCES["sources"] = original_order          # the stale-value face: tavily after healthy apify
+try:
+    c5_late = live.notice(Config({"CR_MODE": "sim"}), live.tree_for("sim"), True, apify_lib.UnitLedger(
+        live.STATE / "apify_units.jsonl", 25, 1))
+    c5_late_accepted = c5_late["scan_state"].get("tavily-discovery", {}).get("accepted")
+    check("tavily scanned last reports its own count too, never the previous apify source's",
+          c5_late_accepted == 3,
+          f"accepted={c5_late_accepted} (fixture: 4 hits, one off-allowlist)")
+except UnboundLocalError as exc:
+    check("tavily scanned last reports its own count too, never the previous apify source's",
+          False, f"regressed: UnboundLocalError: {exc}")
+live.rebase(SANDBOX)
+
 check("a discovery-only claim can never satisfy the two-independent-source rule",
       policy_lib.independent_publishers([{"publisher": "tavily", "role": "discovery"}] * 3) == 0
       and policy_lib.independent_publishers([{"publisher": "n8n", "role": "authoritative"},

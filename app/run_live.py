@@ -261,9 +261,12 @@ def notice(cfg: Config, tree: "twin.Tree", dry_run: bool, ledger: apify_lib.Unit
             sources_scanned += 1
             leads.extend(result["items"])
             hosts_refused.extend(result.get("excluded_hosts", []))
+            # `accepted` counts leads kept after the allowlist filter — never a read of the apify
+            # loop's `normalised`, which is unbound when tavily runs first (crash) and stale when
+            # it runs after an apify source (wrong count). Regression: test_live_modules.py §11.
             state[source["source_id"]] = {
                 "last_scan_epoch": time.time(), "last_scan": now(),
-                "rows": len(result["items"]), "accepted": len(normalised["snapshots"]),
+                "rows": len(result["items"]), "accepted": len(result["items"]),
                 "credits": result.get("credits"),
                 "spent_today": credits.spent_today(),
                 "excluded_hosts": result.get("excluded_hosts", []),
