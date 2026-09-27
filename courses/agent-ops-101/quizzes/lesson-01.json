@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-01",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-01-a",
+      "concept": "agent-ops",
+      "prompt": "A system scans vendor release notes at night, judges on its own evidence whether your course lesson is now wrong, and decides to rewrite it. Compared with a cron job that runs a script you wrote, the new quality is:",
+      "options": [
+        "It runs on a schedule without a human pressing a button",
+        "It uses a language model somewhere in the pipeline",
+        "It can send messages without a human drafting them",
+        "It chooses its own next action from evidence it gathered itself"
+      ],
+      "answer": 3,
+      "explanation": "The lectures' test is 'who initiates the action': scheduled scripts do exactly what they were told when told; the described system decides, unprompted, what to do next. Model usage and messaging are incidental — choosing is the defining property. (obj-01-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-01-b",
+      "concept": "loop-anatomy",
+      "prompt": "Put the six loop phases in the order the course defines them:",
+      "options": [
+        "notice → verify → decide → act → learn → report",
+        "verify → notice → act → decide → report → learn",
+        "decide → act → notice → verify → learn → report",
+        "notice → decide → verify → act → learn → report"
+      ],
+      "answer": 0,
+      "explanation": "Evidence before verdict: notice fetches and hashes, verify checks corroboration, decide applies rules to verified inputs, act writes the versioned artifact, learn watches outcomes and gates, report testifies. (obj-01-b)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-01-b",
+      "concept": "loop-anatomy",
+      "prompt": "For each loop phase, what artifact does the ACT phase leave?",
+      "options": [
+        "A hashed snapshot of what was fetched",
+        "A new versioned artifact plus its diff (and a notification to consenting humans)",
+        "An anchored verbatim quote",
+        "The morning digest"
+      ],
+      "answer": 1,
+      "explanation": "NOTICE leaves snapshots, VERIFY leaves anchored quotes, ACT leaves the version + diff (+ cards), REPORT leaves the digest. Phase-to-artifact mapping is the anatomy lecture's core table. (obj-01-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-01-c",
+      "concept": "agent-ops",
+      "prompt": "The operator's core question for any autonomous system, the one this course builds its entire accountability apparatus to answer, is:",
+      "options": [
+        "How much does it cost per run?",
+        "Which model does it use for decisions?",
+        "What did it do while nobody was watching?",
+        "Is the system working correctly right now?"
+      ],
+      "answer": 2,
+      "explanation": "'Is it working' can be true of a system busily doing the wrong thing; the Monday question demands an itemised, checkable account of every decision and action — receipts, chains, digests exist to answer it with a document. (obj-01-c)"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-22",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-22-a",
+      "concept": "digest",
+      "prompt": "What is the digest's byte budget, and whataudits it?",
+      "options": [
+        "16 KB, audited by the ledger",
+        "≤ 4,096 bytes — the digest prints its own size against the cap, and the budget is contract-tested",
+        "8 KB, audited by the operator",
+        "No cap — the digest is as long as the night was"
+      ],
+      "answer": 1,
+      "explanation": "The document audits its own budget: 3,412/4,096 in the discipline strip, and the cap is tested so a growing digest cannot quietly learn to summarise away its refusals. (obj-22-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-22-a",
+      "concept": "digest",
+      "prompt": "Why do REFUSALS come first in the digest?",
+      "options": [
+        "Alphabetical order",
+        "Because refusals are shorter",
+        "Refusals generate more receipts",
+        "Because the operator with two minutes reads only section one — and an operator who reads only refusals still knows whether any safety boundary was approached; leading with successes buries the signal"
+      ],
+      "answer": 3,
+      "explanation": "Refusals-first is a SAFETY property — the first scroll is the audit; it is contract-tested, not a style choice. (obj-22-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-22-b",
+      "concept": "discipline-strip",
+      "prompt": "From a digest header 'mode: sim · cadence: 63 min (measured)', what does the operator know?",
+      "options": [
+        "The run used live fetches and exact timing",
+        "Mechanisms were exercised against fixtures (sim), and the observed interval was 63 minutes against a configured 60 — labels and measured jitter, both honesty devices",
+        "The chain verified",
+        "The system is within budget"
+      ],
+      "answer": 1,
+      "explanation": "The mode label says which questions the numbers can answer; the measured cadence carries jitter — the earliest symptom of a struggling loop. (obj-22-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-22-b",
+      "concept": "discipline-strip",
+      "prompt": "Which discipline-strip entry enumerates what the run could NOT measure?",
+      "options": [
+        "digest size",
+        "the unmeasured list — every unmeasured quantity named with its n; the digest's confession posture and its most trustworthy feature",
+        "receipt coverage",
+        "chain ✓ n rows"
+      ],
+      "answer": 1,
+      "explanation": "A system that never says unmeasured is either omniscient or lying: the list makes ignorance an artifact. (obj-22-b)"
+    }
+  ]
+}

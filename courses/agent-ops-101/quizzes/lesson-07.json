@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-07",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-07-a",
+      "concept": "policy-node",
+      "prompt": "Where does the course put the DECISION of an autonomous system?",
+      "options": [
+        "In a human approval queue for every action",
+        "In the LLM with the best benchmark scores",
+        "In the workflow's trigger configuration",
+        "In a Code node: ordered rules over the model's closed-question answers — no model call inside the decision path"
+      ],
+      "answer": 3,
+      "explanation": "'Models propose, code disposes': the judge answers closed questions; the policy block compares answers to thresholds deterministically. (obj-07-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-07-a",
+      "concept": "policy-node",
+      "prompt": "In the policy skeleton, why does the input-validation guard return ESCALATE with reason `unknown_state` when required keys are missing?",
+      "options": [
+        "Because n8n requires every input to be a string",
+        "Unknown state fails CLOSED — escalate rather than guess; the same posture as Lecture 04's stop conditions, applied to plumbing",
+        "To keep the execution log small",
+        "To retry with a simpler prompt"
+      ],
+      "answer": 1,
+      "explanation": "Fail-closed is the rule: a decision input you cannot fully read is a stop condition, not an interpolation opportunity. (obj-07-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-07-b",
+      "concept": "determinism",
+      "prompt": "Which output style is a contract violation from a policy node?",
+      "options": [
+        "{action: 'PUBLISH', reason_codes: ['corroborated_change']}",
+        "{action: 'maybe-publish', note: 'looks reasonable'}",
+        "{action: 'ESCALATE', reason_codes: ['injection_or_jailbreak']}",
+        "{action: 'NO_CHANGE', reason_codes: ['below_materiality']}"
+      ],
+      "answer": 1,
+      "explanation": "Actions are a closed enum (PUBLISH/ESCALATE/NO_CHANGE/DISPATCH/REVERT) and reasons come from a published taxonomy. 'maybe-publish' forces downstream nodes to match on prose — matching vibes. (obj-07-a)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-07-b",
+      "concept": "determinism",
+      "prompt": "Why is 'let the LLM look at the judge scores and pick the action' rejected outright?",
+      "options": [
+        "n8n does not allow model calls after Code nodes",
+        "A model-made decision is a draw from a distribution: untestable, unreproducible in post-mortem, silently different after vendor updates — the whole accountability architecture presupposes deterministic decisions",
+        "It costs more tokens",
+        "Models are not good at choosing actions"
+      ],
+      "answer": 1,
+      "explanation": "Receipts, parity, gates — every artifact the course ships is only meaningful because the decision is a pure function of its inputs. (obj-07-b)"
+    }
+  ]
+}

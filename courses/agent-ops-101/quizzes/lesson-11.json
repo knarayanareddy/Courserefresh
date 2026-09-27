@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-11",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-11-a",
+      "concept": "pinning",
+      "prompt": "Why is `build: latest` forbidden in production?",
+      "options": [
+        "Latest builds are experimental by definition",
+        "The store's latest moves when the actor's author ships — output shapes change under you and your transforms throw at 03:02 every hour",
+        "It costs more",
+        "It disables proxy rotation"
+      ],
+      "answer": 1,
+      "explanation": "The pin is reproducibility: the build your transforms and tests expect is a specific one; `latest` is a floating dependency for your evidence pipeline. (obj-11-b)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-11-a",
+      "concept": "pinning",
+      "prompt": "Where does the pin's provenance live in the source config?",
+      "options": [
+        "It is not recorded",
+        "Beside the build number: buildVerified date and buildSource — the pin is itself an audited fact",
+        "In a comment only",
+        "In the actor's readme"
+      ],
+      "answer": 1,
+      "explanation": "A pinned number without provenance is a frozen guess: the config records what build, verified when, from what source. (obj-11-b)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-11-b",
+      "concept": "run-to-finish",
+      "prompt": "Your notice block uses wait-for-run-to-finish with a 120-second timeout; the actor is slow (30–120s). What happens on a run that exceeds the bound?",
+      "options": [
+        "The dataset is fetched anyway",
+        "A fetch_failed error receipt, a staged digest line, and the schedule retries next hour — the wait is bounded and the failure is loud",
+        "The workflow hangs until the actor finishes eventually",
+        "n8n silently continues with partial data"
+      ],
+      "answer": 1,
+      "explanation": "Bounded waiting is part of the call contract: degrade loudly, never hang, never silently partial. (obj-11-a)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-11-b",
+      "concept": "run-to-finish",
+      "prompt": "Datasets page at 1,000 items. Your crawl outgrew one page and your code only fetched page one. What does the receipt's rows-assertion catch?",
+      "options": [
+        "The budget overrun only",
+        "The hash mismatch",
+        "Nothing — paging is transparent",
+        "The total: 'rows: 417 of 2,417' — silent data loss is made countable, so 'we saw everything we asked for' is checkable"
+      ],
+      "answer": 3,
+      "explanation": "The unhandled page boundary manifests as missing rows that dedupe makes look like no_delta; the asserted total makes the loss visible and accountable. (obj-11-a)"
+    }
+  ]
+}

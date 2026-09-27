@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-24",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-24-a",
+      "concept": "capstone",
+      "prompt": "Your friend proposes 'the Rust language' as a capstone subject. Which filter does it most likely fail, and why?",
+      "options": [
+        "Two voices structurally — the spec, the compiler's release log, and the book are all one publisher (the Rust project); finding a genuinely independent second voice outside that org chart is the hard part",
+        "Does it move — Rust rarely changes",
+        "None — Rust is an excellent subject",
+        "Public and fetchable — Rust docs are paywalled"
+      ],
+      "answer": 0,
+      "explanation": "The two-voices filter is about structural independence: many excellent subjects have one authoritative ecosystem whose every artifact shares a publisher. The source plan must find the voice OUTSIDE. (obj-24-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-24-b",
+      "concept": "full-loop",
+      "prompt": "The pre-registration habit applied to the capstone means:",
+      "options": [
+        "Pre-register the model you will use",
+        "Write and publish the SOURCE-PLAN before building: sources, publishers, groups, roles, cadence — including the URL pair that LOOKS independent but isn't",
+        "Publish the code before writing it",
+        "Register the project with the course admin"
+      ],
+      "answer": 1,
+      "explanation": "The plan-before-build discipline, inherited from the sciences and the running repo, is what makes your mirror trap honest — it comes from your own published plan. (obj-24-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-24-b",
+      "concept": "full-loop",
+      "prompt": "Why assemble the loop in the order notice→verify, then decide, then act→learn, then report→eval→degrade?",
+      "options": [
+        "It is the cheapest sequence",
+        "Verification is the hardest part",
+        "It matches the lecture numbering",
+        "Failure-order: each step's artifacts make the next debuggable — a heartbeat of visible no_delta rows before any decision, parity-green rules before any real publish, receipts before digests"
+      ],
+      "answer": 3,
+      "explanation": "The build order is earned failure-order — you want the loop's heartbeat visible and the rules proven before the first versioned write. (obj-24-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-24-c",
+      "concept": "subject-choice",
+      "prompt": "The judge endpoint goes down mid-capstone. What is the correct degraded behaviour?",
+      "options": [
+        "Pause the whole system until the judge returns",
+        "Let the policy decide without judge answers",
+        "Fail CLOSED — escalate unknown_state, publish nothing: a fallback judge with different calibration turns your thresholds into folklore; the world survives an hour of no publishes",
+        "Switch to a smaller backup model so the loop keeps working"
+      ],
+      "answer": 2,
+      "explanation": "The judge is a measurement instrument; swapping instruments mid-run invalidates the measurements. Fail closed and label it degraded. (obj-24-c)"
+    }
+  ]
+}

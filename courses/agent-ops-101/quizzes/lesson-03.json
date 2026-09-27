@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-03",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-03-a",
+      "concept": "loop-anatomy",
+      "prompt": "Which component implements the NOTICE phase in the running case study?",
+      "options": [
+        "The Telegram node",
+        "The digest workflow",
+        "Pinned Apify actors fetching each source on a schedule, plus a normalize+dedupe pass",
+        "The POLICY Code node"
+      ],
+      "answer": 2,
+      "explanation": "Actors fetch the world on schedules; normalize hashes and validates required fields; dedupe checks seen.json. The policy decides, telegram notifies, the digest reports — different phases, different components. (obj-03-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-03-a",
+      "concept": "loop-anatomy",
+      "prompt": "Match the artifact: what does the LEARN phase write when a publish's outcome is being watched?",
+      "options": [
+        "The lesson diff",
+        "Gate states (open/satisfied/unmeasured) and micro-lesson dispatch receipts",
+        "A hashed snapshot",
+        "The webhook payload"
+      ],
+      "answer": 1,
+      "explanation": "LEARN evaluates revert gates on the 15-minute schedule and dispatches micro-lessons for stuck learners; its artifacts are gate states and dispatch receipts. Snapshots belong to NOTICE, diffs to ACT. (obj-03-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-03-b",
+      "concept": "components",
+      "prompt": "In the end-to-end trace, which single fact made the npm package page decisive for the publish?",
+      "options": [
+        "It provided the second independent publisher voice — releases and docs are one vendor (n8n)",
+        "Its snapshot had the largest hash",
+        "It was fetched most recently",
+        "Its crawl was the fastest"
+      ],
+      "answer": 0,
+      "explanation": "Independence is counted in publisher voices, not URLs: n8n's release notes and docs are one voice (one org); the npm package page is the second voice that satisfies the two-voices rule. (obj-03-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-03-b",
+      "concept": "components",
+      "prompt": "During the traced publish, where was the gate for the new version recorded?",
+      "options": [
+        "Inside the publish receipt's inputs, at publish time — before any learner interaction",
+        "In the Telegram card sent to learners",
+        "In the system's current state, readable by the learn workflow",
+        "In the actor's dataset"
+      ],
+      "answer": 0,
+      "explanation": "The gate is pre-registered inside the publish receipt: written before data arrives, immune to post-hoc rationalisation, quotable by the revert receipt that later fires. (obj-03-b)"
+    }
+  ]
+}

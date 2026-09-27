@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-08",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-08-a",
+      "concept": "error-workflows",
+      "prompt": "What does an n8n error workflow receive when a sibling workflow throws?",
+      "options": [
+        "An email template",
+        "A structured payload: failing workflow and execution id, the failing node's name/type, the error message, and the item being processed",
+        "Nothing — it must poll for failures",
+        "Only the workflow name"
+      ],
+      "answer": 1,
+      "explanation": "The errorTrigger payload carries everything needed to build an evidence-grade failure record — including the input item, which for parse failures IS the bug report. (obj-08-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-08-a",
+      "concept": "error-workflows",
+      "prompt": "The course's invariant 'a crash is never silence' is implemented as:",
+      "options": [
+        "A Slack alerting integration",
+        "Retrying failed workflows automatically",
+        "Error workflow → error receipt (hash-chained like every receipt) + a pre-staged digest line listing the failure among refusals",
+        "A cron job that checks workflow health daily"
+      ],
+      "answer": 2,
+      "explanation": "Errors are not second-class events: the same chain, the same digest citizenship, refusals-first. A 04:10 failure and a productive night leave equally checkable records. (obj-08-b)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-08-b",
+      "concept": "degradation",
+      "prompt": "The judge endpoint is down, so the offline twin (same rules, parity-tested) decides the night's events. What must appear everywhere the twin's decisions are shown?",
+      "options": [
+        "Nothing — the twin is equivalent, so no label is needed",
+        "A warning that results may be inaccurate",
+        "The label OFFLINE TWIN — the runtime that decided is named, so the reader knows what they are trusting",
+        "A pause-the-world flag"
+      ],
+      "answer": 2,
+      "explanation": "Degradation is labelled everywhere it appears: a degraded mode presented as healthy is a lie with uptime. The parity tests are what make the labelled twin trustworthy. (obj-08-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-08-b",
+      "concept": "degradation",
+      "prompt": "When is it acceptable for a lab system to present fixture data as live?",
+      "options": [
+        "Never — fixtures are labelled SIM (mode on the run header, receipt, digest); a fixture presented as live is evidence fraud",
+        "When the fixtures were built from real pages",
+        "When the audience is technical",
+        "When the live source is temporarily down"
+      ],
+      "answer": 0,
+      "explanation": "The mode label exists precisely so that sentence cannot be written by accident: honesty about origin is the difference between a demo and a deception. (obj-08-b)"
+    }
+  ]
+}

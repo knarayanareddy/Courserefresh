@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-18",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-18-a",
+      "concept": "revert-gate",
+      "prompt": "The four fields of a gate, as written at publish time, are:",
+      "options": [
+        "metric, condition, n_min (cohort floor), window_h (deadline)",
+        "branch, repo, token, chat",
+        "action, actor, timestamp, reason",
+        "model, prompt, temperature, budget"
+      ],
+      "answer": 0,
+      "explanation": "What gets measured, the firing condition, the cohort floor that keeps small-n noise from acting, and the time box. (obj-18-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-18-a",
+      "concept": "revert-gate",
+      "prompt": "Why is the gate recorded INSIDE the publish receipt rather than in the system's mutable state?",
+      "options": [
+        "State stores are expensive",
+        "Receipts are faster to read",
+        "The digest requires it",
+        "A gate that lives only in current state can be edited to match the outcome it wants; the recorded gate is pre-registered before any learner data exists — a promise immune to post-hoc rationalisation"
+      ],
+      "answer": 3,
+      "explanation": "Publishing means promising to undo; the promise must be unfalsifiable-by-the-system itself — hence recorded at publish time in the chain. (obj-18-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-18-b",
+      "concept": "falsification",
+      "prompt": "A gate window elapses with n=3 (n_min 5). What does the digest print?",
+      "options": [
+        "'UNMEASURED (n=3, required 5)' — no revert claim, no harm claim; the honest sentence is 'we could not tell whether the change helped'",
+        "Nothing; the gate waits another 48h",
+        "Gate satisfied — reverting",
+        "Gate failed — escalate to author"
+      ],
+      "answer": 0,
+      "explanation": "Unmeasured is a state with obligations: print it with its n, make no claim either way — small-n arithmetic is noise, and the system refuses to launder it into evidence. (obj-18-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-18-b",
+      "concept": "falsification",
+      "prompt": "In what sense is a revert 'a new version'?",
+      "options": [
+        "The old version is deleted and the prior restored by rename",
+        "The git history is rolled back",
+        "It is logged as a NO_CHANGE",
+        "It is recorded as v(N+1) whose content restores the prior version, with its own receipt, diff, and cohort notification — history appends the correction, never rewrites"
+      ],
+      "answer": 3,
+      "explanation": "The revert must itself be arguable: receipt quoting the recorded gate, diff of the restoration, notification to the same cohort. Deleting v4 would break the chain and abandon learners in a version that no longer exists. (obj-18-b)"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-15",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-15-a",
+      "concept": "policy-node",
+      "prompt": "Order the reasons: why does the injection rule R1 come FIRST?",
+      "options": [
+        "It is the cheapest check",
+        "It is the oldest rule",
+        "Alphabetical ordering",
+        "A hostile page cannot be rescued by good corroboration later in the list; suspicion is raised, never lowered — safety outranks evidence quality"
+      ],
+      "answer": 3,
+      "explanation": "First-match-wins means order is semantics: safety first, then evidence sufficiency, then economy — a well-corroborated hostile page is still a hostile page. (obj-15-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-15-a",
+      "concept": "policy-node",
+      "prompt": "Input: injection 0.02, sources_verified 2, conflict true, materiality material_breaking. What fires?",
+      "options": [
+        "R6 NO_CHANGE",
+        "R3 ESCALATE [source_conflict] — conflict is checked BEFORE the publish default; two good voices disagreeing needs a human",
+        "R8 PUBLISH — the change is well corroborated and material",
+        "R4 assessment_integrity"
+      ],
+      "answer": 1,
+      "explanation": "Walk the rules in order: R1 no (0.02 < 0.5), R2 no (2 voices), R3 FIRES. The publish default never runs. (obj-15-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-15-b",
+      "concept": "parity",
+      "prompt": "What does PARITY testing prove about the canvas?",
+      "options": [
+        "That the canvas is faster than Python",
+        "That the two implementations are basically similar",
+        "That the JavaScript rules on the canvas and the Python oracle produce bit-for-bit identical actions and reason codes on every gold row — the canvas is provably the decision maker, and the offline twin is not a mock",
+        "That Python is the production runtime"
+      ],
+      "answer": 2,
+      "explanation": "'Basically the same' is where incidents live: zero disagreements is the floor, and it is what lets a receipt carry canvas.execution_id and be believed. (obj-15-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-15-b",
+      "concept": "parity",
+      "prompt": "Adding a new policy rule requires, in order:",
+      "options": [
+        "Add the rule to BOTH runtime mirrors, add gold rows exercising it, run the parity test, release — four steps, no exceptions",
+        "Add it to the JS side; mirror it next sprint",
+        "Disable the old rules and A/B test",
+        "Ship it; add tests if time permits"
+      ],
+      "answer": 0,
+      "explanation": "The discipline is the same for thresholds and rules: both mirrors, coverage rows, parity green, then release — the receipt history shows the discipline held. (obj-15-b)"
+    }
+  ]
+}

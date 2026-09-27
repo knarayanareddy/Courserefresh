@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-23",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-23-a",
+      "concept": "units",
+      "prompt": "The three currencies a run is booked in are:",
+      "options": [
+        "API calls, webhooks, executions",
+        "dollars, euros, credits",
+        "tokens, actor units, money — with money `unmeasured` until prices are captured into a config, never guessed",
+        "CPU, memory, network"
+      ],
+      "answer": 2,
+      "explanation": "Booking all three with declared approximations; unmeasured is a respectable value for the money column until a captured price table upgrades it. (obj-23-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-23-a",
+      "concept": "units",
+      "prompt": "When is a ledger row written?",
+      "options": [
+        "Once per run, as a total",
+        "At nightly reconciliation, building the digest",
+        "At SPEND time, append-only — the spend-to-book window is where overruns hide, and the budget rule reads the ledger, never a cached counter",
+        "Whenever the policy asks"
+      ],
+      "answer": 2,
+      "explanation": "Append at spend time; a counter can drift from reality, the ledger IS the reality. (obj-23-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-23-b",
+      "concept": "token-ledger",
+      "prompt": "Why is '1 actor run = 1 unit' printed on receipts?",
+      "options": [
+        "To simplify the digest",
+        "To Apify's legal requirement",
+        "Because it is a DECLARED approximation (units_source) — real per-actor pricing varies; when the approximation misleads, you upgrade the unit definition with a visible change",
+        "Because it is exact"
+      ],
+      "answer": 2,
+      "explanation": "Approximations are declared at the unit, not discovered at the total — the receipt tells you which accounting world you are reading. (obj-23-a)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-23-b",
+      "concept": "token-ledger",
+      "prompt": "A budget cap fires mid-run at 03:00. What lands in the morning digest?",
+      "options": [
+        "A request to raise the cap automatically",
+        "Nothing — the run stopped; silence is correct",
+        "A stack trace",
+        "An over_budget refusal line WITH the numbers and the coverage cost ('2 sources skipped pending approval') — escalation, not shutdown; coverage stays visible so the world doesn't quietly shrink"
+      ],
+      "answer": 3,
+      "explanation": "The cap gates the DECISION to spend and escalates with evidence: a budget that silently swallows work is a drift amplifier. (obj-23-b)"
+    }
+  ]
+}

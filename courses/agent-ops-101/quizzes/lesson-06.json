@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-06",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-06-a",
+      "concept": "triggers",
+      "prompt": "Your scan must hand claims to a triage workflow the moment they are deduped. Which trigger is the right shape?",
+      "options": [
+        "A webhook trigger on the triage workflow that the scan POSTs to",
+        "A schedule trigger polling triage every minute",
+        "An error trigger on the scan",
+        "A manual trigger"
+      ],
+      "answer": 0,
+      "explanation": "System-to-system handoff is the webhook's job: on-demand, authenticated, idempotent. Polling is a schedule pretending to be a webhook. (obj-06-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-06-a",
+      "concept": "triggers",
+      "prompt": "Why is dedupe keyed on a content hash rather than a timestamp?",
+      "options": [
+        "A timestamp trusts the publisher's clock; the hash answers whether the EVIDENCE changed — catching both silent re-serves and bumped-timestamp-no-change traps",
+        "Hashes work offline",
+        "Timestamps require a database",
+        "Hashes are shorter"
+      ],
+      "answer": 0,
+      "explanation": "The hash of canonical bytes is the ground truth of change: identical content with a fresh timestamp correctly no-deltas; different content under an unchanged timestamp correctly notices. (obj-06-b)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-06-b",
+      "concept": "idempotence",
+      "prompt": "What artifact does a scan leave for a source whose content has NOT changed?",
+      "options": [
+        "Nothing — silence is correct for no change",
+        "An error receipt",
+        "A digest line",
+        "A no_delta row in the run log (and the hash recorded in seen.json) — proof the scan ran and noticed nothing"
+      ],
+      "answer": 3,
+      "explanation": "'Checked and quiet' must be distinguishable from 'never checked': the no_delta row is the heartbeat made visible. (obj-06-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-06-b",
+      "concept": "idempotence",
+      "prompt": "Your teammate proposes scanning every 15 minutes 'to be safe' (from 60). What is the honest first response?",
+      "options": [
+        "Produce the cadence arithmetic: doubling frequency doubles the dominant budget line; compare against the subject's real change cadence before deciding",
+        "Agree — freshness is always better",
+        "Ask the model provider for advice",
+        "Refuse — 60 minutes is a constitutional constant"
+      ],
+      "answer": 0,
+      "explanation": "The cadence IS the budget: the correct response to 'faster' is the units table plus the subject's actual release cadence — reasoning, not enthusiasm. (obj-06-b)"
+    }
+  ]
+}

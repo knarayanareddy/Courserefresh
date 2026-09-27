@@ -38,6 +38,21 @@ import tavily as tavily_lib  # noqa: E402
 import telemetry as telemetry_lib  # noqa: E402
 from config import Config  # noqa: E402
 
+
+class Config(Config):  # noqa: F811 — deliberate shadow: every test-built Config is hermetic
+    """Hermetic Config: never reads the machine's real .env or shell (review-class: a test that
+    passes only on a machine with empty credentials is not a test of the product).
+
+    The repo's real .env carries live APIFY_TOKEN/JUDGE keys and CR_NOTIFY_CHANNEL=telegram
+    for the unattended engine; tests reading it would (a) mis-decide mode(), and worse
+    (b) hand a live Telegram token to a channel test that expects "not configured".
+    Resolution order is unchanged: explicit env > (empty) shell > defaults.
+    """
+
+    def __init__(self, env=None, env_file=None, environ=None):
+        # env_file explicitly passed by a test keeps pointing at that test's file
+        super().__init__(env=env, env_file=env_file, environ=environ or {})
+
 spec = importlib.util.spec_from_file_location("live", ROOT / "app" / "run_live.py")
 live = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(live)
@@ -174,14 +189,15 @@ updated = n8n_client.upsert_workflow(workflow_doc)
 check("an existing workflow is updated in place, not duplicated",
       updated["ok"] and updated["created"] is False and updated["id"] == "wf-1", str(updated))
 
-# import: idempotent, and the error workflow is attached to the other five
+# import: idempotent, and the error workflow is attached to the other six
 import_state = {"created": [], "patched": [], "updated": []}
 
 
 def import_listing(body):
     return 200, {"data": [{"id": f"wf-{i}", "name": name} for i, name in
                           enumerate(["wf-cr-0-scan", "wf-cr-1-triage", "wf-cr-2-act", "wf-cr-3-learn",
-                                     "wf-cr-4-digest", "CR-9 · errors → receipt"])]}
+                                     "wf-cr-4-digest", "CR Showcase — the whole loop on one canvas",
+                                     "CR-9 · errors → receipt"])]}
 
 
 def import_create(body):
@@ -211,17 +227,17 @@ import_client = n8n_lib.N8nClient("https://n8n.example", "key", transport=import
 ids_path = SANDBOX / "n8n-ids.json"
 first = import_client.import_exports(ROOT / "app" / "n8n", ids_path)
 check("importing the exports updates in place instead of duplicating, and records the ids",
-      first["ok"] and len(first["ids"]) == 6 and not import_state["created"]
+      first["ok"] and len(first["ids"]) == 7 and not import_state["created"]
       and json.loads(ids_path.read_text())["instance_version"] == "1.64.0",
       f"created={import_state['created']} ids={len(first['ids'])}")
 # n8n Cloud accepts settings only via PUT (PATCH is 405), so the attach is a full-body PUT whose
 # settings carry the error workflow id — assert on what would actually be sent to the instance
 attached = [p for p in import_state["updated"] if (p.get("settings") or {}).get("errorWorkflow") ==
             first["ids"].get("CR-9 · errors → receipt")]
-check("the error workflow is attached to the other five at import time",
-      len(attached) == 5, f"attached={len(attached)}")
+check("the error workflow is attached to the other six at import time",
+      len(attached) == 6, f"attached={len(attached)}")
 second = import_client.import_exports(ROOT / "app" / "n8n", ids_path)
-check("a second import is a no-op for identity: still six workflows, still no duplicates",
+check("a second import is a no-op for identity: still seven workflows, still no duplicates",
       second["ok"] and not import_state["created"], f"created={import_state['created']}")
 
 canvas = live.canvas_decide(Config({"N8N_BASE_URL": "https://n8n.example", "N8N_API_KEY": "key"}),

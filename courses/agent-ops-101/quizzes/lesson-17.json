@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-17",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-17-a",
+      "concept": "tool-permissions",
+      "prompt": "An agent may call http_request, but its parameters restrict hosts to {docs.n8n.io, docs.apify.com}. A model-driven step follows a redirect to metrics.example. What happens?",
+      "options": [
+        "The fetch proceeds; redirects are normal web behaviour",
+        "The runtime REFUSES — host scoping means a bounce to an unlisted host is a refusal, not a fetch",
+        "The fetch proceeds and logs a warning",
+        "The workflow retries on the original host"
+      ],
+      "answer": 1,
+      "explanation": "Host scoping closes exfiltration's favorite shape ('it just followed a redirect'): the credential proves YOU are allowed, the allowlist decides whether the DESTINATION is. (obj-17-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-17-a",
+      "concept": "tool-permissions",
+      "prompt": "Which grant belongs in an allowlist for the case-study agent?",
+      "options": [
+        "credential READ access so the agent can rotate keys",
+        "github → one repo, one branch (bot/courserefresh); telegram → one chat, one templated card",
+        "all tools, read-write, for flexibility",
+        "filesystem-wide writes"
+      ],
+      "answer": 1,
+      "explanation": "One tool per job, scoped to the narrowest parameters that work; the credential crate and the exec crate stay locked. (obj-17-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-17-b",
+      "concept": "human-exit",
+      "prompt": "The self-test for any permission block is the sentence:",
+      "options": [
+        "'The audit log will catch problems.'",
+        "'Here is where it refuses.' — if you cannot point at the refusing line, you have a draft, not least privilege",
+        "'It would never do anything harmful.'",
+        "'The model was instructed to be careful.'"
+      ],
+      "answer": 1,
+      "explanation": "A pointed-at refusal line per dangerous sequence is the lab's grading criterion, and the same sentence a security judge asks for. (obj-17-a)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-17-b",
+      "concept": "human-exit",
+      "prompt": "Why is MISSING CONSENT listed among stop conditions alongside assessment-touched and out-of-scope tools?",
+      "options": [
+        "Because messages cost money",
+        "Consent is a permission on PEOPLE — the symmetric twin of the tool allowlist: no consent row → no storage, no contact, refusal receipted (consent_missing) so the wall's hold is auditable",
+        "Because Telegram requires it",
+        "Because consent speeds up delivery"
+      ],
+      "answer": 1,
+      "explanation": "The permission model governs two domains: what the agent may touch (tools) and whom it may touch (people). Both fail closed, both are receipted. (obj-17-b)"
+    }
+  ]
+}

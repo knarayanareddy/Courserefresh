@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-05",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-05-a",
+      "concept": "n8n",
+      "prompt": "In n8n, what flows between two connected nodes?",
+      "options": [
+        "An array of items, each a JSON object — most nodes run once per item by default",
+        "A stream of raw HTTP responses",
+        "Only credentials, never data",
+        "A single JSON object"
+      ],
+      "answer": 0,
+      "explanation": "Items are the unit of dataflow; the per-item default execution is the fan-out that surprises everyone with N expensive-node calls for N items. (obj-05-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-05-a",
+      "concept": "n8n",
+      "prompt": "Why do workflow exports never contain credentials?",
+      "options": [
+        "They do, but base64-encoded",
+        "Credentials live encrypted in a separate store and are referenced by name — the canvas and the key store are deliberately separated",
+        "Credentials only exist on the n8n cloud plan",
+        "n8n strips them for size reasons"
+      ],
+      "answer": 1,
+      "explanation": "The separation is a safety property: exports can be shared, versioned and committed while secrets stay in the encrypted store. (obj-05-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-05-b",
+      "concept": "items",
+      "prompt": "Reading an execution as an operator, what is the most efficient way to locate the incident?",
+      "options": [
+        "Check the workflow's active toggle",
+        "Re-run the workflow and watch live",
+        "Walk the canvas in data-flow order and find the FIRST node whose output diverges from what you expected",
+        "Read every node's output top-to-bottom until something looks odd"
+      ],
+      "answer": 2,
+      "explanation": "The divergence-hunt is the operator's core skill: the first node whose emitted items surprise you is the phase where the loop misbehaved. (obj-05-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-05-b",
+      "concept": "items",
+      "prompt": "What makes an n8n execution 'auditable by default'?",
+      "options": [
+        "Every run records status, timing and per-node input/output data — the runtime keeps its own receipt of what happened",
+        "n8n logs to syslog",
+        "The canvas is visual",
+        "Executions email the owner a summary"
+      ],
+      "answer": 0,
+      "explanation": "The recorded per-node I/O is n8n's built-in account; the system's decision receipts layer argument on top of the raw record. (obj-05-b)"
+    }
+  ]
+}

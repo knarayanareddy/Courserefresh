@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-12",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-12-a",
+      "concept": "snapshots",
+      "prompt": "What is the correct order, and why?",
+      "options": [
+        "Fetch → cache → hash, because caching first saves bandwidth",
+        "Parse → hash → cache, because parsed text is what claims quote",
+        "Fetch → hash → cache: hash BEFORE parsing so parser refactors never invalidate seen.json or old span anchors; cache AFTER hashing so files are content-addressed",
+        "Hash → fetch → parse, because hashes are inputs"
+      ],
+      "answer": 2,
+      "explanation": "Each step buys a specific property: the hash of canonical bytes survives parser changes; the content-addressed cache dedupes by construction. (obj-12-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-12-a",
+      "concept": "snapshots",
+      "prompt": "Hashing AFTER parsing instead of before invites:",
+      "options": [
+        "Faster snapshots",
+        "Nothing — parsed bytes are canonical bytes",
+        "Better quote quality",
+        "Every later parser tweak silently invalidates seen.json (spurious re-notices) and breaks old anchors"
+      ],
+      "answer": 3,
+      "explanation": "Parse-then-hash couples your change-detection to your parser implementation — a refactor becomes a flood of false notices. (obj-12-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-12-b",
+      "concept": "hashing",
+      "prompt": "A receipt's claim cites a quote with span [412–481] in snapshot n8n-releases-5c9a4b7e.md. Months later a dispute arises. What makes this checkable NOW?",
+      "options": [
+        "The content-addressed snapshot file (findable by hash) and the byte range: open, seek, compare — the anchor makes 'the source said this' falsifiable rather than a recollection",
+        "The judge's score is stored too",
+        "The publisher's archive page",
+        "The snapshot is still hot in the actor's cache"
+      ],
+      "answer": 0,
+      "explanation": "Anchoring is the difference between citation and vibes: hash + span + preserved file = a dispute you can win months later. (obj-12-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-12-b",
+      "concept": "hashing",
+      "prompt": "On every receipt write, the system asserts span ⊆ snapshot. Why?",
+      "options": [
+        "To help the judge understand",
+        "To keep quotes short",
+        "To reduce digest bytes",
+        "An anchor pointing outside its snapshot is a contract violation — it would break the very checkability the anchor exists to provide; it fails the build, not the receipt"
+      ],
+      "answer": 3,
+      "explanation": "The integrity of anchors is regression-tested like arithmetic: a broken anchor is a bug, not a shape we allow. (obj-12-b)"
+    }
+  ]
+}

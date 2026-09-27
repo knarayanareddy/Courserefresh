@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-20",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-20-a",
+      "concept": "micro-lessons",
+      "prompt": "The micro-lesson format contract is:",
+      "options": [
+        "a link to the relevant lesson section",
+        "a full lesson rewrite with exercises",
+        "fixed: (1) what it is — three sentences, (2) one worked example from the lesson's own code, (3) one practice item with the answer explained; ≤ two minutes/220 words; concept named; opt-out present; never graded",
+        "whatever the model decides fits the learner's level"
+      ],
+      "answer": 2,
+      "explanation": "The format is tested: three parts, the concept named, example from the course's own artifacts, and the word 'graded' banned from the artifact. (obj-20-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-20-a",
+      "concept": "micro-lessons",
+      "prompt": "Where do the message caps (1/day, 3/week, 1 per concept/7 days) live?",
+      "options": [
+        "As constants in the policy, checked BEFORE dispatch, receipted when they fire — changing one is a versioned amendment, not a copy edit",
+        "In the Telegram API defaults",
+        "In copy the cohort reads ('we aim for at most one a day')",
+        "In the system prompt, so the model can judge each situation"
+      ],
+      "answer": 0,
+      "explanation": "Copy-declared limits drift under product pressure ('this one is important'); code-declared limits hold — and the rate_limited refusal is itself a decision with a receipt, proving restraint. (obj-20-b)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-20-b",
+      "concept": "rate-limits",
+      "prompt": "A willing learner was dispatched a micro-lesson on concept X this week and hits the same stuck signal again tomorrow. What happens?",
+      "options": [
+        "Escalate to the author",
+        "Dispatch again — the learner is asking for help",
+        "The per-concept cap fires: NO_CHANGE [rate_limited] with a receipt — even eagerness doesn't shift the caps",
+        "Send a different concept's lesson"
+      ],
+      "answer": 2,
+      "explanation": "Caps are checked in consent-then-caps-then-signal order and bind the system itself: a second dispatch this week is a refusal, receipted. (obj-20-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-20-b",
+      "concept": "rate-limits",
+      "prompt": "What does the dispatch receipt deliberately record about the learner?",
+      "options": [
+        "Their email for consent verification",
+        "Only the hashed handle — the receipt is loud about the DECISION (which signal, which caps passed, which concept) and silent about identity",
+        "Nothing at all",
+        "Their name and quiz history for follow-up"
+      ],
+      "answer": 1,
+      "explanation": "If a learner asks 'why did I get this message?', the receipt answers with signal facts without ever naming them to anyone else. (obj-20-a)"
+    }
+  ]
+}

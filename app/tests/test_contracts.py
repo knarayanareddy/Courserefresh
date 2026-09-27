@@ -148,8 +148,8 @@ try:
             guards = [n for n in doc["nodes"] if n["type"] == "n8n-nodes-base.code"
                       and "execute-once" in n.get("parameters", {}).get("jsCode", "")]
             assert len(guards) == 1, f"{path.name} has no execute-once guard"
-    check("the six n8n workflow exports are present, importable and carry their contract",
-          len(exports) == 6, f"found={[p.name for p in exports]}")
+    check("the seven n8n workflow exports are present, importable and carry their contract",
+          len(exports) == 7, f"found={[p.name for p in exports]}")
     check("every export embeds the current rulebook (triage) and an execute-once guard", True)
 
 except AssertionError as exc:

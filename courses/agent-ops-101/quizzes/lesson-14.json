@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-14",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-14-a",
+      "concept": "observe",
+      "prompt": "Why two stages — OBSERVE then JUDGE — instead of one merged prompt?",
+      "options": [
+        "n8n requires one call per node",
+        "Two models are more accurate than one",
+        "Merged prompts exceed token limits",
+        "The stages fail differently (extraction misses v interpretation errors) and must be debuggable separately; a merged prompt makes every failure unattributable"
+      ],
+      "answer": 3,
+      "explanation": "When a gold row fails, the split tells you which half to fix; one prompt cannot answer 'was it misread or unfound?'. (obj-14-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-14-a",
+      "concept": "observe",
+      "prompt": "Which of these is a CLOSED judge answer in the course's taxonomy?",
+      "options": [
+        "'This looks serious; I'd update the lesson.'",
+        "A 3-paragraph assessment of the change",
+        "'Probably fine, maybe publish?'",
+        "q1 materiality ∈ {material_breaking, material_deprecation, material_new_capability, cosmetic, marketing_noise, ambiguous, contradictory, unverifiable} — one label from a closed set"
+      ],
+      "answer": 3,
+      "explanation": "Choice = one label from a closed set; Noul = a probability for a named proposition. Anything else coerces to unknown — and unknown fails closed. (obj-14-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-14-b",
+      "concept": "judge",
+      "prompt": "Why must the judge NEVER see thresholds or the expected action?",
+      "options": [
+        "So scores mean what they say: a judge that knows the materiality line nudges answers across it (goal-gradient collapse); a judge that knows the action exists finds reasons toward it — the questions must be answerable without knowing any action exists",
+        "Because thresholds are secrets under NDA",
+        "Models perform better with less context",
+        "To keep prompts short"
+      ],
+      "answer": 0,
+      "explanation": "Each blind spot closes a smuggling route: threshold blindness keeps scores honest; action blindness prevents the judge from quietly becoming the ladder. (obj-14-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-14-b",
+      "concept": "judge",
+      "prompt": "What does temperature 0 buy on judge calls?",
+      "options": [
+        "Faster responses",
+        "Reproducibility — same prompt, same inputs, same answers, today and at the incident review: the judge is a measurement instrument, and instruments must read the same value twice",
+        "Cheaper tokens",
+        "More creative materiality labels"
+      ],
+      "answer": 1,
+      "explanation": "T>0 on a measurement call is noise injected into an instrument; variety belongs in generative outputs (the act node's prose), not the judge. (obj-14-b)"
+    }
+  ]
+}

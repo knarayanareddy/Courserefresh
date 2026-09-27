@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-09",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-09-a",
+      "concept": "http",
+      "prompt": "Where do production secrets belong on an n8n canvas?",
+      "options": [
+        "In the workflow JSON, committed to the repo",
+        "In the HTTP node's URL, base64-encoded",
+        "In environment variables (or the encrypted credential store) referenced by name — a secret exists in exactly two places: the env source and the platform's encrypted store",
+        "In a pinned note on the canvas for the team to see"
+      ],
+      "answer": 2,
+      "explanation": "Env-var references keep the canvas shareable, the repo clean, and rotation a re-pointing exercise. Never in node parameters, never in exports, never in receipts. (obj-09-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-09-a",
+      "concept": "http",
+      "prompt": "Which retry policy is the production posture?",
+      "options": [
+        "≤2 retries with exponential backoff on 5xx/timeout; NEVER retry 4xx — a 403 retried is still a 403, just later and louder",
+        "No retries — one attempt only",
+        "Unlimited retries every 30 seconds until success",
+        "Retry only on Mondays"
+      ],
+      "answer": 0,
+      "explanation": "Retries buy resilience against transient noise; on permanent failures they become a self-inflicted denial-of-service with a schedule. (obj-09-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-09-b",
+      "concept": "credentials",
+      "prompt": "A per-run token budget is checked by the policy node mid-run and found exceeded. What happens?",
+      "options": [
+        "ESCALATE [over_budget] — the loop stops itself, the receipt preserves what was pending, the digest tells the human with numbers",
+        "The workflow silently skips the expensive call",
+        "The error workflow retries the run with a higher budget",
+        "The budget resets automatically and the run continues"
+      ],
+      "answer": 0,
+      "explanation": "The ledger feeds the rule; the rule escalates with evidence. Silent budget-swallowing would be a drift amplifier — you think you're scanning everything; you're scanning the affordable. (obj-09-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-09-b",
+      "concept": "credentials",
+      "prompt": "What does the running case study print on every receipt about its unit accounting?",
+      "options": [
+        "The vendor's list price",
+        "Nothing — unit accounting is internal",
+        "units_source: the '1 actor run = 1 unit' approximation is DECLARED because per-actor pricing is not yet captured; money stays 'unmeasured' until a price table exists",
+        "A fixed euro amount per run"
+      ],
+      "answer": 2,
+      "explanation": "Approximations are declared at the unit, and money is unmeasured-not-guessed until prices are captured — the receipt says which world you are in. (obj-09-b)"
+    }
+  ]
+}

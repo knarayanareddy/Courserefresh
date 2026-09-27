@@ -565,8 +565,15 @@ def verify_and_run(cfg: Config, tree: "twin.Tree", snapshots: list[dict], mode: 
                               if event.get("lesson_touched") and event["lesson_touched"] in str(l)), "")
         event["lesson_touched"] = lesson_id or ""
         event["objective"] = (lesson_index.get(lesson_id, {}).get("objectives") or [{}])[0].get("text", "")
-        provider = judge_lib.build_provider(cfg, apify_lib.urllib_transport,
-                                            mock_answers=provider_answers.get(_answer_key(event), {}))
+        # A sim cycle (dry-run) is documented as offline: recorded datasets, mock judge, no network.
+        # A configured live provider in .env must not leak a real model call into a dry run — the
+        # fixtures carry the answers, so the mock is not a downgrade, it is the contract.
+        if mode == "sim":
+            provider = judge_lib.MockProvider()
+            provider.answers = provider_answers.get(_answer_key(event), {})
+        else:
+            provider = judge_lib.build_provider(cfg, apify_lib.urllib_transport,
+                                                mock_answers=provider_answers.get(_answer_key(event), {}))
         model = cfg.get("CR_JUDGE_MODEL", "mock-1")
         judgement = judge_lib.ask_judge(event, provider, model, judgement_ledger)
         judge_records.append({"event_id": event["event_id"], "provider": judgement.get("provider", provider.name),
@@ -917,7 +924,15 @@ def one_cycle(cfg: Config, dry_run: bool, inject_failure: bool = False, via_n8n:
         result = {"log": twin.run(tree, [], label=f"{mode} cycle (no new snapshots)", extra=context),
                   "judge": [], "events": []}
     commit_notice(notice_result)
-    delivery = deliver_staged(cfg, tree, before)
+    # A sim/dry cycle is documented offline (argparse: "recorded datasets + mock judge; no network")
+    # and its telemetry consent is fixture consent — so it may never touch a real delivery channel.
+    # Staging happens (cards exist as rows), delivery does not; the summary names the forced channel.
+    delivery_cfg = cfg
+    if mode == "sim":
+        delivery_cfg = Config({**{k: v for k, v in cfg.env.items() if k not in ("CR_NOTIFY_CHANNEL",)},
+                               "CR_NOTIFY_CHANNEL": "file"}, env_file=None, environ={})
+        delivery_cfg.sources = {"CR_NOTIFY_CHANNEL": "sim-override"}
+    delivery = deliver_staged(delivery_cfg, tree, before)
     commit = commit_changes(cfg, tree, result["log"]["run_id"])
     summary = {"run_id": result["log"]["run_id"], "mode": mode,
                "sources_due": notice_result["due"], "snapshots_new": len(notice_result["snapshots"]),

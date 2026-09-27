@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-02",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-02-a",
+      "concept": "autonomy",
+      "prompt": "On the ladder as the course defines it, the rung where the SYSTEM initiates, decides AND acts (with receipts and undo) is:",
+      "options": [
+        "Chatbot (rung 1)",
+        "Tool (rung 0)",
+        "Supervised agent (rung 3)",
+        "Copilot (rung 2)"
+      ],
+      "answer": 2,
+      "explanation": "Each rung adds a 'who' — the chatbot decides nothing that touches the world; the copilot suggests while a human acts; the supervised agent initiates, decides and acts, and is made trustworthy by receipts and undo. (obj-02-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-02-b",
+      "concept": "earned-authority",
+      "prompt": "Why must authority be EARNED by evidence rather than declared in a prompt?",
+      "options": [
+        "Because authority levels are a vendor requirement of n8n",
+        "Because prompts are expensive to write",
+        "Because the cost of an agent's mistakes is not symmetric with the benefit of its work, and a prompt grants a belief, not a runtime capability",
+        "Because models cannot read long prompts reliably"
+      ],
+      "answer": 2,
+      "explanation": "'You are allowed to publish' in a prompt is a belief the model holds; the runtime may or may not honour it. Real authority lives in settings, scopes and the policy — and it must be revocable by rule because a system that cannot lose authority has not earned it. (obj-02-b)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-02-c",
+      "concept": "authority-ladder",
+      "prompt": "Courserefresh sits at PA2. A corroborated, material change arrives that rewrites a quiz's correct answer. What does the system do?",
+      "options": [
+        "Escalates to a human — assessment changes are PA3 forever; no rung unlocks them",
+        "Publishes it — PA2 permits lesson-adjacent writes",
+        "Sends the cohort a card explaining the answer change",
+        "Publishes it and flags the quiz for human review"
+      ],
+      "answer": 0,
+      "explanation": "PA3 is a ceiling, not a rung: grading-adjacent changes never ride good evidence to publish. The ladder is per-action-class: PA2 covers lesson text, and assessment changes sit above the ladder entirely. (obj-02-c)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-02-b",
+      "concept": "earned-authority",
+      "prompt": "A revert gate fires overnight and the system auto-reverts its own lesson edit. On Monday, where does the system sit on the ladder?",
+      "options": [
+        "PA1 — a rollback resets the consecutive-accepted counter, and the digest names the reset with its receipts",
+        "Whatever the author sets it to that morning",
+        "PA0 — a rollback means the system must re-earn observe-only",
+        "Still PA2 — a revert proves the gates work, so authority stands"
+      ],
+      "answer": 0,
+      "explanation": "Earned authority is revocable by rule: one rollback un-earns notify privileges; three consecutive accepted publishes re-earn PA2. The reset appears in the digest with the receipts that caused it — silent ladder movement is a defect. (obj-02-b)"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-16",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-16-a",
+      "concept": "receipts",
+      "prompt": "Which receipt section carries the verbatim quotes and policy hash the decision ran under?",
+      "options": [
+        "inputs — the full DecisionInput: quotes as anchored, scores as scored, the policy version hash, and the gate as armed",
+        "artifact",
+        "decision (action and reason codes only)",
+        "prev (the chain link)"
+      ],
+      "answer": 0,
+      "explanation": "Inputs verbatim is the design rule: a summarised input is a paraphrase, and paraphrases are the enemy of arguability. (obj-16-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-16-a",
+      "concept": "receipts",
+      "prompt": "Why are REFUSAL receipts first-class — full artifacts with the claim and quote preserved — even though nothing was published?",
+      "options": [
+        "Because the human reviewing the escalation needs the exact evidence, and the refusal is precisely the decision that must be arguable after the fact",
+        "To pad the chain length",
+        "Refusals are cheaper to store",
+        "For statistics"
+      ],
+      "answer": 0,
+      "explanation": "'Nothing was published' is the most-scrutinised decision class: an unauditable refusal is indistinguishable from a bug. (obj-16-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-16-b",
+      "concept": "audit-chain",
+      "prompt": "What does verify_chain() == true actually prove?",
+      "options": [
+        "That the digest was sent on time",
+        "That the log is intact — every receipt is exactly what the system wrote, in order, since genesis: memory integrity, not decision quality (that's the gold set's job)",
+        "That every decision was correct",
+        "That the system is within budget"
+      ],
+      "answer": 1,
+      "explanation": "Chain = memory integrity; gold = decision quality; together they make an action arguable. The distinction is worth reciting under questioning. (obj-16-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-16-b",
+      "concept": "audit-chain",
+      "prompt": "Someone edits Saturday's receipt to hide a bad publish. What happens at the next verify_chain() run?",
+      "options": [
+        "The edit propagates to the digest silently",
+        "The link-rehash fails at the tampered row; the check reports the broken link, and the digest names the gap — tampering is detected, not prevented",
+        "Nothing — the log is append-only so edits are impossible",
+        "The whole chain re-hashes to match"
+      ],
+      "answer": 1,
+      "explanation": "The chain is tamper-EVIDENT: the rewrite breaks the cryptographic link to the next row, and the integrity check turns the edit into a visible incident. (obj-16-b)"
+    }
+  ]
+}

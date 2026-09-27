@@ -1,0 +1,310 @@
+{
+  "version": "curriculum-v1.0",
+  "note": "Objectives, prerequisites and quiz alignment for Agent Ops 101 (the 24-lecture authored expansion). Same contract as course/agent-ops: a lesson without objectives, a quiz item without an objective, or a prerequisite cycle is a curriculum defect. Authored content — generated: false, authority PA3 (human-only) on every version.",
+  "course": {
+    "slug": "agent-ops-101",
+    "title": "Agent Ops 101 — Agents, Autonomy & Operations in Production",
+    "modules": [
+      { "id": "I", "title": "Orientation & the Autonomy Question", "lessons": [1, 4] },
+      { "id": "II", "title": "n8n: The Canvas as a Governance Surface", "lessons": [5, 9] },
+      { "id": "III", "title": "Apify: Real Data at the Input", "lessons": [10, 13] },
+      { "id": "IV", "title": "Judgment: Models Propose, Code Decides", "lessons": [14, 18] },
+      { "id": "V", "title": "The Learning Loop & the Living Course", "lessons": [19, 24] }
+    ]
+  },
+  "lessons": [
+    {
+      "lesson_id": "lesson-01-what-is-agent-ops",
+      "lesson_number": 1,
+      "title": "What is agent operations?",
+      "module": "I",
+      "objectives": [
+        { "id": "obj-01-a", "text": "Define agent operations and distinguish it from plain workflow automation with one test: does the system choose its own next action?" },
+        { "id": "obj-01-b", "text": "Name the six loop phases — notice, verify, decide, act, learn, report — and sketch the loop for one concrete product" },
+        { "id": "obj-01-c", "text": "State the operator's core question for any autonomous system: what did it do while nobody was watching?" }
+      ],
+      "prereqs": [],
+      "quiz_items": { "q1": "obj-01-a", "q2": "obj-01-b", "q3": "obj-01-b", "q4": "obj-01-c" }
+    },
+    {
+      "lesson_id": "lesson-02-autonomy-ladder",
+      "lesson_number": 2,
+      "title": "The autonomy ladder: from chatbot to autonomous system",
+      "module": "I",
+      "objectives": [
+        { "id": "obj-02-a", "text": "Place chatbot, copilot and autonomous systems on the autonomy ladder and say who initiates, who decides and who acts at each rung" },
+        { "id": "obj-02-b", "text": "Explain why authority must be earned by evidence and reversible by rule, not declared in a prompt" },
+        { "id": "obj-02-c", "text": "Read the PA0–PA3 authority ladder and predict which actions are permitted at each level" }
+      ],
+      "prereqs": ["lesson-01-what-is-agent-ops"],
+      "quiz_items": { "q1": "obj-02-a", "q2": "obj-02-b", "q3": "obj-02-c", "q4": "obj-02-b" }
+    },
+    {
+      "lesson_id": "lesson-03-anatomy-of-a-production-agent",
+      "lesson_number": 3,
+      "title": "Anatomy of a production agent",
+      "module": "I",
+      "objectives": [
+        { "id": "obj-03-a", "text": "Map the six loop phases onto concrete components: actors, snapshots, the policy node, receipts, telemetry, the digest" },
+        { "id": "obj-03-b", "text": "Trace one real event end-to-end through the components and name the artifact each phase writes" }
+      ],
+      "prereqs": ["lesson-02-autonomy-ladder"],
+      "quiz_items": { "q1": "obj-03-a", "q2": "obj-03-a", "q3": "obj-03-b", "q4": "obj-03-b" }
+    },
+    {
+      "lesson_id": "lesson-04-failure-modes",
+      "lesson_number": 4,
+      "title": "Failure modes & the safety case",
+      "module": "I",
+      "objectives": [
+        { "id": "obj-04-a", "text": "List the four recurring failure classes — injection, drift, cost, silence — with one production example each" },
+        { "id": "obj-04-b", "text": "Argue why safety belongs in tested stop conditions, not in model politeness" }
+      ],
+      "prereqs": ["lesson-03-anatomy-of-a-production-agent"],
+      "quiz_items": { "q1": "obj-04-a", "q2": "obj-04-a", "q3": "obj-04-b", "q4": "obj-04-b" }
+    },
+    {
+      "lesson_id": "lesson-05-n8n-fundamentals",
+      "lesson_number": 5,
+      "title": "n8n fundamentals: nodes, items, executions",
+      "module": "II",
+      "objectives": [
+        { "id": "obj-05-a", "text": "Explain nodes, items, executions and credentials, and how data flows between nodes as an item array" },
+        { "id": "obj-05-b", "text": "Read an execution's recorded input and output for one node and say what makes it auditable" }
+      ],
+      "prereqs": ["lesson-04-failure-modes"],
+      "quiz_items": { "q1": "obj-05-a", "q2": "obj-05-a", "q3": "obj-05-b", "q4": "obj-05-b" }
+    },
+    {
+      "lesson_id": "lesson-06-triggers-and-cadence",
+      "lesson_number": 6,
+      "title": "Triggers, schedules & idempotence",
+      "module": "II",
+      "objectives": [
+        { "id": "obj-06-a", "text": "Choose between schedule, webhook and error triggers for a given job" },
+        { "id": "obj-06-b", "text": "Explain why an idempotent scan — dedupe on a content hash — is required before a schedule can be trusted" }
+      ],
+      "prereqs": ["lesson-05-n8n-fundamentals"],
+      "quiz_items": { "q1": "obj-06-a", "q2": "obj-06-a", "q3": "obj-06-b", "q4": "obj-06-b" }
+    },
+    {
+      "lesson_id": "lesson-07-code-node-decisions",
+      "lesson_number": 7,
+      "title": "The Code node: deterministic decisions on the canvas",
+      "module": "II",
+      "objectives": [
+        { "id": "obj-07-a", "text": "Write a Code-node rule block that decides an action deterministically, with no model call inside it" },
+        { "id": "obj-07-b", "text": "Explain why the decision belongs in code and the model only proposes answers to closed questions" }
+      ],
+      "prereqs": ["lesson-06-triggers-and-cadence"],
+      "quiz_items": { "q1": "obj-07-a", "q2": "obj-07-a", "q3": "obj-07-b", "q4": "obj-07-b" }
+    },
+    {
+      "lesson_id": "lesson-08-error-workflows",
+      "lesson_number": 8,
+      "title": "Error workflows: a crash is never silence",
+      "module": "II",
+      "objectives": [
+        { "id": "obj-08-a", "text": "Attach an error workflow to a production workflow and describe the payload it receives" },
+        { "id": "obj-08-b", "text": "Show how a thrown error becomes a receipt and a digest line instead of silence" }
+      ],
+      "prereqs": ["lesson-07-code-node-decisions"],
+      "quiz_items": { "q1": "obj-08-a", "q2": "obj-08-a", "q3": "obj-08-b", "q4": "obj-08-b" }
+    },
+    {
+      "lesson_id": "lesson-09-http-and-credentials",
+      "lesson_number": 9,
+      "title": "Calling the world: HTTP, credentials & budgets",
+      "module": "II",
+      "objectives": [
+        { "id": "obj-09-a", "text": "Configure an HTTP Request node with environment-variable credentials instead of pasted secrets" },
+        { "id": "obj-09-b", "text": "Set timeouts, retries and per-run caps for one external call, and say what happens when a cap is hit" }
+      ],
+      "prereqs": ["lesson-08-error-workflows"],
+      "quiz_items": { "q1": "obj-09-a", "q2": "obj-09-a", "q3": "obj-09-b", "q4": "obj-09-b" }
+    },
+    {
+      "lesson_id": "lesson-10-actor-anatomy",
+      "lesson_number": 10,
+      "title": "Actors, datasets & key-value stores",
+      "module": "III",
+      "objectives": [
+        { "id": "obj-10-a", "text": "Describe an actor's input schema, dataset, key-value store and run log, and the role of each" },
+        { "id": "obj-10-b", "text": "Say what a dataset row must minimally contain to be usable as evidence downstream" }
+      ],
+      "prereqs": ["lesson-09-http-and-credentials"],
+      "quiz_items": { "q1": "obj-10-a", "q2": "obj-10-a", "q3": "obj-10-b", "q4": "obj-10-b" }
+    },
+    {
+      "lesson_id": "lesson-11-running-actors",
+      "lesson_number": 11,
+      "title": "Running actors from n8n: pinning, waiting, paging",
+      "module": "III",
+      "objectives": [
+        { "id": "obj-11-a", "text": "Run an actor from n8n and extract its dataset into items for downstream nodes" },
+        { "id": "obj-11-b", "text": "Justify pinning a specific build instead of `latest` in production, naming the failure the pin prevents" }
+      ],
+      "prereqs": ["lesson-10-actor-anatomy"],
+      "quiz_items": { "q1": "obj-11-a", "q2": "obj-11-a", "q3": "obj-11-b", "q4": "obj-11-b" }
+    },
+    {
+      "lesson_id": "lesson-12-snapshots-and-hashes",
+      "lesson_number": 12,
+      "title": "Snapshots, hashes & evidence discipline",
+      "module": "III",
+      "objectives": [
+        { "id": "obj-12-a", "text": "Apply the fetch → hash → cache order and explain what each step buys" },
+        { "id": "obj-12-b", "text": "Anchor a claim to a byte range in a cached snapshot so 'the source said this' stays checkable months later" }
+      ],
+      "prereqs": ["lesson-11-running-actors"],
+      "quiz_items": { "q1": "obj-12-a", "q2": "obj-12-a", "q3": "obj-12-b", "q4": "obj-12-b" }
+    },
+    {
+      "lesson_id": "lesson-13-source-independence",
+      "lesson_number": 13,
+      "title": "Source independence: voices, not URLs",
+      "module": "III",
+      "objectives": [
+        { "id": "obj-13-a", "text": "Apply the two-independent-voices rule: two pages from one publisher count as one source" },
+        { "id": "obj-13-b", "text": "Recognise when a page is not evidence: single voice, stale, unreachable, or addressed to the operator" }
+      ],
+      "prereqs": ["lesson-12-snapshots-and-hashes"],
+      "quiz_items": { "q1": "obj-13-a", "q2": "obj-13-a", "q3": "obj-13-b", "q4": "obj-13-b" }
+    },
+    {
+      "lesson_id": "lesson-14-observe-and-judge",
+      "lesson_number": 14,
+      "title": "The two-stage judge: observe, then answer closed questions",
+      "module": "IV",
+      "objectives": [
+        { "id": "obj-14-a", "text": "Separate OBSERVE (extract candidate claims from a snapshot) from JUDGE (answer closed questions at temperature 0)" },
+        { "id": "obj-14-b", "text": "Explain why the judge never sees thresholds or the expected action, and what failure that design prevents" }
+      ],
+      "prereqs": ["lesson-13-source-independence"],
+      "quiz_items": { "q1": "obj-14-a", "q2": "obj-14-a", "q3": "obj-14-b", "q4": "obj-14-b" }
+    },
+    {
+      "lesson_id": "lesson-15-policy-node",
+      "lesson_number": 15,
+      "title": "The POLICY node: ordered rules, first match wins",
+      "module": "IV",
+      "objectives": [
+        { "id": "obj-15-a", "text": "Order the policy rules R1–R8 and predict the action for a given input, first match wins" },
+        { "id": "obj-15-b", "text": "Explain parity testing: the same rules in JavaScript on the canvas and Python in tests, with zero disagreements allowed" }
+      ],
+      "prereqs": ["lesson-14-observe-and-judge"],
+      "quiz_items": { "q1": "obj-15-a", "q2": "obj-15-a", "q3": "obj-15-b", "q4": "obj-15-b" }
+    },
+    {
+      "lesson_id": "lesson-16-receipts-and-chains",
+      "lesson_number": 16,
+      "title": "Receipts, diffs & hash-chained memory",
+      "module": "IV",
+      "objectives": [
+        { "id": "obj-16-a", "text": "Read a receipt: input, decision, reason codes, preserved quotes, artifact hash" },
+        { "id": "obj-16-b", "text": "Explain how a hash-chained receipt log makes an action arguable after the fact, and what verify_chain proves" }
+      ],
+      "prereqs": ["lesson-15-policy-node"],
+      "quiz_items": { "q1": "obj-16-a", "q2": "obj-16-a", "q3": "obj-16-b", "q4": "obj-16-b" }
+    },
+    {
+      "lesson_id": "lesson-17-tool-permissions",
+      "lesson_number": 17,
+      "title": "Tool permissions & the human exit",
+      "module": "IV",
+      "objectives": [
+        { "id": "obj-17-a", "text": "Write a least-privilege tool permission block for one agent, host-scoped where applicable" },
+        { "id": "obj-17-b", "text": "Name the conditions that must stop the agent and bring in a human, and say why consent is one of them" }
+      ],
+      "prereqs": ["lesson-16-receipts-and-chains"],
+      "quiz_items": { "q1": "obj-17-a", "q2": "obj-17-a", "q3": "obj-17-b", "q4": "obj-17-b" }
+    },
+    {
+      "lesson_id": "lesson-18-revert-gates",
+      "lesson_number": 18,
+      "title": "Revert gates: publishing means promising to undo",
+      "module": "IV",
+      "objectives": [
+        { "id": "obj-18-a", "text": "Write a revert gate at publish time: metric, threshold, cohort minimum and deadline" },
+        { "id": "obj-18-b", "text": "Distinguish open, satisfied and unmeasured gates, and what each obliges the system to report" }
+      ],
+      "prereqs": ["lesson-17-tool-permissions"],
+      "quiz_items": { "q1": "obj-18-a", "q2": "obj-18-a", "q3": "obj-18-b", "q4": "obj-18-b" }
+    },
+    {
+      "lesson_id": "lesson-19-telemetry-and-consent",
+      "lesson_number": 19,
+      "title": "Learner telemetry & the consent wall",
+      "module": "V",
+      "objectives": [
+        { "id": "obj-19-a", "text": "Define the two stuck signals — consecutive wrong answers ≥ 2, and dwell ≥ 3× the learner's median — and what each means" },
+        { "id": "obj-19-b", "text": "Explain consent-first storage: no consent row means nothing is stored, and the refusal is itself receipted" }
+      ],
+      "prereqs": ["lesson-18-revert-gates"],
+      "quiz_items": { "q1": "obj-19-a", "q2": "obj-19-a", "q3": "obj-19-b", "q4": "obj-19-b" }
+    },
+    {
+      "lesson_id": "lesson-20-micro-lessons",
+      "lesson_number": 20,
+      "title": "Micro-lessons & messaging caps",
+      "module": "V",
+      "objectives": [
+        { "id": "obj-20-a", "text": "Write a micro-lesson to the fixed three-part contract — what it is, one worked example, one practice item — under the word cap" },
+        { "id": "obj-20-b", "text": "State the message caps (1 per learner per day, 3 per week, 1 per concept per 7 days) and why they live in code, not copy" }
+      ],
+      "prereqs": ["lesson-19-telemetry-and-consent"],
+      "quiz_items": { "q1": "obj-20-a", "q2": "obj-20-a", "q3": "obj-20-b", "q4": "obj-20-b" }
+    },
+    {
+      "lesson_id": "lesson-21-evals-that-survive",
+      "lesson_number": 21,
+      "title": "Evals that survive a judge",
+      "module": "V",
+      "objectives": [
+        { "id": "obj-21-a", "text": "Design a gold row and name the trap types an eval set must contain by name" },
+        { "id": "obj-21-b", "text": "Explain the three columns — proprietary one-shot, vanilla same-models, ours — and what column (b) proves about the rules" },
+        { "id": "obj-21-c", "text": "Apply the floor rule: below the gold-row floor nothing may be claimed except n and the legal degrade line" }
+      ],
+      "prereqs": ["lesson-20-micro-lessons"],
+      "quiz_items": { "q1": "obj-21-a", "q2": "obj-21-a", "q3": "obj-21-b", "q4": "obj-21-c" }
+    },
+    {
+      "lesson_id": "lesson-22-the-digest",
+      "lesson_number": 22,
+      "title": "The morning digest: the system's face",
+      "module": "V",
+      "objectives": [
+        { "id": "obj-22-a", "text": "List the five digest sections in fixed order and explain why refusals come first" },
+        { "id": "obj-22-b", "text": "Extract the operational facts from a real digest: mode, measured cadence, budgets, gate states and the unmeasured list" }
+      ],
+      "prereqs": ["lesson-21-evals-that-survive"],
+      "quiz_items": { "q1": "obj-22-a", "q2": "obj-22-a", "q3": "obj-22-b", "q4": "obj-22-b" }
+    },
+    {
+      "lesson_id": "lesson-23-costs-and-budgets",
+      "lesson_number": 23,
+      "title": "Costs, budgets & the discipline of units",
+      "module": "V",
+      "objectives": [
+        { "id": "obj-23-a", "text": "Account for a run in the three currencies — tokens, actor units, and money (or an explicit unmeasured)" },
+        { "id": "obj-23-b", "text": "Configure a budget cap that escalates to a human instead of silently stopping the world" }
+      ],
+      "prereqs": ["lesson-22-the-digest"],
+      "quiz_items": { "q1": "obj-23-a", "q2": "obj-23-a", "q3": "obj-23-b", "q4": "obj-23-b" }
+    },
+    {
+      "lesson_id": "lesson-24-capstone",
+      "lesson_number": 24,
+      "title": "Capstone: run the loop on your own subject",
+      "module": "V",
+      "objectives": [
+        { "id": "obj-24-a", "text": "Choose a moving subject whose sources are public, fetchable and independent, and justify the choice against the two-voices rule" },
+        { "id": "obj-24-b", "text": "Assemble the full loop — scan, triage, act, learn, digest — for that subject and name the artifact each phase leaves" },
+        { "id": "obj-24-c", "text": "Write the honest-degrade plan: what the system prints when the canvas, the actor or the judge is down" }
+      ],
+      "prereqs": ["lesson-23-costs-and-budgets"],
+      "quiz_items": { "q1": "obj-24-a", "q2": "obj-24-b", "q3": "obj-24-b", "q4": "obj-24-c" }
+    }
+  ],
+  "downstream_rule": "Authored tree: a human revisits downstream lessons on edit, and the live loop (if it adopts this course) marks every lesson whose prereq chain includes a change as 'downstream to revisit' in the digest, never rewriting them in the same night."
+}

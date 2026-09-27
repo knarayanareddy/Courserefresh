@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-13",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-13-a",
+      "concept": "corroboration",
+      "prompt": "Three URLs agree: n8n's release notes, docs.n8n.io, and a mirror of the release notes on a community CDN. How many voices?",
+      "options": [
+        "One — all three belong to the n8n independence group; mirrors are recorded, never counted",
+        "Two — the CDN is a different host",
+        "Depends on fetch timestamps",
+        "Three — URLs are sources"
+      ],
+      "answer": 0,
+      "explanation": "Independence is modelled by publisher/independence groups, and two pages from one publisher count as one voice: groups, not addresses. (obj-13-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-13-a",
+      "concept": "corroboration",
+      "prompt": "Why does a search-engine discovery source NOT count toward the two-voice rule?",
+      "options": [
+        "Search results are low quality",
+        "Discovery sources cost too many credits",
+        "Search APIs are too slow",
+        "One engine returning three pages is one engine's opinion of relevance — a hit is a lead; the pages it points at are fetched through the allowlist and counted by their own publishers (counts_as_independent: false)"
+      ],
+      "answer": 3,
+      "explanation": "The engine finds; it never vouches — otherwise one autocomplete becomes your second source. (obj-13-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-13-b",
+      "concept": "independence",
+      "prompt": "Two qualified, independent sources DISAGREE on the same fact. What does the system do?",
+      "options": [
+        "ESCALATE [source_conflict] with both quotes and anchors preserved — never average, never pick; the distinction needs a human",
+        "Publish the more official one",
+        "Average the two positions into a careful middle claim",
+        "Wait one scan cycle and publish whichever repeats"
+      ],
+      "answer": 0,
+      "explanation": "Averaging manufactures false consensus; conflict is the most informative state the verify phase can produce, and it routes to a human with both quotes intact. (obj-13-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-13-b",
+      "concept": "independence",
+      "prompt": "Which page state is NOT one of the four disqualifiers?",
+      "options": [
+        "Popular — many learners read it",
+        "Addressed to the operator — the page talks to the system",
+        "Unreachable — fetch failed or page gone",
+        "Stale — a snapshot failing the subject's freshness window"
+      ],
+      "answer": 0,
+      "explanation": "The four: single voice, stale, unreachable, addressed-to-the-operator. Popularity is orthogonal to evidence. (obj-13-b)"
+    }
+  ]
+}

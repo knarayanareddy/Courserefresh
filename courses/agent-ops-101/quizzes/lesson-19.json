@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-19",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-19-a",
+      "concept": "telemetry",
+      "prompt": "The two stuck signals are:",
+      "options": [
+        "consecutive_wrong ≥ 2 on one concept within a session, and dwell ≥ 3× the LEARNER'S OWN median without an attempt",
+        "quiz score < 60% and time-on-site > 30 minutes",
+        "any wrong answer, and any page refresh",
+        "two different concepts wrong in one week, and dwell ≥ 3× the cohort median"
+      ],
+      "answer": 0,
+      "explanation": "Wrong answers must chain on the SAME concept (one wrong is noise); the dwell baseline is personal, not cohort-global — penalising careful readers is the classic false positive. (obj-19-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-19-a",
+      "concept": "telemetry",
+      "prompt": "A telemetry POST arrives with consent: absent. What does the system do?",
+      "options": [
+        "Stores an anonymised aggregate",
+        "HTTP 403, nothing stored, a consent_missing receipt — the wall fails CLOSED: absent means no, and the refusal is an artifact",
+        "Stores it for 48h pending consent",
+        "Stores it pseudonymised and asks for consent later"
+      ],
+      "answer": 1,
+      "explanation": "Consent precedes storage, fail-closed: missing/malformed/stale all refuse, and the refusal receipt proves the wall held — auditable ethics. (obj-19-b)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-19-b",
+      "concept": "consent",
+      "prompt": "Which of these is NEVER stored under the course's telemetry schema?",
+      "options": [
+        "names or contact details",
+        "dwell samples and the consent version",
+        "quiz attempts (concept, right/wrong, ts)",
+        "message-cap counters"
+      ],
+      "answer": 0,
+      "explanation": "No names anywhere — handles are hashed at capture; the demo, digests and receipts carry hashes only. The ethics lives in the schema, not a policy PDF. (obj-19-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-19-b",
+      "concept": "consent",
+      "prompt": "A stuck signal fires for a learner who consented Tuesday and withdrew Thursday. What does Friday's system do?",
+      "options": [
+        "Sends help anyway — consent was given once",
+        "Asks the learner to re-consent",
+        "Stores nothing new and sends nothing; the withdrawal ends the permission. The refusal is receipted and the learner keeps full course access",
+        "Sends one final micro-lesson as a courtesy"
+      ],
+      "answer": 2,
+      "explanation": "The wall respects time, not just presence — and opting out never costs access: leaving changes nothing about the course. (obj-19-b)"
+    }
+  ]
+}

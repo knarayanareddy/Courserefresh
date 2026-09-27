@@ -1,0 +1,62 @@
+{
+  "lesson_id": "lesson-10",
+  "version": "v1",
+  "items": [
+    {
+      "id": "q1",
+      "objective": "obj-10-a",
+      "concept": "apify",
+      "prompt": "An actor's input is validated AGAINST ITS INPUT SCHEMA. When does that validation happen?",
+      "options": [
+        "After the run, on the dataset",
+        "Before the run starts — garbage inputs are rejected at the door",
+        "During the crawl, page by page",
+        "In n8n, after the dataset is collected"
+      ],
+      "answer": 1,
+      "explanation": "Schema validation precedes the run: the contract is enforced at the boundary, which is why input JSONs live in your versioned config. (obj-10-a)"
+    },
+    {
+      "id": "q2",
+      "objective": "obj-10-a",
+      "concept": "apify",
+      "prompt": "Where does an actor store arbitrary binary artifacts like screenshots and raw HTML snapshots?",
+      "options": [
+        "The dataset",
+        "The key-value store — blob-shaped storage beside the dataset's schema-shaped rows",
+        "The run log",
+        "The input schema"
+      ],
+      "answer": 1,
+      "explanation": "Datasets carry structured rows; the KV store carries the raw evidence a dispute might need later. (obj-10-a)"
+    },
+    {
+      "id": "q3",
+      "objective": "obj-10-b",
+      "concept": "actors",
+      "prompt": "Which fields are the MINIMUM for a dataset row to travel downstream as evidence?",
+      "options": [
+        "title and description",
+        "Only the hash",
+        "url and the extracted content (markdown) plus fetch metadata — provenance, substance, and when/whether the fetch was healthy",
+        "html and css"
+      ],
+      "answer": 2,
+      "explanation": "Evidence that cannot name its provenance is not evidence: url (re-visitable), content (quotable), fetch metadata (context) — rows missing required fields take the parse_failed path, not the claim path. (obj-10-b)"
+    },
+    {
+      "id": "q4",
+      "objective": "obj-10-b",
+      "concept": "actors",
+      "prompt": "A row arrives with a URL but no content. What path does it take?",
+      "options": [
+        "It is retried by the actor automatically",
+        "Into a claim with reduced confidence",
+        "It is silently skipped",
+        "The normalize step drops it to a parse_failed error receipt — input preserved, digest line staged, no claim"
+      ],
+      "answer": 3,
+      "explanation": "Required-fields violations fail loudly at the boundary: an error receipt (hostile to silence), nothing published, the input preserved for debugging. (obj-10-b)"
+    }
+  ]
+}
