@@ -4,6 +4,51 @@ import StatusBadge from "./StatusBadge";
 // n8n workflow data
 const WORKFLOWS = [
   {
+    id: "wf-cr-showcase-loop",
+    name: "wf-cr-showcase-loop",
+    label: "CR Showcase — the whole loop on one canvas",
+    trigger: "Webhook: POST /webhook/showcase/cr/loop (or Test workflow)",
+    description: "Every phase of Courserefresh — notice, verify, decide, act, learn, report — compressed onto a single 56-node n8n canvas, sticky-notes narrating each lane. Five seeded scenarios traverse the whole loop in one ~10s run: a two-voice change is PUBLISHED and committed to GitHub, a one-voice claim is refused for corroboration, a prompt-injection source is refused by rule R2, a falling cohort quiz trips the revert gate, and a stuck learner gets a consented micro-lesson. Models propose; the deterministic POLICY rulebook decides; the receipt chain is verified before the digest ships.",
+    color: "#9B2C1F",
+    nodes: [
+      { id: "s0",  label: "DEMO IN", type: "trigger", desc: "Webhook /webhook/showcase/cr/loop or the Test-workflow button", x: 60, y: 300 },
+      { id: "s1",  label: "SCENARIOS A–E", type: "code", desc: "Seeds 5 demo events: two-voice change · one-voice claim · injected source · falling cohort · stuck learner", x: 290, y: 300 },
+      { id: "s2",  label: "LEARN INTAKE", type: "code", desc: "Scenarios D+E: hashed, consent-flagged learner telemetry", x: 520, y: 120 },
+      { id: "s3",  label: "REVERT GATE", type: "policy", desc: "quiz_delta −0.12 at n=7 crosses the threshold → REVERT", x: 750, y: 120 },
+      { id: "s4",  label: "MICRO-LESSON", type: "notify", desc: "1 concept · ≤2 min · 1 practice · opt-out (stuck learner E)", x: 980, y: 120 },
+      { id: "s5",  label: "LEARN RECEIPTS", type: "receipt", desc: "Cohort + dispatch receipts, chained into run-log", x: 1210, y: 120 },
+      { id: "s6",  label: "SCAN SOURCES", type: "apify", desc: "Apify actors fetch declared sources; hash + dedupe", x: 520, y: 300 },
+      { id: "s7",  label: "SANITIZE", type: "code", desc: "Injection patterns stripped before any model call (R2)", x: 750, y: 300 },
+      { id: "s8",  label: "OBSERVE (LLM)", type: "llm", desc: "gpt-oss-120b extracts claims with verbatim quotes", x: 980, y: 300 },
+      { id: "s9",  label: "ANCHOR QUOTES", type: "code", desc: "Claim dropped unless it quotes the cached snapshot", x: 1210, y: 300 },
+      { id: "s10", label: "JUDGE (LLM)", type: "llm", desc: "Closed questions: novelty · materiality · independence", x: 1440, y: 300 },
+      { id: "s11", label: "POLICY", type: "policy", desc: "9.1KB production rulebook — R1–R9 ladder, deterministic, no network", x: 1670, y: 300 },
+      { id: "s12", label: "ESCALATE SINK", type: "receipt", desc: "Refusal receipts (B: insufficient corroboration · C: injection R2)", x: 1900, y: 140 },
+      { id: "s13", label: "PUBLISH OR REVERT?", type: "branch", desc: "Router: act lane vs escalate/none", x: 1900, y: 460 },
+      { id: "s14", label: "GH SHA+COMMIT", type: "git", desc: "Look up blob sha → commit body + diff to main (showcase/)", x: 2130, y: 460 },
+      { id: "s15", label: "LEARNER CARD", type: "notify", desc: "Telegram card to consented cohort (PA2 caps respected)", x: 2360, y: 460 },
+      { id: "s16", label: "LANES MERGE", type: "branch", desc: "Appends every lane's receipts into one item set", x: 2360, y: 300 },
+      { id: "s17", label: "DIGEST RENDER", type: "code", desc: "≤4KB: refusals first → changes → learners → discipline strip", x: 2130, y: 620 },
+      { id: "s18", label: "VERIFY CHAIN", type: "code", desc: "Recompute row hashes + chain.prev links → chain_ok", x: 1900, y: 620 },
+      { id: "s19", label: "TELEGRAM DIGEST", type: "notify", desc: "Digest to author's channel", x: 1670, y: 620 },
+      { id: "s20", label: "RESULTS", type: "http", desc: "Webhook response: per-lane outcomes + chain_ok flag", x: 1440, y: 620 },
+    ],
+    edges: [
+      { from: "s0", to: "s1" },
+      { from: "s1", to: "s2" }, { from: "s1", to: "s6" },
+      { from: "s2", to: "s3" }, { from: "s3", to: "s4" }, { from: "s4", to: "s5" },
+      { from: "s6", to: "s7" }, { from: "s7", to: "s8" }, { from: "s8", to: "s9" },
+      { from: "s9", to: "s10" }, { from: "s10", to: "s11" },
+      { from: "s11", to: "s12" }, { from: "s11", to: "s13" },
+      { from: "s13", to: "s14" }, { from: "s14", to: "s15" },
+      { from: "s12", to: "s16" }, { from: "s5", to: "s16" }, { from: "s15", to: "s16" },
+      { from: "s16", to: "s17" }, { from: "s17", to: "s18" },
+      { from: "s18", to: "s19" }, { from: "s18", to: "s20" },
+    ],
+    writes: ["showcase/ (GitHub commits)", "receipts/run-log.jsonl", "Telegram cards + digest"],
+    n8nUrl: "https://knreddy.app.n8n.cloud/workflow/1dGrPQ8j4M8u2lXU",
+  },
+  {
     id: "wf-cr-0-scan",
     name: "wf-cr-0-scan",
     label: "Source Scanner",
@@ -312,7 +357,7 @@ function FullLoopDiagram() {
         {/* Back arrow */}
         <div style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: "var(--s3)" }}>
           <div style={{ fontSize: 11, color: "var(--ink-faint)", fontFamily: "var(--font-mono)" }}>
-            ↳ loop repeats every 60 min · receipts chained · chain verified at digest
+            ↳ loop repeats every 60 min · receipts chained · chain verified at digest · the whole loop also runs on one combined canvas → wf-cr-showcase-loop
           </div>
         </div>
       </div>
@@ -331,7 +376,7 @@ export default function WorkflowTab({ data }: { data: any }) {
           n8n Workflow Visualisations
         </h2>
         <p style={{ margin: 0, fontSize: 13, color: "var(--ink-soft)", fontStyle: "italic", fontFamily: "var(--font-serif)" }}>
-          Five workflows orchestrate the full notice → verify → decide → act → learn → report loop. Every decision executes inside n8n; the canvas is the accountability surface.
+          Five production workflows orchestrate the notice → verify → decide → act → learn → report loop — plus a sixth, wf-cr-showcase-loop, which runs the entire loop end-to-end on a single canvas for the demo. Every decision executes inside n8n; the canvas is the accountability surface.
         </p>
       </div>
 
@@ -414,7 +459,7 @@ export default function WorkflowTab({ data }: { data: any }) {
           <div style={{ fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink-faint)", fontFamily: "var(--font-sans)", marginBottom: "var(--s4)" }}>
             Canvas — hover nodes for detail
           </div>
-          <div style={{ minWidth: 900 }}>
+          <div style={{ minWidth: wf.id === "wf-cr-showcase-loop" ? 1800 : 900 }}>
             <WorkflowCanvas wf={wf} />
           </div>
         </div>
