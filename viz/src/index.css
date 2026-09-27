@@ -16,6 +16,12 @@
   --mark: rgba(197,162,2,.28);
   --radius: 2px;
   --measure: 68ch;
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
   --font-serif: "Source Serif 4", Georgia, serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;

@@ -2,18 +2,34 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { stagedCard } from './data/mockData';
 import PresentationSlides from './components/PresentationSlides';
-import WorkflowVisualizer from './components/WorkflowVisualizer';
 import AuthorConsole from './components/AuthorConsole';
 import LiveLoopBadge from './components/LiveLoopBadge';
 import CoursesSection from './components/CoursesSection';
+import RunsTab from './components/RunsTab';
+import WorkflowTab from './components/WorkflowTab';
+import { workflowRuns, receipts } from './data/mockData';
+
+// Adapt the repo's REAL recorded runs (mockData.workflowRuns — generated from the hero
+// run's receipts) into the executions-strip shape the n8n-workflows tab renders.
+// receiptsWritten counts the actual receipt rows each runId wrote.
+const realWorkflowExecutions = workflowRuns.slice(0, 8).map((r) => ({
+  id: r.id,
+  workflowName: r.cadence.includes('15') ? 'wf-cr-3-learn' : r.outcome === 'PUBLISH' ? 'wf-cr-1-triage' : 'wf-cr-2-act',
+  runId: r.runId,
+  status: 'success',
+  durationMs: 0,
+  nodesExecuted: r.events.slice(0, 6).map((e) => e.phase),
+  receiptsWritten: receipts.filter((rc) => rc.runId === r.runId).length,
+}));
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
-type Section = 'overview' | 'slides' | 'workflow' | 'courses' | 'console';
+type Section = 'overview' | 'slides' | 'runs' | 'workflow' | 'courses' | 'console';
 
 const nav: { id: Section; label: string; sub: string }[] = [
   { id: 'overview',  label: 'Overview',         sub: 'What & why' },
   { id: 'slides',   label: 'Deck (10 slides)',   sub: 'Problem · Loop · Safeguards · Proof' },
-  { id: 'workflow', label: 'Workflow Runs',      sub: '5 views of the recorded runs' },
+  { id: 'runs',     label: 'Live Runs',         sub: '5 traced run records' },
+  { id: 'workflow', label: 'n8n Workflows',      sub: '5 workflow canvases' },
   { id: 'courses',  label: 'Course',             sub: 'agent-ops · 6 lessons' },
   { id: 'console',  label: 'Author Console',     sub: 'Receipts · digest · chain' },
 ];
@@ -232,7 +248,8 @@ export default function App() {
   const sectionTitles: Record<Section, string> = {
     overview: 'Overview',
     slides: 'Deck — 4 slides',
-    workflow: 'Workflow Runs (5 live)',
+    runs: 'Live Runs',
+    workflow: 'n8n Workflows',
     courses: 'Courses & Lessons',
     console: 'Author Console',
   };
@@ -392,19 +409,33 @@ export default function App() {
                   <PresentationSlides />
                 </div>
               )}
+              {section === 'runs' && (
+                <div>
+                  <div className="mb-4">
+                    <h2 className="text-2xl font-semibold" style={{ color: '#1C1915', fontFamily: "'Source Serif 4', Georgia, serif" }}>
+                      Live runs — traced end to end
+                    </h2>
+                    <p className="text-sm mt-1" style={{ color: '#68604F' }}>
+                      Five detailed run traces: detected claim, anchored quote, the POLICY execution path, before/after amendments, revert-gate maths, learner cards and receipts. The demo traces illustrate the full notice → verify → decide → act → learn → report cycle; recorded engine runs live in the Author Console.
+                    </p>
+                  </div>
+                  <RunsTab />
+                </div>
+              )}
               {section === 'workflow' && (
                 <div>
                   <div className="mb-4">
                     <h2 className="text-2xl font-semibold" style={{ color: '#1C1915', fontFamily: "'Source Serif 4', Georgia, serif" }}>
-                      Workflow runs — 5 views of the recorded cycle
+                      n8n workflows — the accountability surface
                     </h2>
                     <p className="text-sm mt-1" style={{ color: '#68604F' }}>
-                      Each view animates the recorded Notice → Verify → Decide → Act → Learn → Report cycle from the real receipts and run logs. Click any event row to expand. “Replay loop” animates the presentation; the runs themselves are recorded artifacts, not a live feed.
+                      Five workflows orchestrate the full loop. Every node's contract is named; "Open in n8n ↗" links to the live canvases. The triage link is the workflow that really decided the CE-2026-041 events on your instance.
                     </p>
                   </div>
-                  <WorkflowVisualizer />
+                  <WorkflowTab data={{ workflowRuns: realWorkflowExecutions }} />
                 </div>
               )}
+
               {section === 'courses' && (
                 <div>
                   <div className="mb-4">
