@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { allCourses, stagedCard } from './data/mockData';
+import { stagedCard } from './data/mockData';
 import PresentationSlides from './components/PresentationSlides';
 import WorkflowVisualizer from './components/WorkflowVisualizer';
-import CourseView from './components/CourseView';
 import AuthorConsole from './components/AuthorConsole';
-import ProgressionChart from './components/ProgressionChart';
 import LiveLoopBadge from './components/LiveLoopBadge';
+import CoursesSection from './components/CoursesSection';
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
 type Section = 'overview' | 'slides' | 'workflow' | 'courses' | 'console';
@@ -222,49 +221,8 @@ function OverviewPage({ onNavigate }: { onNavigate: (s: Section) => void }) {
 }
 
 // ─── Courses page ─────────────────────────────────────────────────────────────
-function CoursesPage() {
-  const [selectedCourse, setSelectedCourse] = useState(0);
-  const course = allCourses[selectedCourse];
-
-  return (
-    <div style={{ fontFamily: "'IBM Plex Sans', system-ui, sans-serif" }}>
-      {/* Course tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {allCourses.map((c, i) => (
-          <button
-            key={c.id}
-            onClick={() => setSelectedCourse(i)}
-            className="text-left px-4 py-2 border rounded-sm text-sm transition-all"
-            style={{
-              borderColor: selectedCourse === i ? '#6B4E2E' : '#C9C0AE',
-              backgroundColor: selectedCourse === i ? '#EDE6D8' : '#F3EFE7',
-              color: '#1C1915',
-            }}
-          >
-            <span className="font-mono font-semibold" style={{ color: '#6B4E2E' }}>{c.code}</span>
-            <span className="ml-2" style={{ color: '#4A443A' }}>{c.title}</span>
-            <span className="ml-2 text-xs font-mono" style={{ color: '#8E8160' }}>({c.enrolledLearners})</span>
-          </button>
-        ))}
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={course.id}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.25 }}
-        >
-              <div className="mb-6">
-                <ProgressionChart />
-              </div>
-              <CourseView course={course} />
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
-}
+// (former CoursesPage — course tabs + ProgressionChart + CourseView — replaced by the
+//  three-level CoursesSection adapted from the Next.js variant; see components/CoursesSection.tsx)
 
 // ─── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
@@ -451,13 +409,13 @@ export default function App() {
                 <div>
                   <div className="mb-4">
                     <h2 className="text-2xl font-semibold" style={{ color: '#1C1915', fontFamily: "'Source Serif 4', Georgia, serif" }}>
-                      Course & lessons
+                      Course Catalogue
                     </h2>
                     <p className="text-sm mt-1" style={{ color: '#68604F' }}>
-                      One real course — agent-ops, six lessons. Each lesson shows its actual version history, real diffs, and the quizzes as shipped. Cohort scores are <span className="font-mono">unmeasured</span> until a consented live cohort runs; the system prints <span className="font-mono">unmeasured</span> rather than guessing.
+                      Course catalogue → course → lesson, each with its version history, real diffs and the quizzes as shipped. The agent-ops course is the repo's real six-lesson course; ml-engineering and web-security are demo catalog entries. Cohort scores are <span className="font-mono">unmeasured</span> until a consented live cohort runs; the system prints <span className="font-mono">unmeasured</span> rather than guessing.
                     </p>
                   </div>
-                  <CoursesPage />
+                  <CoursesSection />
                 </div>
               )}
               {section === 'console' && (
