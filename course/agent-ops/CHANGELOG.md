@@ -18,3 +18,8 @@ Apify validates actor inputs against the actor schema; the changelog and the cli
 REVERT to v3: The published breaking change did not help: quiz_delta -0.04 at n=6 after 60h
 - diff: lesson-04-tool-permissions/diffs/v5.diff
 - receipt: rcpt-21-001-008
+
+## lesson-01-autonomy-ladder v2 — 2026.09.27T09:08:29Z
+Input validation before the run
+- diff: lesson-01-autonomy-ladder/diffs/v2.diff
+- receipt: rcpt-08-907-001

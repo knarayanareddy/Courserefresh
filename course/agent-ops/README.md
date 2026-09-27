@@ -6,7 +6,7 @@ under which it must be reverted.
 
 | Lesson | Title | Version |
 |---|---|---|
-| 01 | The autonomy ladder | v1 |
+| 01 | The autonomy ladder | v2 |
 | 02 | n8n as the decision layer | v1 |
 | 03 | Apify as the input layer | v2 |
 | 04 | Tool permissions and the human exit | v5 |

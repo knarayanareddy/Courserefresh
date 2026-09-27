@@ -1,70 +1,87 @@
 {
+  "id": "XafXKTwrLXr6dkmR",
   "name": "wf-cr-1-triage",
+  "description": null,
+  "active": true,
+  "activeVersionId": "e4eb31ca-8540-4c18-b7bc-e072824715af",
+  "createdAt": "2026-09-26T19:36:18.312Z",
+  "updatedAt": "2026-09-27T09:24:25.033Z",
+  "isArchived": false,
+  "versionId": "e4eb31ca-8540-4c18-b7bc-e072824715af",
+  "versionCounter": 9,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "cr/triage",
-        "responseMode": "lastNode"
-      },
       "id": "from-scan",
       "name": "From scan",
+      "webhookId": "b9d04497-3cfe-4f06-932d-b45a2d53c004",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
         0,
         0
-      ]
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cr/triage",
+        "responseMode": "lastNode"
+      }
     },
     {
-      "parameters": {
-        "jsCode": "// execute-once: the scan trigger passes a run key; a duplicate key stops this execution.\nconst key = $json.run_key || $json.run_id || null;\nconst store = $getWorkflowStaticData('global');\nif (key && store.lastRunKey === key) { return []; }\nif (key) store.lastRunKey = key;\nreturn $input.all();"
-      },
       "id": "once",
       "name": "ONCE",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        220,
+        200,
         0
-      ]
+      ],
+      "parameters": {
+        "jsCode": "// execute-once: the scan trigger passes a run key; a duplicate key stops this execution.\nconst key = $json.run_key || $json.run_id || null;\nconst store = $getWorkflowStaticData('global');\nif (key && store.lastRunKey === key) { return []; }\nif (key) store.lastRunKey = key;\nreturn $input.all();",
+        "mode": "runOnceForAllItems"
+      }
     },
     {
-      "parameters": {
-        "jsCode": "// assembles the observe prompt from the snapshot text; the judge never sees it\nreturn $input.all();"
-      },
       "id": "build_prompt",
       "name": "BUILD_PROMPT",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        220,
+        380,
         0
-      ]
+      ],
+      "parameters": {
+        "jsCode": "// Router (WIRING \u00a73.0): engine DecisionInputs go straight to the rulebook;\n// scan snapshots build an observe prompt for the judge chain. The webhook nests\n// the payload under `body` on newer n8n versions \u2014 accept both shapes.\nreturn $input.all().map(item => {\n  const j = item.json || {};\n  const src = (j.input && typeof j.input === 'object') ? j\n            : (j.body && typeof j.body.input === 'object') ? j.body\n            : null;\n  if (src) {\n    return { json: { input: src.input, input_hash: null, engine: true } };\n  }\n  const scan = (j.markdown || j.title) ? j : (j.body || {});\n  const text = String(scan.markdown || scan.title || '').slice(0, 8000);\n  return { json: {\n    engine: false,\n    messages: [\n      { role: 'system', content: 'You extract factual claims from a snapshot page. Reply as JSON.' },\n      { role: 'user', content: text }\n    ]\n  } };\n});\n",
+        "mode": "runOnceForAllItems"
+      }
     },
     {
-      "parameters": {
-        "method": "POST",
-        "url": "ATTACH_AT_IMPORT/v1/chat/completions",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\"model\":\"{{$env.OBSERVE_MODEL}}\",\"temperature\":0,\"messages\":{{JSON.stringify($json.messages)}}}",
-        "options": {}
-      },
       "id": "observe",
       "name": "OBSERVE",
+      "notes": "OBSERVE_MODEL pinned in WIRING.md \u00a74",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         440,
         0
       ],
-      "notes": "OBSERVE_MODEL pinned in WIRING.md \u00a74"
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tokenfactory.nebius.com/v1/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\":\"{{$vars.OBSERVE_MODEL}}\",\"temperature\":0,\"messages\":{{JSON.stringify($json.messages)}}}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Q19GQA67XXiiHaj6",
+          "name": "Courserefresh \u00b7 Judge (Bearer)"
+        }
+      }
     },
     {
-      "parameters": {
-        "jsCode": "// keeps only quotes that occur verbatim in the cached snapshot\nreturn $input.all();"
-      },
       "id": "anchor_quotes",
       "name": "ANCHOR_QUOTES",
       "type": "n8n-nodes-base.code",
@@ -72,31 +89,38 @@
       "position": [
         660,
         0
-      ]
+      ],
+      "parameters": {
+        "jsCode": "// keeps only quotes that occur verbatim in the cached snapshot\nreturn $input.all();",
+        "mode": "runOnceForAllItems"
+      }
     },
     {
-      "parameters": {
-        "method": "POST",
-        "url": "ATTACH_AT_IMPORT/v1/chat/completions",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\"model\":\"{{$env.JUDGE_MODEL}}\",\"temperature\":0,\"response_format\":{\"type\":\"json_object\"}}",
-        "options": {}
-      },
       "id": "judge",
       "name": "JUDGE",
+      "notes": "The seven closed questions in skin/questions.json",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         880,
         0
       ],
-      "notes": "The seven closed questions in skin/questions.json"
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tokenfactory.nebius.com/v1/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\":\"{{$vars.JUDGE_MODEL}}\",\"temperature\":0,\"response_format\":{\"type\":\"json_object\"}}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Q19GQA67XXiiHaj6",
+          "name": "Courserefresh \u00b7 Judge (Bearer)"
+        }
+      }
     },
     {
-      "parameters": {
-        "jsCode": "/**\n * Courserefresh POLICY node \u2014 production rulebook (n8n Code node, Run Once for Each Item).\n *\n * This file is loaded verbatim into the n8n canvas (WIRING.md \u00a73) and is kept identical to the\n * oracle `specs/courserefresh/skin/policy.py` by `app/tests/test_gate_parity.py`.\n *\n * Rule order (normative): safety -> evidence -> relevance -> authority -> integrity -> budget ->\n * default ESCALATE(unknown_state). First match wins. No network, no clock, no randomness.\n *\n * Input:  the DecisionInput (specs/shared/data-model.md \u00a75) as `item.json.input`\n * Output: { action, reason_codes, authority, notes }\n */\n\nconst THRESHOLDS = {\n  // discovery_roles: quoted, never counted as independent voices (mirrors + Tavily leads)\n  evidence: { min_sources: 2, source_agreement_min: 0.5, quote_supported_min: 0.8,\n              discovery_roles: [\"none\", \"discovery\"] },\n  relevance: { learner_impact_min: 0.4 },\n  safety: { injection_min: 0.5 },\n  budgets: { publishes_per_day: 6, tokens_per_change: 60000, notify_per_learner_day: 1, notify_per_learner_week: 3 },\n  revert: { n_min: 5, window_h: 48 },\n  diff: { max_lines: 400 }\n};\n\nconst COHORT_NOTIFY = [\"material_breaking\", \"material_deprecation\"];\nconst PUBLISHABLE = [\"material_breaking\", \"material_deprecation\", \"material_new_capability\"];\nconst MATERIALITIES = [\"material_breaking\", \"material_deprecation\", \"material_new_capability\", \"cosmetic\",\n  \"marketing_noise\", \"ambiguous\", \"contradictory\", \"unverifiable\"];\nconst AUTHORITIES = [\"PA0\", \"PA1\", \"PA2\", \"PA3\"];\n\nfunction num(v) {\n  if (typeof v === \"boolean\" || v === null || v === undefined) return null;\n  const n = Number(v);\n  if (!isFinite(n)) return null;\n  return n >= 0 && n <= 1 ? n : null;\n}\n\nfunction out(action, reasons, authority, notes = \"\") {\n  return { action, reason_codes: reasons, authority, notes };\n}\n\nfunction independentPublishers(sources) {\n  if (!Array.isArray(sources) || sources.length === 0) return null;\n  // Roles in thresholds.evidence.discovery_roles are recorded, never counted as a voice:\n  // \"none\" is a mirror or re-post (review 05, AP-01); \"discovery\" is a Tavily lead whose page has\n  // not been fetched from its own publisher yet. One search engine is one voice, not three.\n  const quiet = (THRESHOLDS.evidence.discovery_roles || [\"none\"]);\n  const set = new Set(sources.filter((s) => s && typeof s === \"object\" && !quiet.includes(s.role))\n    .map((s) => String(s.publisher || s.source_id || \"?\").toLowerCase()));\n  return set.size;\n}\n\nfunction mirrorCount(sources) {\n  if (!Array.isArray(sources)) return 0;\n  const quiet = (THRESHOLDS.evidence.discovery_roles || [\"none\"]);\n  return sources.filter((s) => s && typeof s === \"object\" && quiet.includes(s.role)).length;\n}\n\nfunction malformed(inp) {\n  const required = [\"event_id\", \"stream\", \"materiality\", \"learner_impact\", \"source_agreement\",\n    \"quote_supported\", \"sources_verified\", \"injection_or_jailbreak\", \"authority\", \"freeze_active\"];\n  for (const f of required) if (inp[f] === undefined || inp[f] === null) return f;\n  if (!MATERIALITIES.includes(inp.materiality)) return \"materiality\";\n  if (!AUTHORITIES.includes(inp.authority)) return \"authority\";\n  for (const f of [\"learner_impact\", \"source_agreement\", \"quote_supported\", \"injection_or_jailbreak\"]) {\n    if (num(inp[f]) === null) return f;\n  }\n  if (![\"change\", \"learner\", \"revert\"].includes(inp.stream)) return \"stream\";\n  return null;\n}\n\nfunction decideChange(inp) {\n  const a = inp.authority, m = inp.materiality, b = inp.budgets || {};\n  // 1) safety\n  if (inp.freeze_active) return out(\"DRAFT\", [\"freeze_active\"], a);\n  if (num(inp.injection_or_jailbreak) >= THRESHOLDS.safety.injection_min) return out(\"ESCALATE\", [\"injection_or_jailbreak\"], a);\n  if (inp.assessment_touched) return out(\"ESCALATE\", [\"assessment_change_requires_human\"], a);\n  // 2) evidence\n  if (m === \"contradictory\") return out(\"ESCALATE\", [\"source_conflict\"], a);\n  if (m === \"unverifiable\") return out(\"ESCALATE\", [\"unverifiable\"], a);\n  if (m === \"ambiguous\") return out(\"ESCALATE\", [\"ambiguous_change\"], a);\n  if (inp.seed) {\n    if (inp.claims_upstream) return out(\"ESCALATE\", [\"seeded_source_misrepresented\"], a, \"rehearsal presented as a vendor change\");\n    return out(\"PUBLISH\", [m, \"seeded_rehearsal\"], a, \"SEEDED REHEARSAL \u2014 not a vendor release\");\n  }\n  const publishers = independentPublishers(inp.sources);\n  if (publishers !== null && publishers < THRESHOLDS.evidence.min_sources) {\n    const mirrors = mirrorCount(inp.sources);\n    let note = publishers + \" independent voice(s) in \" + Number(inp.sources_verified) + \" source(s)\";\n    if (mirrors) note += \" (\" + mirrors + \" source(s) not independent: mirrors, re-posts or discovery leads)\";\n    return out(\"ESCALATE\", [\"insufficient_corroboration\"], a, note);\n  }\n  if (Number(inp.sources_verified) < THRESHOLDS.evidence.min_sources ||\n      num(inp.source_agreement) < THRESHOLDS.evidence.source_agreement_min) return out(\"ESCALATE\", [\"insufficient_corroboration\"], a);\n  if (num(inp.quote_supported) < THRESHOLDS.evidence.quote_supported_min) return out(\"ESCALATE\", [\"quote_unsupported\"], a);\n  // 3) relevance\n  if (m === \"marketing_noise\") return out(\"NO_CHANGE\", [\"immaterial_change\"], a);\n  if (m === \"cosmetic\" || num(inp.learner_impact) < THRESHOLDS.relevance.learner_impact_min) return out(\"DRAFT\", [\"low_learner_impact\"], a);\n  // 4) authority\n  if (a === \"PA0\") return out(\"DRAFT\", [\"authority_insufficient\"], a, \"PA0: observe only\");\n  if (COHORT_NOTIFY.includes(m) && a !== \"PA2\") return out(\"DRAFT\", [\"authority_insufficient\"], a, \"cohort notification required (PA2)\");\n  // 5) integrity floor\n  if (inp.revert_gate_present === false) return out(\"ESCALATE\", [\"integrity_floor_missing_gate\"], a);\n  if (Number(inp.diff_lines || 0) > THRESHOLDS.diff.max_lines) return out(\"ESCALATE\", [\"diff_too_wide\"], a);\n  if (inp.previous_version_available === false) return out(\"ESCALATE\", [\"previous_version_missing\"], a);\n  // 6) budget\n  if (Number(b.publishes_used || 0) >= Number(b.publishes_cap || THRESHOLDS.budgets.publishes_per_day)) return out(\"ESCALATE\", [\"over_budget\"], a, \"publishes\");\n  if (Number(b.tokens_used || 0) >= Number(b.tokens_cap || THRESHOLDS.budgets.tokens_per_change)) return out(\"ESCALATE\", [\"over_budget\"], a, \"tokens\");\n  // 7) default\n  if (PUBLISHABLE.includes(m)) {\n    const reasons = [m];\n    if (inp.seed) reasons.push(\"seeded_rehearsal\");\n    return out(\"PUBLISH\", reasons, a, \"lesson \" + (inp.lesson_touched || \"?\"));\n  }\n  return out(\"ESCALATE\", [\"unknown_state\"], a, \"unhandled materiality \" + m);\n}\n\nfunction decideLearner(inp) {\n  const a = inp.authority;\n  if (inp.freeze_active) return out(\"NO_CHANGE\", [\"freeze_active\"], a);\n  if (inp.grade_impacting) return out(\"ESCALATE\", [\"grade_impacting_requires_human\"], a);\n  if (!inp.consent) return out(\"NO_CHANGE\", [\"consent_missing\"], a);\n  const caps = inp.caps || {};\n  if (Number(caps.notifications_today || 0) >= THRESHOLDS.budgets.notify_per_learner_day) return out(\"NO_CHANGE\", [\"rate_limited\"], a, \"day cap\");\n  if (Number(caps.notifications_week || 0) >= THRESHOLDS.budgets.notify_per_learner_week) return out(\"NO_CHANGE\", [\"rate_limited\"], a, \"week cap\");\n  if (inp.stuck && inp.concept_recently_dispatched) return out(\"NO_CHANGE\", [\"rate_limited\"], a, \"concept cap: \" + (inp.concept || \"\"));\n  if (inp.stuck) return out(\"DISPATCH\", [\"stuck_signals_met\"], a, inp.concept || \"\");\n  return out(\"NO_CHANGE\", [\"no_signal\"], a);\n}\n\nfunction decideRevert(inp) {\n  const a = inp.authority;\n  if (inp.freeze_active) return out(\"NO_CHANGE\", [\"freeze_active\"], a);\n  if (!inp.revert_gate_present) return out(\"ESCALATE\", [\"revert_gate_absent\"], a);\n  if (inp.previous_version_available === false) return out(\"ESCALATE\", [\"previous_version_missing\"], a);\n  const c = inp.cohort || {};\n  if (c.n === undefined || c.n === null || c.quiz_delta === undefined || c.quiz_delta === null ||\n      c.hours_since_publish === undefined || c.hours_since_publish === null) return out(\"NO_CHANGE\", [\"measurement_incomplete\"], a);\n  if (Number(c.n) < THRESHOLDS.revert.n_min) return out(\"NO_CHANGE\", [\"cohort_below_minimum\"], a, \"n=\" + c.n);\n  if (Number(c.hours_since_publish) < THRESHOLDS.revert.window_h) return out(\"NO_CHANGE\", [\"gate_window_open\"], a);\n  if (Number(c.quiz_delta) <= 0) return out(\"REVERT\", [\"revert_gate_satisfied\"], a);\n  return out(\"NO_CHANGE\", [\"no_improvement_measured\"], a);\n}\n\nfunction decide(inp) {\n  const bad = malformed(inp);\n  if (bad) {\n    const authority = AUTHORITIES.includes(inp.authority) ? inp.authority : \"PA0\";\n    return out(\"ESCALATE\", [\"unknown_state\"], authority, \"invalid:\" + bad);\n  }\n  if (inp.stream === \"change\") return decideChange(inp);\n  if (inp.stream === \"learner\") return decideLearner(inp);\n  return decideRevert(inp);\n}\n\nif (typeof module !== \"undefined\" && module.exports) {\n  module.exports = { decide, THRESHOLDS, MATERIALITIES, PUBLISHABLE };\n}\n\n// n8n runtime: read the input and emit one item per decision\nif (typeof $input !== \"undefined\" && typeof module === \"undefined\") {\n  return $input.all().map((item) => ({ json: { decision: decide(item.json.input), input_hash: item.json.input_hash } }));\n}\n"
-      },
       "id": "policy",
       "name": "POLICY",
       "type": "n8n-nodes-base.code",
@@ -104,9 +128,21 @@
       "position": [
         1100,
         0
-      ]
+      ],
+      "parameters": {
+        "jsCode": "/**\n * Courserefresh POLICY node \u2014 production rulebook (n8n Code node, Run Once for Each Item).\n *\n * This file is loaded verbatim into the n8n canvas (WIRING.md \u00a73) and is kept identical to the\n * oracle `specs/courserefresh/skin/policy.py` by `app/tests/test_gate_parity.py`.\n *\n * Rule order (normative): safety -> evidence -> relevance -> authority -> integrity -> budget ->\n * default ESCALATE(unknown_state). First match wins. No network, no clock, no randomness.\n *\n * Input:  the DecisionInput (specs/shared/data-model.md \u00a75) as `item.json.input`\n * Output: { action, reason_codes, authority, notes }\n */\n\nconst THRESHOLDS = {\n  // discovery_roles: quoted, never counted as independent voices (mirrors + Tavily leads)\n  evidence: { min_sources: 2, source_agreement_min: 0.5, quote_supported_min: 0.8,\n              discovery_roles: [\"none\", \"discovery\"] },\n  relevance: { learner_impact_min: 0.4 },\n  safety: { injection_min: 0.5 },\n  budgets: { publishes_per_day: 6, tokens_per_change: 60000, notify_per_learner_day: 1, notify_per_learner_week: 3 },\n  revert: { n_min: 5, window_h: 48 },\n  diff: { max_lines: 400 }\n};\n\nconst COHORT_NOTIFY = [\"material_breaking\", \"material_deprecation\"];\nconst PUBLISHABLE = [\"material_breaking\", \"material_deprecation\", \"material_new_capability\"];\nconst MATERIALITIES = [\"material_breaking\", \"material_deprecation\", \"material_new_capability\", \"cosmetic\",\n  \"marketing_noise\", \"ambiguous\", \"contradictory\", \"unverifiable\"];\nconst AUTHORITIES = [\"PA0\", \"PA1\", \"PA2\", \"PA3\"];\n\nfunction num(v) {\n  if (typeof v === \"boolean\" || v === null || v === undefined) return null;\n  const n = Number(v);\n  if (!isFinite(n)) return null;\n  return n >= 0 && n <= 1 ? n : null;\n}\n\nfunction out(action, reasons, authority, notes = \"\") {\n  return { action, reason_codes: reasons, authority, notes };\n}\n\nfunction independentPublishers(sources) {\n  if (!Array.isArray(sources) || sources.length === 0) return null;\n  // Roles in thresholds.evidence.discovery_roles are recorded, never counted as a voice:\n  // \"none\" is a mirror or re-post (review 05, AP-01); \"discovery\" is a Tavily lead whose page has\n  // not been fetched from its own publisher yet. One search engine is one voice, not three.\n  const quiet = (THRESHOLDS.evidence.discovery_roles || [\"none\"]);\n  const set = new Set(sources.filter((s) => s && typeof s === \"object\" && !quiet.includes(s.role))\n    .map((s) => String(s.publisher || s.source_id || \"?\").toLowerCase()));\n  return set.size;\n}\n\nfunction mirrorCount(sources) {\n  if (!Array.isArray(sources)) return 0;\n  const quiet = (THRESHOLDS.evidence.discovery_roles || [\"none\"]);\n  return sources.filter((s) => s && typeof s === \"object\" && quiet.includes(s.role)).length;\n}\n\nfunction malformed(inp) {\n  const required = [\"event_id\", \"stream\", \"materiality\", \"learner_impact\", \"source_agreement\",\n    \"quote_supported\", \"sources_verified\", \"injection_or_jailbreak\", \"authority\", \"freeze_active\"];\n  for (const f of required) if (inp[f] === undefined || inp[f] === null) return f;\n  if (!MATERIALITIES.includes(inp.materiality)) return \"materiality\";\n  if (!AUTHORITIES.includes(inp.authority)) return \"authority\";\n  for (const f of [\"learner_impact\", \"source_agreement\", \"quote_supported\", \"injection_or_jailbreak\"]) {\n    if (num(inp[f]) === null) return f;\n  }\n  if (![\"change\", \"learner\", \"revert\"].includes(inp.stream)) return \"stream\";\n  return null;\n}\n\nfunction decideChange(inp) {\n  const a = inp.authority, m = inp.materiality, b = inp.budgets || {};\n  // 1) safety\n  if (inp.freeze_active) return out(\"DRAFT\", [\"freeze_active\"], a);\n  if (num(inp.injection_or_jailbreak) >= THRESHOLDS.safety.injection_min) return out(\"ESCALATE\", [\"injection_or_jailbreak\"], a);\n  if (inp.assessment_touched) return out(\"ESCALATE\", [\"assessment_change_requires_human\"], a);\n  // 2) evidence\n  if (m === \"contradictory\") return out(\"ESCALATE\", [\"source_conflict\"], a);\n  if (m === \"unverifiable\") return out(\"ESCALATE\", [\"unverifiable\"], a);\n  if (m === \"ambiguous\") return out(\"ESCALATE\", [\"ambiguous_change\"], a);\n  if (inp.seed) {\n    if (inp.claims_upstream) return out(\"ESCALATE\", [\"seeded_source_misrepresented\"], a, \"rehearsal presented as a vendor change\");\n    return out(\"PUBLISH\", [m, \"seeded_rehearsal\"], a, \"SEEDED REHEARSAL \u2014 not a vendor release\");\n  }\n  const publishers = independentPublishers(inp.sources);\n  if (publishers !== null && publishers < THRESHOLDS.evidence.min_sources) {\n    const mirrors = mirrorCount(inp.sources);\n    let note = publishers + \" independent voice(s) in \" + Number(inp.sources_verified) + \" source(s)\";\n    if (mirrors) note += \" (\" + mirrors + \" source(s) not independent: mirrors, re-posts or discovery leads)\";\n    return out(\"ESCALATE\", [\"insufficient_corroboration\"], a, note);\n  }\n  if (Number(inp.sources_verified) < THRESHOLDS.evidence.min_sources ||\n      num(inp.source_agreement) < THRESHOLDS.evidence.source_agreement_min) return out(\"ESCALATE\", [\"insufficient_corroboration\"], a);\n  if (num(inp.quote_supported) < THRESHOLDS.evidence.quote_supported_min) return out(\"ESCALATE\", [\"quote_unsupported\"], a);\n  // 3) relevance\n  if (m === \"marketing_noise\") return out(\"NO_CHANGE\", [\"immaterial_change\"], a);\n  if (m === \"cosmetic\" || num(inp.learner_impact) < THRESHOLDS.relevance.learner_impact_min) return out(\"DRAFT\", [\"low_learner_impact\"], a);\n  // 4) authority\n  if (a === \"PA0\") return out(\"DRAFT\", [\"authority_insufficient\"], a, \"PA0: observe only\");\n  if (COHORT_NOTIFY.includes(m) && a !== \"PA2\") return out(\"DRAFT\", [\"authority_insufficient\"], a, \"cohort notification required (PA2)\");\n  // 5) integrity floor\n  if (inp.revert_gate_present === false) return out(\"ESCALATE\", [\"integrity_floor_missing_gate\"], a);\n  if (Number(inp.diff_lines || 0) > THRESHOLDS.diff.max_lines) return out(\"ESCALATE\", [\"diff_too_wide\"], a);\n  if (inp.previous_version_available === false) return out(\"ESCALATE\", [\"previous_version_missing\"], a);\n  // 6) budget\n  if (Number(b.publishes_used || 0) >= Number(b.publishes_cap || THRESHOLDS.budgets.publishes_per_day)) return out(\"ESCALATE\", [\"over_budget\"], a, \"publishes\");\n  if (Number(b.tokens_used || 0) >= Number(b.tokens_cap || THRESHOLDS.budgets.tokens_per_change)) return out(\"ESCALATE\", [\"over_budget\"], a, \"tokens\");\n  // 7) default\n  if (PUBLISHABLE.includes(m)) {\n    const reasons = [m];\n    if (inp.seed) reasons.push(\"seeded_rehearsal\");\n    return out(\"PUBLISH\", reasons, a, \"lesson \" + (inp.lesson_touched || \"?\"));\n  }\n  return out(\"ESCALATE\", [\"unknown_state\"], a, \"unhandled materiality \" + m);\n}\n\nfunction decideLearner(inp) {\n  const a = inp.authority;\n  if (inp.freeze_active) return out(\"NO_CHANGE\", [\"freeze_active\"], a);\n  if (inp.grade_impacting) return out(\"ESCALATE\", [\"grade_impacting_requires_human\"], a);\n  if (!inp.consent) return out(\"NO_CHANGE\", [\"consent_missing\"], a);\n  const caps = inp.caps || {};\n  if (Number(caps.notifications_today || 0) >= THRESHOLDS.budgets.notify_per_learner_day) return out(\"NO_CHANGE\", [\"rate_limited\"], a, \"day cap\");\n  if (Number(caps.notifications_week || 0) >= THRESHOLDS.budgets.notify_per_learner_week) return out(\"NO_CHANGE\", [\"rate_limited\"], a, \"week cap\");\n  if (inp.stuck && inp.concept_recently_dispatched) return out(\"NO_CHANGE\", [\"rate_limited\"], a, \"concept cap: \" + (inp.concept || \"\"));\n  if (inp.stuck) return out(\"DISPATCH\", [\"stuck_signals_met\"], a, inp.concept || \"\");\n  return out(\"NO_CHANGE\", [\"no_signal\"], a);\n}\n\nfunction decideRevert(inp) {\n  const a = inp.authority;\n  if (inp.freeze_active) return out(\"NO_CHANGE\", [\"freeze_active\"], a);\n  if (!inp.revert_gate_present) return out(\"ESCALATE\", [\"revert_gate_absent\"], a);\n  if (inp.previous_version_available === false) return out(\"ESCALATE\", [\"previous_version_missing\"], a);\n  const c = inp.cohort || {};\n  if (c.n === undefined || c.n === null || c.quiz_delta === undefined || c.quiz_delta === null ||\n      c.hours_since_publish === undefined || c.hours_since_publish === null) return out(\"NO_CHANGE\", [\"measurement_incomplete\"], a);\n  if (Number(c.n) < THRESHOLDS.revert.n_min) return out(\"NO_CHANGE\", [\"cohort_below_minimum\"], a, \"n=\" + c.n);\n  if (Number(c.hours_since_publish) < THRESHOLDS.revert.window_h) return out(\"NO_CHANGE\", [\"gate_window_open\"], a);\n  if (Number(c.quiz_delta) <= 0) return out(\"REVERT\", [\"revert_gate_satisfied\"], a);\n  return out(\"NO_CHANGE\", [\"no_improvement_measured\"], a);\n}\n\nfunction decide(inp) {\n  const bad = malformed(inp);\n  if (bad) {\n    const authority = AUTHORITIES.includes(inp.authority) ? inp.authority : \"PA0\";\n    return out(\"ESCALATE\", [\"unknown_state\"], authority, \"invalid:\" + bad);\n  }\n  if (inp.stream === \"change\") return decideChange(inp);\n  if (inp.stream === \"learner\") return decideLearner(inp);\n  return decideRevert(inp);\n}\n\nif (typeof module !== \"undefined\" && module.exports) {\n  module.exports = { decide, THRESHOLDS, MATERIALITIES, PUBLISHABLE };\n}\n\n// n8n runtime: read the input and emit one item per decision\nif (typeof $input !== \"undefined\") {\n  return $input.all().map((item) => ({ json: { decision: decide(item.json.input), input_hash: item.json.input_hash } }));\n}\n",
+        "mode": "runOnceForAllItems"
+      }
     },
     {
+      "id": "publish-or-revert?",
+      "name": "Publish or revert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -124,37 +160,28 @@
             }
           ]
         }
-      },
-      "id": "publish-or-revert?",
-      "name": "Publish or revert?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        1320,
-        0
-      ]
+      }
     },
     {
-      "parameters": {
-        "method": "POST",
-        "url": "ATTACH_AT_IMPORT/webhook/cr/act",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{JSON.stringify($json)}}",
-        "options": {}
-      },
       "id": "notice_decision",
       "name": "NOTICE_DECISION",
+      "notes": "",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         1540,
         -80
       ],
-      "notes": ""
+      "parameters": {
+        "method": "POST",
+        "url": "https://knreddy.app.n8n.cloud/webhook/cr/act",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{JSON.stringify($json)}}",
+        "options": {}
+      }
     },
     {
-      "parameters": {},
       "id": "queue-for-a-human",
       "name": "Queue for a human",
       "type": "n8n-nodes-base.noOp",
@@ -162,12 +189,10 @@
       "position": [
         1540,
         120
-      ]
+      ],
+      "parameters": {}
     },
     {
-      "parameters": {
-        "jsCode": "// one chained row per decision: quotes, judge answers, action, reasons, artifact hash\nreturn $input.all();"
-      },
       "id": "receipt",
       "name": "RECEIPT",
       "type": "n8n-nodes-base.code",
@@ -175,15 +200,13 @@
       "position": [
         1760,
         0
-      ]
+      ],
+      "parameters": {
+        "jsCode": "// one chained row per decision + the response contract (WIRING \u00a73.0):\n// the engine reads {decision, execution_id} from the webhook response.\nreturn $input.all().map(item => ({ json: {\n  decision: item.json.decision,\n  input_hash: item.json.input_hash !== undefined ? item.json.input_hash : null,\n  execution_id: $execution.id,\n  workflow: 'wf-cr-1-triage',\n  notes: (item.json.decision || {}).notes || ''\n}}));\n",
+        "mode": "runOnceForAllItems"
+      }
     },
     {
-      "parameters": {
-        "content": "WIRING.md \u00a73.1 contract:\n1. execute-once (this file has the guard)\n2. the POLICY node embeds app/n8n/policy_node.js byte-for-byte (drift-checked by test_contracts)\n3. errors land as receipts: error branch \u2192 RETRY(dlq, once) \u2192 RECEIPT(degraded)\n4. wf-cr-9-errors is attached to every workflow at import time (make_n8n_exports.py --import)\n5. instance version is recorded in WIRING.md \u00a74 at D-1; expressions stay version-safe",
-        "height": 220,
-        "width": 420,
-        "color": 4
-      },
       "id": "contract-note",
       "name": "CONTRACT",
       "type": "n8n-nodes-base.stickyNote",
@@ -191,7 +214,87 @@
       "position": [
         0,
         -420
-      ]
+      ],
+      "parameters": {
+        "content": "WIRING.md \u00a73.1 contract:\n1. execute-once (this file has the guard)\n2. the POLICY node embeds app/n8n/policy_node.js byte-for-byte (drift-checked by test_contracts)\n3. errors land as receipts: error branch \u2192 RETRY(dlq, once) \u2192 RECEIPT(degraded)\n4. wf-cr-9-errors is attached to every workflow at import time (make_n8n_exports.py --import)\n5. instance version is recorded in WIRING.md \u00a74 at D-1; expressions stay version-safe",
+        "height": 220,
+        "width": 420,
+        "color": 4
+      }
+    },
+    {
+      "id": "path-tag",
+      "name": "PATH TAG",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// carry the path flag past POLICY (the rulebook must stay byte-identical to policy_node.js)\nconst engine = $('Engine or scan?').first().json.engine === true;\nreturn $input.all().map(item => ({ json: { ...item.json, engine } }));\n",
+        "mode": "runOnceForAllItems"
+      }
+    },
+    {
+      "id": "engine-or-scan",
+      "name": "Engine or scan?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.engine }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "canvas-acts",
+      "name": "Canvas acts? (scan path)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        -80
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.engine !== true }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -206,8 +309,37 @@
         ]
       ]
     },
+    "ONCE": {
+      "main": [
+        [
+          {
+            "node": "BUILD_PROMPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "BUILD_PROMPT": {
       "main": [
+        [
+          {
+            "node": "Engine or scan?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Engine or scan?": {
+      "main": [
+        [
+          {
+            "node": "POLICY",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "OBSERVE",
@@ -254,6 +386,17 @@
       "main": [
         [
           {
+            "node": "PATH TAG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PATH TAG": {
+      "main": [
+        [
+          {
             "node": "Publish or revert?",
             "type": "main",
             "index": 0
@@ -265,7 +408,7 @@
       "main": [
         [
           {
-            "node": "NOTICE_DECISION",
+            "node": "Canvas acts? (scan path)",
             "type": "main",
             "index": 0
           }
@@ -273,6 +416,24 @@
         [
           {
             "node": "Queue for a human",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canvas acts? (scan path)": {
+      "main": [
+        [
+          {
+            "node": "NOTICE_DECISION",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "RECEIPT",
             "type": "main",
             "index": 0
           }
@@ -300,41 +461,504 @@
           }
         ]
       ]
-    },
-    "ONCE": {
-      "main": [
-        [
-          {
-            "node": "BUILD_PROMPT",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
+  "nodeGroups": [],
   "settings": {
-    "executionOrder": "v1",
     "saveManualExecutions": true,
+    "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": null
+    "errorWorkflow": "VUWApp8KSebb2BmG"
   },
   "staticData": null,
-  "meta": {
-    "instanceId": "ATTACH_AT_IMPORT",
-    "templateCredsSetupCompleted": false,
-    "courserefresh": {
-      "generated_by": "app/tools/make_n8n_exports.py",
-      "policy_node_sha256": "ee181d275c1b2809008647f15a40f48e1bbb785a32d7e79f890425249fe93d83",
-      "notes": "The POLICY node is the product's rulebook: one screen, deterministic, never throws."
-    }
-  },
-  "tags": [
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
     {
-      "name": "courserefresh"
+      "role": "workflow:owner",
+      "workflowId": "XafXKTwrLXr6dkmR",
+      "projectId": "u6ukJDqflV8sveCc",
+      "project": {
+        "id": "u6ukJDqflV8sveCc",
+        "name": "kiran reddy <kirannreddyaero@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "6c19a40c-0551-40ba-88d8-e8586994998c",
+        "createdAt": "2026-09-24T08:58:35.657Z",
+        "updatedAt": "2026-09-24T08:58:49.979Z"
+      },
+      "createdAt": "2026-09-26T19:36:18.314Z",
+      "updatedAt": "2026-09-26T19:36:18.314Z"
     }
   ],
-  "pinData": {},
-  "versionId": "ee181d27",
-  "active": false
+  "activeVersion": {
+    "versionId": "e4eb31ca-8540-4c18-b7bc-e072824715af",
+    "workflowId": "XafXKTwrLXr6dkmR",
+    "nodes": [
+      {
+        "id": "from-scan",
+        "name": "From scan",
+        "webhookId": "b9d04497-3cfe-4f06-932d-b45a2d53c004",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "cr/triage",
+          "responseMode": "lastNode"
+        }
+      },
+      {
+        "id": "once",
+        "name": "ONCE",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          200,
+          0
+        ],
+        "parameters": {
+          "jsCode": "// execute-once: the scan trigger passes a run key; a duplicate key stops this execution.\nconst key = $json.run_key || $json.run_id || null;\nconst store = $getWorkflowStaticData('global');\nif (key && store.lastRunKey === key) { return []; }\nif (key) store.lastRunKey = key;\nreturn $input.all();"
+        }
+      },
+      {
+        "id": "build_prompt",
+        "name": "BUILD_PROMPT",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          380,
+          0
+        ],
+        "parameters": {
+          "jsCode": "// Router (WIRING \u00a73.0): engine DecisionInputs go straight to the rulebook;\n// scan snapshots build an observe prompt for the judge chain. The webhook nests\n// the payload under `body` on newer n8n versions \u2014 accept both shapes.\nreturn $input.all().map(item => {\n  const j = item.json || {};\n  const src = (j.input && typeof j.input === 'object') ? j\n            : (j.body && typeof j.body.input === 'object') ? j.body\n            : null;\n  if (src) {\n    return { json: { input: src.input, input_hash: null, engine: true } };\n  }\n  const scan = (j.markdown || j.title) ? j : (j.body || {});\n  const text = String(scan.markdown || scan.title || '').slice(0, 8000);\n  return { json: {\n    engine: false,\n    messages: [\n      { role: 'system', content: 'You extract factual claims from a snapshot page. Reply as JSON.' },\n      { role: 'user', content: text }\n    ]\n  } };\n});\n"
+        }
+      },
+      {
+        "id": "observe",
+        "name": "OBSERVE",
+        "notes": "OBSERVE_MODEL pinned in WIRING.md \u00a74",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          440,
+          0
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.tokenfactory.nebius.com/v1/v1/chat/completions",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\"model\":\"{{$vars.OBSERVE_MODEL}}\",\"temperature\":0,\"messages\":{{JSON.stringify($json.messages)}}}",
+          "options": {}
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "Q19GQA67XXiiHaj6",
+            "name": "Courserefresh \u00b7 Judge (Bearer)"
+          }
+        }
+      },
+      {
+        "id": "anchor_quotes",
+        "name": "ANCHOR_QUOTES",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          660,
+          0
+        ],
+        "parameters": {
+          "jsCode": "// keeps only quotes that occur verbatim in the cached snapshot\nreturn $input.all();"
+        }
+      },
+      {
+        "id": "judge",
+        "name": "JUDGE",
+        "notes": "The seven closed questions in skin/questions.json",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          880,
+          0
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.tokenfactory.nebius.com/v1/v1/chat/completions",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\"model\":\"{{$vars.JUDGE_MODEL}}\",\"temperature\":0,\"response_format\":{\"type\":\"json_object\"}}",
+          "options": {}
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "Q19GQA67XXiiHaj6",
+            "name": "Courserefresh \u00b7 Judge (Bearer)"
+          }
+        }
+      },
+      {
+        "id": "policy",
+        "name": "POLICY",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1100,
+          0
+        ],
+        "parameters": {
+          "jsCode": "/**\n * Courserefresh POLICY node \u2014 production rulebook (n8n Code node, Run Once for Each Item).\n *\n * This file is loaded verbatim into the n8n canvas (WIRING.md \u00a73) and is kept identical to the\n * oracle `specs/courserefresh/skin/policy.py` by `app/tests/test_gate_parity.py`.\n *\n * Rule order (normative): safety -> evidence -> relevance -> authority -> integrity -> budget ->\n * default ESCALATE(unknown_state). First match wins. No network, no clock, no randomness.\n *\n * Input:  the DecisionInput (specs/shared/data-model.md \u00a75) as `item.json.input`\n * Output: { action, reason_codes, authority, notes }\n */\n\nconst THRESHOLDS = {\n  // discovery_roles: quoted, never counted as independent voices (mirrors + Tavily leads)\n  evidence: { min_sources: 2, source_agreement_min: 0.5, quote_supported_min: 0.8,\n              discovery_roles: [\"none\", \"discovery\"] },\n  relevance: { learner_impact_min: 0.4 },\n  safety: { injection_min: 0.5 },\n  budgets: { publishes_per_day: 6, tokens_per_change: 60000, notify_per_learner_day: 1, notify_per_learner_week: 3 },\n  revert: { n_min: 5, window_h: 48 },\n  diff: { max_lines: 400 }\n};\n\nconst COHORT_NOTIFY = [\"material_breaking\", \"material_deprecation\"];\nconst PUBLISHABLE = [\"material_breaking\", \"material_deprecation\", \"material_new_capability\"];\nconst MATERIALITIES = [\"material_breaking\", \"material_deprecation\", \"material_new_capability\", \"cosmetic\",\n  \"marketing_noise\", \"ambiguous\", \"contradictory\", \"unverifiable\"];\nconst AUTHORITIES = [\"PA0\", \"PA1\", \"PA2\", \"PA3\"];\n\nfunction num(v) {\n  if (typeof v === \"boolean\" || v === null || v === undefined) return null;\n  const n = Number(v);\n  if (!isFinite(n)) return null;\n  return n >= 0 && n <= 1 ? n : null;\n}\n\nfunction out(action, reasons, authority, notes = \"\") {\n  return { action, reason_codes: reasons, authority, notes };\n}\n\nfunction independentPublishers(sources) {\n  if (!Array.isArray(sources) || sources.length === 0) return null;\n  // Roles in thresholds.evidence.discovery_roles are recorded, never counted as a voice:\n  // \"none\" is a mirror or re-post (review 05, AP-01); \"discovery\" is a Tavily lead whose page has\n  // not been fetched from its own publisher yet. One search engine is one voice, not three.\n  const quiet = (THRESHOLDS.evidence.discovery_roles || [\"none\"]);\n  const set = new Set(sources.filter((s) => s && typeof s === \"object\" && !quiet.includes(s.role))\n    .map((s) => String(s.publisher || s.source_id || \"?\").toLowerCase()));\n  return set.size;\n}\n\nfunction mirrorCount(sources) {\n  if (!Array.isArray(sources)) return 0;\n  const quiet = (THRESHOLDS.evidence.discovery_roles || [\"none\"]);\n  return sources.filter((s) => s && typeof s === \"object\" && quiet.includes(s.role)).length;\n}\n\nfunction malformed(inp) {\n  const required = [\"event_id\", \"stream\", \"materiality\", \"learner_impact\", \"source_agreement\",\n    \"quote_supported\", \"sources_verified\", \"injection_or_jailbreak\", \"authority\", \"freeze_active\"];\n  for (const f of required) if (inp[f] === undefined || inp[f] === null) return f;\n  if (!MATERIALITIES.includes(inp.materiality)) return \"materiality\";\n  if (!AUTHORITIES.includes(inp.authority)) return \"authority\";\n  for (const f of [\"learner_impact\", \"source_agreement\", \"quote_supported\", \"injection_or_jailbreak\"]) {\n    if (num(inp[f]) === null) return f;\n  }\n  if (![\"change\", \"learner\", \"revert\"].includes(inp.stream)) return \"stream\";\n  return null;\n}\n\nfunction decideChange(inp) {\n  const a = inp.authority, m = inp.materiality, b = inp.budgets || {};\n  // 1) safety\n  if (inp.freeze_active) return out(\"DRAFT\", [\"freeze_active\"], a);\n  if (num(inp.injection_or_jailbreak) >= THRESHOLDS.safety.injection_min) return out(\"ESCALATE\", [\"injection_or_jailbreak\"], a);\n  if (inp.assessment_touched) return out(\"ESCALATE\", [\"assessment_change_requires_human\"], a);\n  // 2) evidence\n  if (m === \"contradictory\") return out(\"ESCALATE\", [\"source_conflict\"], a);\n  if (m === \"unverifiable\") return out(\"ESCALATE\", [\"unverifiable\"], a);\n  if (m === \"ambiguous\") return out(\"ESCALATE\", [\"ambiguous_change\"], a);\n  if (inp.seed) {\n    if (inp.claims_upstream) return out(\"ESCALATE\", [\"seeded_source_misrepresented\"], a, \"rehearsal presented as a vendor change\");\n    return out(\"PUBLISH\", [m, \"seeded_rehearsal\"], a, \"SEEDED REHEARSAL \u2014 not a vendor release\");\n  }\n  const publishers = independentPublishers(inp.sources);\n  if (publishers !== null && publishers < THRESHOLDS.evidence.min_sources) {\n    const mirrors = mirrorCount(inp.sources);\n    let note = publishers + \" independent voice(s) in \" + Number(inp.sources_verified) + \" source(s)\";\n    if (mirrors) note += \" (\" + mirrors + \" source(s) not independent: mirrors, re-posts or discovery leads)\";\n    return out(\"ESCALATE\", [\"insufficient_corroboration\"], a, note);\n  }\n  if (Number(inp.sources_verified) < THRESHOLDS.evidence.min_sources ||\n      num(inp.source_agreement) < THRESHOLDS.evidence.source_agreement_min) return out(\"ESCALATE\", [\"insufficient_corroboration\"], a);\n  if (num(inp.quote_supported) < THRESHOLDS.evidence.quote_supported_min) return out(\"ESCALATE\", [\"quote_unsupported\"], a);\n  // 3) relevance\n  if (m === \"marketing_noise\") return out(\"NO_CHANGE\", [\"immaterial_change\"], a);\n  if (m === \"cosmetic\" || num(inp.learner_impact) < THRESHOLDS.relevance.learner_impact_min) return out(\"DRAFT\", [\"low_learner_impact\"], a);\n  // 4) authority\n  if (a === \"PA0\") return out(\"DRAFT\", [\"authority_insufficient\"], a, \"PA0: observe only\");\n  if (COHORT_NOTIFY.includes(m) && a !== \"PA2\") return out(\"DRAFT\", [\"authority_insufficient\"], a, \"cohort notification required (PA2)\");\n  // 5) integrity floor\n  if (inp.revert_gate_present === false) return out(\"ESCALATE\", [\"integrity_floor_missing_gate\"], a);\n  if (Number(inp.diff_lines || 0) > THRESHOLDS.diff.max_lines) return out(\"ESCALATE\", [\"diff_too_wide\"], a);\n  if (inp.previous_version_available === false) return out(\"ESCALATE\", [\"previous_version_missing\"], a);\n  // 6) budget\n  if (Number(b.publishes_used || 0) >= Number(b.publishes_cap || THRESHOLDS.budgets.publishes_per_day)) return out(\"ESCALATE\", [\"over_budget\"], a, \"publishes\");\n  if (Number(b.tokens_used || 0) >= Number(b.tokens_cap || THRESHOLDS.budgets.tokens_per_change)) return out(\"ESCALATE\", [\"over_budget\"], a, \"tokens\");\n  // 7) default\n  if (PUBLISHABLE.includes(m)) {\n    const reasons = [m];\n    if (inp.seed) reasons.push(\"seeded_rehearsal\");\n    return out(\"PUBLISH\", reasons, a, \"lesson \" + (inp.lesson_touched || \"?\"));\n  }\n  return out(\"ESCALATE\", [\"unknown_state\"], a, \"unhandled materiality \" + m);\n}\n\nfunction decideLearner(inp) {\n  const a = inp.authority;\n  if (inp.freeze_active) return out(\"NO_CHANGE\", [\"freeze_active\"], a);\n  if (inp.grade_impacting) return out(\"ESCALATE\", [\"grade_impacting_requires_human\"], a);\n  if (!inp.consent) return out(\"NO_CHANGE\", [\"consent_missing\"], a);\n  const caps = inp.caps || {};\n  if (Number(caps.notifications_today || 0) >= THRESHOLDS.budgets.notify_per_learner_day) return out(\"NO_CHANGE\", [\"rate_limited\"], a, \"day cap\");\n  if (Number(caps.notifications_week || 0) >= THRESHOLDS.budgets.notify_per_learner_week) return out(\"NO_CHANGE\", [\"rate_limited\"], a, \"week cap\");\n  if (inp.stuck && inp.concept_recently_dispatched) return out(\"NO_CHANGE\", [\"rate_limited\"], a, \"concept cap: \" + (inp.concept || \"\"));\n  if (inp.stuck) return out(\"DISPATCH\", [\"stuck_signals_met\"], a, inp.concept || \"\");\n  return out(\"NO_CHANGE\", [\"no_signal\"], a);\n}\n\nfunction decideRevert(inp) {\n  const a = inp.authority;\n  if (inp.freeze_active) return out(\"NO_CHANGE\", [\"freeze_active\"], a);\n  if (!inp.revert_gate_present) return out(\"ESCALATE\", [\"revert_gate_absent\"], a);\n  if (inp.previous_version_available === false) return out(\"ESCALATE\", [\"previous_version_missing\"], a);\n  const c = inp.cohort || {};\n  if (c.n === undefined || c.n === null || c.quiz_delta === undefined || c.quiz_delta === null ||\n      c.hours_since_publish === undefined || c.hours_since_publish === null) return out(\"NO_CHANGE\", [\"measurement_incomplete\"], a);\n  if (Number(c.n) < THRESHOLDS.revert.n_min) return out(\"NO_CHANGE\", [\"cohort_below_minimum\"], a, \"n=\" + c.n);\n  if (Number(c.hours_since_publish) < THRESHOLDS.revert.window_h) return out(\"NO_CHANGE\", [\"gate_window_open\"], a);\n  if (Number(c.quiz_delta) <= 0) return out(\"REVERT\", [\"revert_gate_satisfied\"], a);\n  return out(\"NO_CHANGE\", [\"no_improvement_measured\"], a);\n}\n\nfunction decide(inp) {\n  const bad = malformed(inp);\n  if (bad) {\n    const authority = AUTHORITIES.includes(inp.authority) ? inp.authority : \"PA0\";\n    return out(\"ESCALATE\", [\"unknown_state\"], authority, \"invalid:\" + bad);\n  }\n  if (inp.stream === \"change\") return decideChange(inp);\n  if (inp.stream === \"learner\") return decideLearner(inp);\n  return decideRevert(inp);\n}\n\nif (typeof module !== \"undefined\" && module.exports) {\n  module.exports = { decide, THRESHOLDS, MATERIALITIES, PUBLISHABLE };\n}\n\n// n8n runtime: read the input and emit one item per decision\nif (typeof $input !== \"undefined\") {\n  return $input.all().map((item) => ({ json: { decision: decide(item.json.input), input_hash: item.json.input_hash } }));\n}\n"
+        }
+      },
+      {
+        "id": "publish-or-revert?",
+        "name": "Publish or revert?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1320,
+          0
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "version": 2
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ ['PUBLISH','REVERT'].includes($json.decision.action) }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "notice_decision",
+        "name": "NOTICE_DECISION",
+        "notes": "",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1540,
+          -80
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://knreddy.app.n8n.cloud/webhook/cr/act",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{JSON.stringify($json)}}",
+          "options": {}
+        }
+      },
+      {
+        "id": "queue-for-a-human",
+        "name": "Queue for a human",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          1540,
+          120
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "receipt",
+        "name": "RECEIPT",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1760,
+          0
+        ],
+        "parameters": {
+          "jsCode": "// one chained row per decision + the response contract (WIRING \u00a73.0):\n// the engine reads {decision, execution_id} from the webhook response.\nreturn $input.all().map(item => ({ json: {\n  decision: item.json.decision,\n  input_hash: item.json.input_hash !== undefined ? item.json.input_hash : null,\n  execution_id: $execution.id,\n  workflow: 'wf-cr-1-triage',\n  notes: (item.json.decision || {}).notes || ''\n}}));\n"
+        }
+      },
+      {
+        "id": "contract-note",
+        "name": "CONTRACT",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          0,
+          -420
+        ],
+        "parameters": {
+          "content": "WIRING.md \u00a73.1 contract:\n1. execute-once (this file has the guard)\n2. the POLICY node embeds app/n8n/policy_node.js byte-for-byte (drift-checked by test_contracts)\n3. errors land as receipts: error branch \u2192 RETRY(dlq, once) \u2192 RECEIPT(degraded)\n4. wf-cr-9-errors is attached to every workflow at import time (make_n8n_exports.py --import)\n5. instance version is recorded in WIRING.md \u00a74 at D-1; expressions stay version-safe",
+          "height": 220,
+          "width": 420,
+          "color": 4
+        }
+      },
+      {
+        "id": "path-tag",
+        "name": "PATH TAG",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1220,
+          0
+        ],
+        "parameters": {
+          "jsCode": "// carry the path flag past POLICY (the rulebook must stay byte-identical to policy_node.js)\nconst engine = $('Engine or scan?').first().json.engine === true;\nreturn $input.all().map(item => ({ json: { ...item.json, engine } }));\n"
+        }
+      },
+      {
+        "id": "engine-or-scan",
+        "name": "Engine or scan?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          560,
+          0
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "version": 2
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.engine }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "canvas-acts",
+        "name": "Canvas acts? (scan path)",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1420,
+          -80
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "version": 2
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.engine !== true }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "From scan": {
+        "main": [
+          [
+            {
+              "node": "ONCE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ONCE": {
+        "main": [
+          [
+            {
+              "node": "BUILD_PROMPT",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "BUILD_PROMPT": {
+        "main": [
+          [
+            {
+              "node": "Engine or scan?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Engine or scan?": {
+        "main": [
+          [
+            {
+              "node": "POLICY",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "OBSERVE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OBSERVE": {
+        "main": [
+          [
+            {
+              "node": "ANCHOR_QUOTES",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ANCHOR_QUOTES": {
+        "main": [
+          [
+            {
+              "node": "JUDGE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "JUDGE": {
+        "main": [
+          [
+            {
+              "node": "POLICY",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "POLICY": {
+        "main": [
+          [
+            {
+              "node": "PATH TAG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "PATH TAG": {
+        "main": [
+          [
+            {
+              "node": "Publish or revert?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Publish or revert?": {
+        "main": [
+          [
+            {
+              "node": "Canvas acts? (scan path)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Queue for a human",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Canvas acts? (scan path)": {
+        "main": [
+          [
+            {
+              "node": "NOTICE_DECISION",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "RECEIPT",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "NOTICE_DECISION": {
+        "main": [
+          [
+            {
+              "node": "RECEIPT",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Queue for a human": {
+        "main": [
+          [
+            {
+              "node": "RECEIPT",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "kiran reddy",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-27T09:24:25.034Z",
+    "updatedAt": "2026-09-27T09:24:25.034Z",
+    "workflowPublishHistory": [
+      {
+        "id": 19,
+        "workflowId": "XafXKTwrLXr6dkmR",
+        "versionId": "e4eb31ca-8540-4c18-b7bc-e072824715af",
+        "event": "activated",
+        "userId": "6c19a40c-0551-40ba-88d8-e8586994998c",
+        "createdAt": "2026-09-27T09:24:25.183Z"
+      }
+    ]
+  }
 }

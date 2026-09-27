@@ -1,25 +1,34 @@
 {
+  "id": "W5XiGRFg9PZLkKwA",
   "name": "wf-cr-2-act",
+  "description": null,
+  "active": true,
+  "activeVersionId": "85d22dfd-e992-4e7f-888e-3882e79a0d7d",
+  "createdAt": "2026-09-26T19:36:18.949Z",
+  "updatedAt": "2026-09-27T09:06:21.864Z",
+  "isArchived": false,
+  "versionId": "85d22dfd-e992-4e7f-888e-3882e79a0d7d",
+  "versionCounter": 7,
+  "sourceWorkflowId": null,
+  "triggerCount": 1,
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "cr/act",
-        "responseMode": "lastNode"
-      },
       "id": "from-triage",
       "name": "From triage",
+      "webhookId": "abce9485-39a0-4642-b8be-bdd729fa9ccd",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
         0,
         0
-      ]
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cr/act",
+        "responseMode": "lastNode"
+      }
     },
     {
-      "parameters": {
-        "jsCode": "// execute-once: the scan trigger passes a run key; a duplicate key stops this execution.\nconst key = $json.run_key || $json.run_id || null;\nconst store = $getWorkflowStaticData('global');\nif (key && store.lastRunKey === key) { return []; }\nif (key) store.lastRunKey = key;\nreturn $input.all();"
-      },
       "id": "once",
       "name": "ONCE",
       "type": "n8n-nodes-base.code",
@@ -27,12 +36,12 @@
       "position": [
         220,
         0
-      ]
+      ],
+      "parameters": {
+        "jsCode": "// execute-once: the scan trigger passes a run key; a duplicate key stops this execution.\nconst key = $json.run_key || $json.run_id || null;\nconst store = $getWorkflowStaticData('global');\nif (key && store.lastRunKey === key) { return []; }\nif (key) store.lastRunKey = key;\nreturn $input.all();"
+      }
     },
     {
-      "parameters": {
-        "jsCode": "// writes course/<lesson>/v<n+1>.md from the previous version + the anchored edit\nreturn $input.all();"
-      },
       "id": "render_body",
       "name": "RENDER_BODY",
       "type": "n8n-nodes-base.code",
@@ -40,12 +49,12 @@
       "position": [
         220,
         0
-      ]
+      ],
+      "parameters": {
+        "jsCode": "// writes course/<lesson>/v<n+1>.md from the previous version + the anchored edit\nreturn $input.all();"
+      }
     },
     {
-      "parameters": {
-        "jsCode": "// unified diff of previous vs new; refuses if > thresholds.diff.max_lines\nreturn $input.all();"
-      },
       "id": "render_diff",
       "name": "RENDER_DIFF",
       "type": "n8n-nodes-base.code",
@@ -53,27 +62,46 @@
       "position": [
         440,
         0
-      ]
+      ],
+      "parameters": {
+        "jsCode": "// unified diff of previous vs new; refuses if > thresholds.diff.max_lines\nreturn $input.all();"
+      }
     },
     {
-      "parameters": {
-        "operation": "commit",
-        "repository": "ATTACH_AT_IMPORT",
-        "branch": "bot/courserefresh",
-        "filePath": "={{$json.body_path}}",
-        "commitMessage": "=cr: {{$json.decision.action}} {{$json.lesson_id}} {{$json.previous_version}} \u2192 {{$json.new_version}} [{{$json.receipt_id}}]"
-      },
       "id": "git-commit",
       "name": "COMMIT (bot branch)",
+      "webhookId": "9dd6d670-10be-4c30-a320-bdc149a1084e",
+      "notes": "Never main; the human merges (Art. XIV.4)",
       "type": "n8n-nodes-base.github",
       "typeVersion": 1,
       "position": [
         660,
         0
       ],
-      "notes": "Never main; the human merges (Art. XIV.4)"
+      "parameters": {
+        "operation": "commit",
+        "repository": "Courserefresh",
+        "branch": "bot/courserefresh",
+        "filePath": "={{$json.body_path}}",
+        "commitMessage": "=cr: {{$json.decision.action}} {{$json.lesson_id}} {{$json.previous_version}} \u2192 {{$json.new_version}} [{{$json.receipt_id}}]",
+        "owner": "knarayanareddy"
+      },
+      "credentials": {
+        "githubApi": {
+          "id": "nzwn6S8GX3d5Qgci",
+          "name": "Courserefresh \u00b7 GitHub"
+        }
+      }
     },
     {
+      "id": "notify-the-cohort?",
+      "name": "Notify the cohort?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -91,37 +119,35 @@
             }
           ]
         }
-      },
-      "id": "notify-the-cohort?",
-      "name": "Notify the cohort?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        880,
-        0
-      ]
+      }
     },
     {
-      "parameters": {
-        "fromEmail": "ATTACH_AT_IMPORT",
-        "toEmail": "={{$json.learner_ref}}",
-        "subject": "=Lesson updated: {{$json.title}} ({{$json.previous_version}} \u2192 {{$json.new_version}})",
-        "text": "={{$json.card_text}}"
-      },
       "id": "card",
       "name": "CARD (consented only)",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
+      "webhookId": "4b3154ab-3bdf-4209-9900-bfd8c22794ea",
+      "notes": "Three lines + opt-out (Art. IV.3); consented only \u2014 Telegram channel (email needs an SMTP credential nobody has yet)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
       "position": [
         1100,
         -80
       ],
-      "notes": "Three lines; opt-out in every message (Art. IV.3)"
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $json.learner_ref }}",
+        "text": "={{ $json.card_text }}",
+        "additionalFields": {
+          "disableWebPagePreview": true
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "NrsPB2lkzfAE4Y83",
+          "name": "Courserefresh \u00b7 Telegram bot"
+        }
+      }
     },
     {
-      "parameters": {
-        "jsCode": "// chain row: action, artifact hashes, notified handles (hashed), cost\nreturn $input.all();"
-      },
       "id": "receipt",
       "name": "RECEIPT",
       "type": "n8n-nodes-base.code",
@@ -129,15 +155,12 @@
       "position": [
         1320,
         0
-      ]
+      ],
+      "parameters": {
+        "jsCode": "// chain row: action, artifact hashes, notified handles (hashed), cost\nreturn $input.all();"
+      }
     },
     {
-      "parameters": {
-        "content": "WIRING.md \u00a73.1 contract:\n1. execute-once (this file has the guard)\n2. the POLICY node embeds app/n8n/policy_node.js byte-for-byte (drift-checked by test_contracts)\n3. errors land as receipts: error branch \u2192 RETRY(dlq, once) \u2192 RECEIPT(degraded)\n4. wf-cr-9-errors is attached to every workflow at import time (make_n8n_exports.py --import)\n5. instance version is recorded in WIRING.md \u00a74 at D-1; expressions stay version-safe",
-        "height": 220,
-        "width": 420,
-        "color": 4
-      },
       "id": "contract-note",
       "name": "CONTRACT",
       "type": "n8n-nodes-base.stickyNote",
@@ -145,7 +168,13 @@
       "position": [
         0,
         -420
-      ]
+      ],
+      "parameters": {
+        "content": "WIRING.md \u00a73.1 contract:\n1. execute-once (this file has the guard)\n2. the POLICY node embeds app/n8n/policy_node.js byte-for-byte (drift-checked by test_contracts)\n3. errors land as receipts: error branch \u2192 RETRY(dlq, once) \u2192 RECEIPT(degraded)\n4. wf-cr-9-errors is attached to every workflow at import time (make_n8n_exports.py --import)\n5. instance version is recorded in WIRING.md \u00a74 at D-1; expressions stay version-safe",
+        "height": 220,
+        "width": 420,
+        "color": 4
+      }
     }
   ],
   "connections": {
@@ -228,28 +257,302 @@
       ]
     }
   },
+  "nodeGroups": [],
   "settings": {
-    "executionOrder": "v1",
     "saveManualExecutions": true,
+    "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": null
+    "errorWorkflow": "VUWApp8KSebb2BmG"
   },
   "staticData": null,
-  "meta": {
-    "instanceId": "ATTACH_AT_IMPORT",
-    "templateCredsSetupCompleted": false,
-    "courserefresh": {
-      "generated_by": "app/tools/make_n8n_exports.py",
-      "policy_node_sha256": "ee181d275c1b2809008647f15a40f48e1bbb785a32d7e79f890425249fe93d83",
-      "notes": "One commit per decision; the receipt names the commit and the commit names the receipt."
-    }
-  },
-  "tags": [
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
     {
-      "name": "courserefresh"
+      "role": "workflow:owner",
+      "workflowId": "W5XiGRFg9PZLkKwA",
+      "projectId": "u6ukJDqflV8sveCc",
+      "project": {
+        "id": "u6ukJDqflV8sveCc",
+        "name": "kiran reddy <kirannreddyaero@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "6c19a40c-0551-40ba-88d8-e8586994998c",
+        "createdAt": "2026-09-24T08:58:35.657Z",
+        "updatedAt": "2026-09-24T08:58:49.979Z"
+      },
+      "createdAt": "2026-09-26T19:36:18.952Z",
+      "updatedAt": "2026-09-26T19:36:18.952Z"
     }
   ],
-  "pinData": {},
-  "versionId": "ee181d27",
-  "active": false
+  "activeVersion": {
+    "versionId": "85d22dfd-e992-4e7f-888e-3882e79a0d7d",
+    "workflowId": "W5XiGRFg9PZLkKwA",
+    "nodes": [
+      {
+        "id": "from-triage",
+        "name": "From triage",
+        "webhookId": "abce9485-39a0-4642-b8be-bdd729fa9ccd",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "cr/act",
+          "responseMode": "lastNode"
+        }
+      },
+      {
+        "id": "once",
+        "name": "ONCE",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          0
+        ],
+        "parameters": {
+          "jsCode": "// execute-once: the scan trigger passes a run key; a duplicate key stops this execution.\nconst key = $json.run_key || $json.run_id || null;\nconst store = $getWorkflowStaticData('global');\nif (key && store.lastRunKey === key) { return []; }\nif (key) store.lastRunKey = key;\nreturn $input.all();"
+        }
+      },
+      {
+        "id": "render_body",
+        "name": "RENDER_BODY",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          220,
+          0
+        ],
+        "parameters": {
+          "jsCode": "// writes course/<lesson>/v<n+1>.md from the previous version + the anchored edit\nreturn $input.all();"
+        }
+      },
+      {
+        "id": "render_diff",
+        "name": "RENDER_DIFF",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          440,
+          0
+        ],
+        "parameters": {
+          "jsCode": "// unified diff of previous vs new; refuses if > thresholds.diff.max_lines\nreturn $input.all();"
+        }
+      },
+      {
+        "id": "git-commit",
+        "name": "COMMIT (bot branch)",
+        "webhookId": "9dd6d670-10be-4c30-a320-bdc149a1084e",
+        "notes": "Never main; the human merges (Art. XIV.4)",
+        "type": "n8n-nodes-base.github",
+        "typeVersion": 1,
+        "position": [
+          660,
+          0
+        ],
+        "parameters": {
+          "operation": "commit",
+          "repository": "Courserefresh",
+          "branch": "bot/courserefresh",
+          "filePath": "={{$json.body_path}}",
+          "commitMessage": "=cr: {{$json.decision.action}} {{$json.lesson_id}} {{$json.previous_version}} \u2192 {{$json.new_version}} [{{$json.receipt_id}}]",
+          "owner": "knarayanareddy"
+        },
+        "credentials": {
+          "githubApi": {
+            "id": "nzwn6S8GX3d5Qgci",
+            "name": "Courserefresh \u00b7 GitHub"
+          }
+        }
+      },
+      {
+        "id": "notify-the-cohort?",
+        "name": "Notify the cohort?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          880,
+          0
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "version": 2
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.decision.action === 'PUBLISH' && $json.notify }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "card",
+        "name": "CARD (consented only)",
+        "webhookId": "4b3154ab-3bdf-4209-9900-bfd8c22794ea",
+        "notes": "Three lines + opt-out (Art. IV.3); consented only \u2014 Telegram channel (email needs an SMTP credential nobody has yet)",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          1100,
+          -80
+        ],
+        "parameters": {
+          "operation": "sendMessage",
+          "chatId": "={{ $json.learner_ref }}",
+          "text": "={{ $json.card_text }}",
+          "additionalFields": {
+            "disableWebPagePreview": true
+          }
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "NrsPB2lkzfAE4Y83",
+            "name": "Courserefresh \u00b7 Telegram bot"
+          }
+        }
+      },
+      {
+        "id": "receipt",
+        "name": "RECEIPT",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1320,
+          0
+        ],
+        "parameters": {
+          "jsCode": "// chain row: action, artifact hashes, notified handles (hashed), cost\nreturn $input.all();"
+        }
+      },
+      {
+        "id": "contract-note",
+        "name": "CONTRACT",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          0,
+          -420
+        ],
+        "parameters": {
+          "content": "WIRING.md \u00a73.1 contract:\n1. execute-once (this file has the guard)\n2. the POLICY node embeds app/n8n/policy_node.js byte-for-byte (drift-checked by test_contracts)\n3. errors land as receipts: error branch \u2192 RETRY(dlq, once) \u2192 RECEIPT(degraded)\n4. wf-cr-9-errors is attached to every workflow at import time (make_n8n_exports.py --import)\n5. instance version is recorded in WIRING.md \u00a74 at D-1; expressions stay version-safe",
+          "height": 220,
+          "width": 420,
+          "color": 4
+        }
+      }
+    ],
+    "connections": {
+      "From triage": {
+        "main": [
+          [
+            {
+              "node": "ONCE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "RENDER_BODY": {
+        "main": [
+          [
+            {
+              "node": "RENDER_DIFF",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "RENDER_DIFF": {
+        "main": [
+          [
+            {
+              "node": "COMMIT (bot branch)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "COMMIT (bot branch)": {
+        "main": [
+          [
+            {
+              "node": "Notify the cohort?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notify the cohort?": {
+        "main": [
+          [
+            {
+              "node": "CARD (consented only)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "CARD (consented only)": {
+        "main": [
+          [
+            {
+              "node": "RECEIPT",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ONCE": {
+        "main": [
+          [
+            {
+              "node": "RENDER_BODY",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "kiran reddy",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "createdAt": "2026-09-27T09:06:21.865Z",
+    "updatedAt": "2026-09-27T09:06:21.865Z",
+    "workflowPublishHistory": [
+      {
+        "id": 11,
+        "workflowId": "W5XiGRFg9PZLkKwA",
+        "versionId": "85d22dfd-e992-4e7f-888e-3882e79a0d7d",
+        "event": "activated",
+        "userId": "6c19a40c-0551-40ba-88d8-e8586994998c",
+        "createdAt": "2026-09-27T09:08:06.567Z"
+      }
+    ]
+  }
 }
