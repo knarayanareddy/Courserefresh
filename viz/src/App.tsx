@@ -400,10 +400,10 @@ export default function App() {
                 <div>
                   <div className="mb-4">
                     <h2 className="text-2xl font-semibold" style={{ color: '#1C1915', fontFamily: "'Source Serif 4', Georgia, serif" }}>
-                      Four-slide deck
+                      Five-slide deck
                     </h2>
                     <p className="text-sm mt-1" style={{ color: '#68604F' }}>
-                      Why CourseRefresh matters · How it works · Why you can trust it · The university of the future
+                      Why CourseRefresh matters · Who pays for the drift · Why this solution · How it works · The close
                     </p>
                   </div>
                   <PresentationSlides />
