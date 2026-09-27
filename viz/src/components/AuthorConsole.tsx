@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { receipts, workflowRuns, heroDigest, register } from '../data/mockData';
+import { receipts, workflowRuns, heroDigest, register, allCourses } from '../data/mockData';
 import StatusBadge from './StatusBadge';
 
 const phaseIcon: Record<string, string> = {
@@ -18,6 +18,26 @@ const actionColor: Record<string, string> = {
   NO_CHANGE: '#5C564C',
   DISPATCH: '#96550A',
 };
+
+// Resolve the receipt ↔ lesson-version link from the real data:
+// PUBLISH receipts point at the version they wrote; the REVERT receipt (rcpt-…-008)
+// points at v5 but its evidence is the v3→v4 diff of the publish it undid.
+function resolveVersion(receiptId: string) {
+  for (const course of allCourses) {
+    for (const lesson of course.lessons) {
+      for (const v of lesson.versions) {
+        if (v.receipt === receiptId) {
+          if (v.status === 'REVERTED' && v.revertOf) {
+            const undone = lesson.versions.find(x => x.version === v.revertOf);
+            if (undone) return { courseTitle: course.title, lesson, version: undone, revert: v };
+          }
+          return { courseTitle: course.title, lesson, version: v };
+        }
+      }
+    }
+  }
+  return null;
+}
 
 export default function AuthorConsole() {
   const [selectedReceipt, setSelectedReceipt] = useState(0);
@@ -179,16 +199,70 @@ export default function AuthorConsole() {
             ))}
           </div>
 
-          {/* Human decisions note — mirrors digest §3 */}
+          {/* Before/after + sources — the artifact the receipt points at */}
+          {(() => {
+            const link = resolveVersion(r.receiptId);
+            if (!link || (!link.version.diffAdded?.length && !link.version.diffRemoved?.length)) return null;
+            const v = link.version;
+            const rv = link.revert;
+            return (
+              <div className="border-t" style={{ borderColor: '#C9C0AE' }}>
+                <div className="px-4 py-1.5 text-[10px] font-mono uppercase tracking-widest" style={{ color: '#8E8160', backgroundColor: '#EAE4D8' }}>
+                  The change — {link.lesson.id} v{v.version - 1} → v{v.version}{rv ? ` (undone by v${rv.version}, ${rv.receipt})` : ''}
+                </div>
+                <div className="p-4 font-mono text-xs leading-relaxed space-y-1" style={{ backgroundColor: '#F3EFE7' }}>
+                  {v.diffRemoved?.map((line, i) => (
+                    <div key={`r-${i}`} className="flex gap-2">
+                      <span className="flex-shrink-0 select-none font-bold" style={{ color: '#9B2C1F' }}>−</span>
+                      <span style={{ color: '#9B2C1F', textDecoration: 'line-through', opacity: 0.8 }}>{line}</span>
+                    </div>
+                  ))}
+                  {v.diffAdded?.map((line, i) => (
+                    <div key={`a-${i}`} className="flex gap-2">
+                      <span className="flex-shrink-0 select-none font-bold" style={{ color: '#3F5A2A' }}>+</span>
+                      <span style={{ color: '#3F5A2A' }}>{line}</span>
+                    </div>
+                  ))}
+                  <div className="pt-3 flex flex-wrap gap-2">
+                    {v.sources?.map(s => (
+                      <a
+                        key={s}
+                        href={s}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[10px] px-1.5 py-0.5 border rounded-sm hover:bg-white/40"
+                        style={{ color: '#4A443A', borderColor: '#C9C0AE' }}
+                      >
+                        {s.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+          {/* Human decisions — the ruling surface (n8n canvas, PA3 human_signoff) */}
           {humanDecisions.some(h => h.receiptId === r.receiptId) && (
             <div className="border-t px-4 py-3" style={{ borderColor: '#C9C0AE', backgroundColor: '#F5F0E0' }}>
               <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: '#7A5C00' }}>
-                Wants a human
+                Wants a human — rule on it on the canvas
               </div>
               <div className="text-xs leading-relaxed" style={{ color: '#4A443A' }}>
                 {r.eventId === 'cr-single-source-01'
-                  ? 'A second independent publisher carrying the same fact would unblock it.'
-                  : 'A decision about which publisher to believe is a human\u2019s call.'}
+                  ? 'A second independent publisher carrying the same fact would unblock it. You can add the source on the canvas — or let the refusal stand (it is the safe state).'
+                  : 'A decision about which publisher to believe is a human’s call. Your ruling is recorded as its own receipt (human_signoff, PA3) and binds the next cycle.'}
+              </div>
+              <a
+                href="https://knreddy.app.n8n.cloud/workflow/XafXKTwrLXr6dkmR"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block mt-2 px-3 py-1.5 text-[11px] font-mono border rounded-sm"
+                style={{ color: '#6B4E2E', borderColor: '#6B4E2E', backgroundColor: '#F3EFE7' }}
+              >
+                Open the ruling canvas → n8n (wf-cr-1-triage)
+              </a>
+              <div className="text-[10px] font-mono mt-2" style={{ color: '#8E8160' }}>
+                No approve/revert button here on purpose: a ruling is a decision-of-record, not a click. Undo belongs to the revert gate (quiz_delta), not to a button.
               </div>
             </div>
           )}
