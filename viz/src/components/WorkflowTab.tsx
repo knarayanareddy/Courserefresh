@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import StatusBadge from "./StatusBadge";
 
 // n8n workflow data
@@ -196,6 +196,92 @@ const NODE_COLORS: Record<string, { bg: string; border: string; label: string }>
 function WorkflowCanvas({ wf }: { wf: typeof WORKFLOWS[0] }) {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
+  // ---- magpie-style execution replay -----------------------------------
+  // Nodes animate in topological waves: a wave fires once every predecessor
+  // is done — the same way n8n executes parallel branches. Borrowed from the
+  // magpie1 WorkflowView replay (pulsing running node, flowing edge packets).
+  const ranks = useMemo(() => {
+    const indeg: Record<string, number> = {};
+    const out: Record<string, string[]> = {};
+    wf.nodes.forEach(n => { indeg[n.id] = 0; out[n.id] = []; });
+    wf.edges.forEach(e => { if (indeg[e.to] !== undefined && out[e.from] !== undefined) { indeg[e.to]++; out[e.from].push(e.to); } });
+    const rank: Record<string, number> = {};
+    const rem = { ...indeg };
+    let frontier = wf.nodes.filter(n => rem[n.id] === 0).map(n => n.id);
+    let r = 0;
+    while (frontier.length) {
+      const next: string[] = [];
+      frontier.forEach(id => {
+        rank[id] = r;
+        (out[id] || []).forEach(t => { if (rem[t] !== undefined) { rem[t]--; if (rem[t] === 0) next.push(t); } });
+      });
+      frontier = next;
+      r++;
+    }
+    wf.nodes.forEach(n => { if (rank[n.id] === undefined) rank[n.id] = r; });
+    return rank;
+  }, [wf.id]);
+
+  const maxRankV = useMemo(() => Math.max(-1, ...wf.nodes.map(n => ranks[n.id] ?? 0)), [wf.id, ranks]);
+  const stepMs = wf.id === "wf-cr-showcase-loop" ? 420 : 600;
+
+  const [animStep, setAnimStep] = useState(-1);
+  const [playing, setPlaying] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoPlayedRef = useRef(false);
+
+  const stopAnim = useCallback(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setPlaying(false);
+  }, []);
+
+  const runAnim = useCallback(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setAnimStep(0);
+    setPlaying(true);
+    let step = 0;
+    timerRef.current = setInterval(() => {
+      step++;
+      setAnimStep(step);
+      if (step >= maxRankV + 1) {
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        setPlaying(false);
+      }
+    }, stepMs);
+  }, [maxRankV, stepMs]);
+
+  // reset on workflow switch; auto-play the combined showcase once on load
+  useEffect(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setPlaying(false);
+    setAnimStep(-1);
+    if (wf.id === "wf-cr-showcase-loop" && !autoPlayedRef.current) {
+      autoPlayedRef.current = true;
+      runAnim();
+    }
+  }, [wf.id, runAnim]);
+
+  useEffect(() => () => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  }, []);
+
+  const animStatus = (id: string): "idle" | "running" | "done" | null => {
+    if (animStep < 0) return null;
+    const r = ranks[id] ?? 0;
+    if (r < animStep) return "done";
+    if (r === animStep) return "running";
+    return "idle";
+  };
+
+  const edgeState = (a: string, b: string): "static" | "active" | "future" => {
+    if (animStep < 0) return "static";
+    const ra = ranks[a] ?? 0;
+    const rb = ranks[b] ?? 0;
+    if (ra < animStep && rb <= animStep) return "active";
+    return "future";
+  };
+  // -----------------------------------------------------------------------
+
   const minX = Math.min(...wf.nodes.map(n => n.x));
   const maxX = Math.max(...wf.nodes.map(n => n.x)) + 180;
   const minY = Math.min(...wf.nodes.map(n => n.y));
@@ -209,12 +295,54 @@ function WorkflowCanvas({ wf }: { wf: typeof WORKFLOWS[0] }) {
 
   return (
     <div style={{ position: "relative" }}>
+      {/* magpie-style replay controls */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: "var(--s3)" }}>
+        <button
+          onClick={playing ? stopAnim : runAnim}
+          style={{
+            padding: "4px 12px",
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            backgroundColor: playing ? "#8E8160" : "var(--ink)",
+            color: "var(--paper)",
+            border: "none",
+            borderRadius: "var(--radius)",
+            cursor: playing ? "wait" : "pointer",
+          }}
+        >
+          {playing ? `▶ replaying… wave ${Math.min(animStep, maxRankV + 1)}/${maxRankV + 1}` : "▶ replay flow"}
+        </button>
+        {animStep >= 0 && !playing && (
+          <button
+            onClick={() => setAnimStep(-1)}
+            style={{
+              padding: "4px 12px",
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+              backgroundColor: "var(--paper-2)",
+              color: "var(--ink-soft)",
+              border: "1px solid var(--rule)",
+              borderRadius: "var(--radius)",
+              cursor: "pointer",
+            }}
+          >
+            ↺ reset
+          </button>
+        )}
+        <span style={{ fontSize: 11, fontFamily: "var(--font-sans)", color: "var(--ink-faint)" }}>
+          {animStep < 0
+            ? "a wave = every node whose predecessors finished — n8n runs parallel branches that way"
+            : playing
+              ? "running nodes pulse · executed wires carry flow packets"
+              : "flow complete — every lane executed, packets keep flowing"}
+        </span>
+      </div>
       <svg
         width="100%"
         viewBox={`${minX - 20} ${minY - 20} ${svgW} ${svgH}`}
         style={{ overflow: "visible", display: "block" }}
       >
-        {/* Edges */}
+        {/* Edges — animated during replay: executed wires go solid and carry flow packets (magpie-style) */}
         {wf.edges.map((edge, i) => {
           const from = nodeById[edge.from];
           const to = nodeById[edge.to];
@@ -224,16 +352,25 @@ function WorkflowCanvas({ wf }: { wf: typeof WORKFLOWS[0] }) {
           const x2 = to.x;
           const y2 = to.y + nodeH / 2;
           const mx = (x1 + x2) / 2;
+          const d = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+          const st = edgeState(edge.from, edge.to);
+          if (st === "active") {
+            return (
+              <g key={i}>
+                <path d={d} stroke={wf.color} strokeWidth={2} fill="none" strokeOpacity={0.9} />
+                <circle r={3} fill={wf.color}>
+                  <animateMotion dur="1.4s" repeatCount="indefinite" path={d} />
+                </circle>
+              </g>
+            );
+          }
+          if (st === "future") {
+            return (
+              <path key={i} d={d} stroke="#C9C2B4" strokeWidth={1} fill="none" strokeDasharray="4 4" strokeOpacity={0.55} />
+            );
+          }
           return (
-            <path
-              key={i}
-              d={`M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`}
-              stroke={wf.color}
-              strokeWidth={1.5}
-              fill="none"
-              strokeOpacity={0.4}
-              markerEnd="url(#arrow)"
-            />
+            <path key={i} d={d} stroke={wf.color} strokeWidth={1.5} fill="none" strokeOpacity={0.4} markerEnd="url(#arrow)" />
           );
         })}
         {/* Arrow marker */}
@@ -247,8 +384,14 @@ function WorkflowCanvas({ wf }: { wf: typeof WORKFLOWS[0] }) {
         {wf.nodes.map(node => {
           const nc = NODE_COLORS[node.type] ?? NODE_COLORS.code;
           const isHovered = hoveredNode === node.id;
+          const a = animStatus(node.id);
           return (
             <g key={node.id}>
+              {a === "running" && (
+                <rect x={node.x - 3} y={node.y - 3} width={nodeW + 6} height={nodeH + 6} fill="none" stroke="#D4A017" strokeWidth={2} rx={3} opacity={0.6}>
+                  <animate attributeName="opacity" values="0.6;0.15;0.6" dur="0.8s" repeatCount="indefinite" />
+                </rect>
+              )}
               <foreignObject
                 x={node.x}
                 y={node.y}
@@ -260,21 +403,25 @@ function WorkflowCanvas({ wf }: { wf: typeof WORKFLOWS[0] }) {
                   onMouseEnter={() => setHoveredNode(node.id)}
                   onMouseLeave={() => setHoveredNode(null)}
                   style={{
+                    position: "relative",
                     width: nodeW,
                     height: nodeH,
-                    background: nc.bg,
-                    border: `1px solid ${nc.border}`,
+                    background: a === "running" ? "rgba(212,160,23,0.16)" : a === "done" ? `${nc.border}22` : nc.bg,
+                    border: `1px solid ${a === "running" ? "#B8860B" : nc.border}`,
                     borderRadius: 2,
                     padding: "8px 10px",
                     cursor: "pointer",
+                    opacity: a === "idle" ? 0.45 : 1,
                     boxShadow: isHovered ? `0 0 0 2px ${nc.border}40` : "none",
-                    transition: "box-shadow 0.15s",
+                    transition: "box-shadow 0.15s, background 0.3s, opacity 0.3s",
                   }}
                 >
                   <div style={{ fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase", color: nc.border, fontFamily: "var(--font-sans)", marginBottom: 3 }}>
                     {nc.label}
                   </div>
                   <div style={{ fontSize: 11, fontWeight: 600, fontFamily: "var(--font-mono)", color: "var(--ink)", lineHeight: 1.3 }}>
+                    {a === "done" && <span style={{ float: "right", color: "#2D6A2D", fontSize: 10, fontWeight: 700 }}>✓</span>}
+                    {a === "running" && <span style={{ float: "right", color: "#B8860B", fontSize: 10, fontWeight: 700 }}>▶</span>}
                     {node.label}
                   </div>
                 </div>
