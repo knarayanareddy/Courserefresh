@@ -6,3 +6,8 @@ __pycache__/
 *.egg-info/
 node_modules/
 app/out/
+
+course-refresh-demo-video/.remotion-binaries/
+course-refresh-demo-video/output/
+course-refresh-demo-video/dist/
+viz/dist/courserefresh-demo-3min.mp4
