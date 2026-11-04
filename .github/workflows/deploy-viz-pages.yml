@@ -2,7 +2,7 @@ name: Deploy viz demo to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, arena/5ee7fa00-courserefresh]
     paths: ['viz/**', '.github/workflows/deploy-viz-pages.yml']
   workflow_dispatch:
 

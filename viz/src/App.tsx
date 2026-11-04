@@ -23,10 +23,11 @@ const realWorkflowExecutions = workflowRuns.slice(0, 8).map((r) => ({
 }));
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
-type Section = 'overview' | 'slides' | 'runs' | 'workflow' | 'courses' | 'console';
+type Section = 'overview' | 'film' | 'slides' | 'runs' | 'workflow' | 'courses' | 'console';
 
 const nav: { id: Section; label: string; sub: string }[] = [
   { id: 'overview',  label: 'Overview',         sub: 'What & why' },
+  { id: 'film',      label: 'Product film',     sub: 'Three-minute narrated walkthrough' },
   { id: 'slides',   label: 'Deck (10 slides)',   sub: 'Problem · Loop · Safeguards · Proof' },
   { id: 'runs',     label: 'Live Runs',         sub: '5 traced run records' },
   { id: 'workflow', label: 'n8n Workflows',      sub: '5 workflow canvases' },
@@ -216,6 +217,7 @@ function OverviewPage({ onNavigate }: { onNavigate: (s: Section) => void }) {
           {/* CTA row */}
       <div className="flex flex-wrap gap-3">
         {[
+          { id: 'film' as Section, label: '→ Watch the 3-minute product film', sub: 'Narrated product walkthrough · MP4' },
           { id: 'slides' as Section, label: '→ Read the 4-slide deck', sub: 'Why · How · Safeguards · Vision' },
           { id: 'workflow' as Section, label: '→ Walk the 5 run views', sub: 'Publish · First scan · Hostile · Stuck · Human signoff + revert' },
           { id: 'courses' as Section, label: '→ Browse agent-ops', sub: '6 lessons · real diffs · real quizzes' },
@@ -236,6 +238,39 @@ function OverviewPage({ onNavigate }: { onNavigate: (s: Section) => void }) {
   );
 }
 
+// ─── Product film ─────────────────────────────────────────────────────────────
+function ProductFilmPage() {
+  return (
+    <section className="max-w-5xl" style={{ fontFamily: "'IBM Plex Sans', system-ui, sans-serif" }}>
+      <div className="mb-6 pb-5 border-b" style={{ borderColor: '#C9C0AE' }}>
+        <div className="text-[11px] font-mono uppercase tracking-widest mb-2" style={{ color: '#8E8160' }}>Courserefresh · product film</div>
+        <h2 className="text-3xl md:text-4xl font-semibold leading-tight" style={{ color: '#1C1915', fontFamily: "'Source Serif 4', Georgia, serif" }}>
+          A three-minute tour of a course that keeps up.
+        </h2>
+        <p className="text-sm md:text-base leading-relaxed mt-3 max-w-3xl" style={{ color: '#4A443A' }}>
+          Follow a source change from discovery through policy, a versioned lesson and quiz update, learner support, the revert gate, and the morning digest.
+        </p>
+      </div>
+      <div className="overflow-hidden border rounded-sm" style={{ borderColor: '#8E8160', backgroundColor: '#1C1915' }}>
+        <video
+          className="block w-full aspect-video"
+          controls
+          playsInline
+          preload="metadata"
+          aria-label="Three-minute narrated Courserefresh product walkthrough"
+        >
+          <source src={`${import.meta.env.BASE_URL}courserefresh-demo-3min.mp4`} type="video/mp4" />
+          Your browser does not support embedded video.
+        </video>
+      </div>
+      <div className="flex flex-wrap justify-between gap-3 mt-3 text-[11px] font-mono" style={{ color: '#68604F' }}>
+        <span>1920 × 1080 · 24 fps · narrated</span>
+        <a className="underline underline-offset-2" href={`${import.meta.env.BASE_URL}courserefresh-demo-3min.mp4`} download="courserefresh-demo-3min.mp4" style={{ color: '#6B4E2E' }}>Download MP4 ↓</a>
+      </div>
+    </section>
+  );
+}
+
 // ─── Courses page ─────────────────────────────────────────────────────────────
 // (former CoursesPage — course tabs + ProgressionChart + CourseView — replaced by the
 //  three-level CoursesSection adapted from the Next.js variant; see components/CoursesSection.tsx)
@@ -247,6 +282,7 @@ export default function App() {
 
   const sectionTitles: Record<Section, string> = {
     overview: 'Overview',
+    film: 'Product film',
     slides: 'Deck — 4 slides',
     runs: 'Live Runs',
     workflow: 'n8n Workflows',
@@ -396,6 +432,7 @@ export default function App() {
               transition={{ duration: 0.25 }}
             >
               {section === 'overview' && <OverviewPage onNavigate={setSection} />}
+              {section === 'film' && <ProductFilmPage />}
               {section === 'slides' && (
                 <div>
                   <div className="mb-4">

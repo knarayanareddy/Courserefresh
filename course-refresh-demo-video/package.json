@@ -1,18 +1,28 @@
 {
-  "name": "react-vite-tailwind",
+  "name": "courserefresh-demo-video",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "studio": "node scripts/remotion-cli.mjs studio",
+    "compositions": "node scripts/remotion-cli.mjs compositions",
+    "render:video": "node scripts/render.mjs",
+    "prepare:narration": "node scripts/prepare-narration.mjs"
   },
   "dependencies": {
+    "@ffmpeg-installer/linux-x64": "4.1.0",
+    "@ffprobe-installer/linux-x64": "5.2.0",
+    "@remotion/cli": "4.0.540",
+    "@remotion/renderer": "4.0.540",
+    "@sparticuz/chromium": "153.0.0",
     "clsx": "2.1.1",
     "lucide-react": "^1.49.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
+    "remotion": "4.0.540",
     "tailwind-merge": "3.4.0"
   },
   "devDependencies": {
@@ -23,7 +33,7 @@
     "@vitejs/plugin-react": "5.1.1",
     "tailwindcss": "4.1.17",
     "typescript": "5.9.3",
-    "vite": "7.3.2",
+    "vite": "^7.3.7",
     "vite-plugin-singlefile": "2.3.0"
   }
 }

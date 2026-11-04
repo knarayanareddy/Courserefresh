@@ -138,7 +138,7 @@ try:
         assert isinstance(doc["nodes"], list) and doc["nodes"], path.name
         # a name may be a human label ("CR-9 · errors → receipt"); the workflow number is the contract
         number = path.stem.replace("wf-cr-", "").split("-")[0]
-        assert number in doc["name"], f"{path.name} names the wrong workflow: {doc['name']}"
+        assert number.casefold() in doc["name"].casefold(), f"{path.name} names the wrong workflow: {doc['name']}"
         assert any(n.get("type") == "n8n-nodes-base.stickyNote" for n in doc["nodes"]), \
             f"{path.name} carries no contract note"
         if "triage" in path.name:

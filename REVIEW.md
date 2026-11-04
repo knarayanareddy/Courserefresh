@@ -450,4 +450,27 @@ approval act on the world.
 * ~~The frozen `MANIFEST.sha256` values: the artifacts are not in the repository.~~ **Resolved:** two
   bundles ship in `specs/evidence/` and the audit stage re-hashes every file on each battery run, so a
   manifest that stops matching its bundle fails the build.
-* Video/pitch materials (`VIDEO-SHOTLIST.md`) — not exercised.
+* The remaining pre-production pitch checklist in `VIDEO-SHOTLIST.md` was not assessed; this pass generated and reviewed the narrated product film described in §9.
+
+---
+
+## 9. Re-review and demo build — 2026-11-04
+
+The previous findings and their fixes remain as recorded above. I re-ran the repository battery on this checkout and reviewed the current demo-video project.
+
+### Verification
+
+- `sh app/check.sh` → **ALL GREEN**, 14 stages; 274 recorded PASS lines across the primary stages, followed by the **32/32** register audit.
+- `npm run compositions` in `course-refresh-demo-video/` → `CourserefreshDemo`, 1920×1080, 24 fps, 4,320 frames (180 seconds).
+- `npx tsc --noEmit` and `npm run build` → pass for the video project and `viz/` site.
+- `npm audit` → **0 vulnerabilities** in both projects.
+- Rendered MP4 → H.264 video, AAC audio, 1920×1080, 24 fps, 180 seconds; included in the Pages build bundle.
+- `GITHUB_ACTIONS=true npm run build` in `viz/` → pass with the `/Courserefresh/` base path; the deploy bundle contains the 17 MB MP4.
+
+### Finding closed during this pass
+
+The contracts test compared a workflow filename token to its display name case-sensitively. The shipped showcase workflow uses `wf-cr-showcase-loop` and the title `CR Showcase — the whole loop on one canvas`, so the check rejected a valid name. The comparison now normalizes case; the workflow-name contract and the full battery pass.
+
+### Scope still not independently exercised
+
+The battery is intentionally credential-free. It checks the external service paths through injected transports; this pass did not call a live Apify account, a configured judge endpoint, or an n8n instance, and did not verify external message delivery. The `viz/` app is a presentation layer over bundled evidence; the separately served operational console is `app/serve.py`. Treat live-provider and live-delivery behavior as unverified until run with configured services.
