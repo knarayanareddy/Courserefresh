@@ -9,7 +9,6 @@ const binaryDir = path.join(here, ".remotion-binaries");
 const outputDir = path.join(here, "output");
 const videoOnly = path.join(outputDir, ".courserefresh-video-only.mp4");
 const outputFile = path.join(outputDir, "courserefresh-demo-3min.mp4");
-const soundtrack = path.join(here, "public/audio/courserefresh-score.mp3");
 const narration = path.join(here, "public/audio/courserefresh-narration.mp3");
 const pagesCopy = path.resolve(here, "../viz/public/courserefresh-demo-3min.mp4");
 const ffmpeg = path.join(here, "node_modules/@ffmpeg-installer/linux-x64/ffmpeg");
@@ -58,14 +57,12 @@ try {
     "--overwrite",
     "--log", "info",
   ]);
-  // Mux narration over the original score, preserving the Remotion-rendered video stream.
+  // Keep only the narration: no music bed or background effects in the final film.
   await run(binaryDir + "/ffmpeg", [
     "-hide_banner", "-loglevel", "warning", "-y",
     "-i", videoOnly,
     "-i", narration,
-    "-stream_loop", "-1", "-i", soundtrack,
-    "-filter_complex", "[1:a]volume=1.0[voice];[2:a]volume=0.22[score];[voice][score]amix=inputs=2:duration=longest:dropout_transition=0[mix]",
-    "-map", "0:v:0", "-map", "[mix]",
+    "-map", "0:v:0", "-map", "1:a:0",
     "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
     "-t", "180", "-movflags", "+faststart", outputFile,
   ]);
