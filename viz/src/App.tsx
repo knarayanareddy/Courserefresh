@@ -264,7 +264,7 @@ function ProductFilmPage() {
         </video>
       </div>
       <div className="flex flex-wrap justify-between gap-3 mt-3 text-[11px] font-mono" style={{ color: '#68604F' }}>
-        <span>1920 × 1080 · 24 fps · narrated</span>
+        <span>1920 × 1080 · 24 fps · narration only</span>
         <a className="underline underline-offset-2" href={`${import.meta.env.BASE_URL}courserefresh-demo-3min.mp4`} download="courserefresh-demo-3min.mp4" style={{ color: '#6B4E2E' }}>Download MP4 ↓</a>
       </div>
     </section>

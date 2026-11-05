@@ -1,6 +1,6 @@
 # Courserefresh product film
 
-A Remotion-built, narrated product film for Courserefresh. Eight React scenes follow a source change from discovery through policy, lesson and quiz updates, learner support, author controls, and the morning digest. The finished composition is 1920 × 1080 at 24 fps with an original ambient score.
+A Remotion-built product film for Courserefresh. Eight React scenes follow a source change from discovery through policy, lesson and quiz updates, learner support, author controls, and the morning digest. The finished composition is 1920 × 1080 at 24 fps, with narration only and no background music. Its visual system uses a bright, editorial palette, translucent liquid-glass surfaces, controlled prismatic light, and short glass-pane wipes with a prismatic light edge between chapters.
 
 ## Render
 
